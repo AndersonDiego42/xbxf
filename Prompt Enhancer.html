@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptForge — AI Prompt Enhancer</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#6C63FF;--primary-light:#8B83FF;--primary-dark:#4F46E5;
+  --secondary:#FF6584;--accent:#00D2FF;
+  --bg:#0F1117;--bg-card:#1A1D27;--bg-card-hover:#22252F;--bg-input:#14161E;
+  --surface:#242733;--surface-light:#2E3142;
+  --text:#F1F1F6;--text-secondary:#9598A6;--text-muted:#62657A;
+  --border:#2E3142;--border-light:#3A3D50;
+  --success:#4ADE80;--warning:#FBBF24;--error:#F87171;
+  --shadow:0 8px 32px rgba(0,0,0,.3);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.4);
+  --radius:12px;--radius-lg:16px;--radius-xl:24px;
+  --transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="light"]{
+  --bg:#F5F6FA;--bg-card:#FFFFFF;--bg-card-hover:#F8F8FC;--bg-input:#F4F5F9;
+  --surface:#EEEFF5;--surface-light:#E4E5EC;
+  --text:#1A1D27;--text-secondary:#4A4D5E;--text-muted:#7A7D8C;
+  --border:#DCDCE5;--border-light:#C5C5D0;
+  --primary-light:#5B52E5;
+  --shadow:0 8px 32px rgba(0,0,0,.08);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.12);
+}
+[data-theme="light"] .provider-badge.groq{background:rgba(255,101,132,.15);color:#D43F5F}
+[data-theme="light"] .provider-badge.openrouter{background:rgba(0,150,200,.15);color:#0088AA}
+[data-theme="light"] .feature-badge{background:rgba(108,99,255,.15);color:#4A40CC}
+[data-theme="light"] .nav-item.active{background:rgba(108,99,255,.1);color:#4A40CC}
+[data-theme="light"] .mode-pill.active{background:rgba(108,99,255,.1);color:#4A40CC}
+[data-theme="light"] .tone-pill.active{background:rgba(108,99,255,.12);color:#4A40CC}
+[data-theme="light"] .format-pill.active{background:rgba(0,150,200,.12);color:#0088AA;border-color:#0088AA}
+
+/* ───── ACCESSIBILITY: visible focus ───── */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.nav-item:focus-visible,
+.mode-pill:focus-visible,
+.tone-pill:focus-visible,
+.format-pill:focus-visible,
+.template-chip:focus-visible,
+.variation-tab:focus-visible,
+.count-btn:focus-visible,
+.history-item:focus-visible,
+.preset-constraint:focus-visible{
+  outline:2px solid var(--primary);
+  outline-offset:2px;
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:var(--transition)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* Layout */
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:280px;background:var(--bg-card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .3s ease}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:99;opacity:0;pointer-events:none;transition:opacity .3s ease;display:none}
+@media(max-width:768px){.sidebar-overlay{display:block}}
+.sidebar-overlay.active{opacity:1;pointer-events:auto}
+.main-content{flex:1;margin-left:280px;display:flex;flex-direction:column;min-height:100vh;transition:margin .3s ease;min-width:0}
+
+/* Sidebar */
+.sidebar-header{padding:24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:800}
+.logo-text h1{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--primary-light),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-text p{font-size:.7rem;color:var(--text-muted);font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.sidebar-nav{flex:1;padding:12px;overflow-y:auto}
+.nav-section{margin-bottom:20px}
+.nav-section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);padding:8px 12px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius);cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:.875rem;font-weight:500;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--surface);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.12);color:var(--primary-light)}
+.nav-item .material-icons-outlined,.nav-item .material-icons-round{font-size:20px}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+
+/* Top Bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:var(--bg-card);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.menu-btn{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:8px;border-radius:var(--radius)}
+.topbar-title{font-size:1rem;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.icon-btn:hover{background:var(--surface-light);color:var(--text);border-color:var(--border-light)}
+.icon-btn .material-icons-outlined,.icon-btn .material-icons-round{font-size:20px}
+
+/* Main */
+.content-area{flex:1;padding:32px;max-width:1400px;width:100%;margin:0 auto}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;transition:var(--transition)}
+.card:hover{border-color:var(--border-light)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-title .material-icons-outlined,.card-title .material-icons-round{font-size:20px;color:var(--primary-light)}
+
+/* Enhancement Mode Pills */
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:24px}
+.mode-pill{padding:10px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:var(--transition);text-align:center;font-size:.8rem;font-weight:500;color:var(--text-secondary);display:flex;align-items:center;gap:8px;justify-content:center}
+.mode-pill:hover{border-color:var(--primary);color:var(--text);background:var(--surface-light)}
+.mode-pill.active{border-color:var(--primary);background:rgba(108,99,255,.12);color:var(--primary-light)}
+.mode-pill .material-icons-outlined{font-size:18px}
+
+/* Tone Pills */
+.tone-grid{display:flex;flex-wrap:wrap;gap:8px}
+.tone-pill{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:var(--transition);font-size:.75rem;font-weight:500;color:var(--text-secondary);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.tone-pill:hover{border-color:var(--primary);color:var(--text);background:var(--surface-light)}
+.tone-pill.active{border-color:var(--primary);background:rgba(108,99,255,.15);color:var(--primary-light);font-weight:600}
+.tone-pill .tone-emoji{font-size:.85rem}
+
+/* Feature toggle switches */
+.feature-toggles{display:flex;flex-direction:column;gap:12px}
+.feature-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);transition:var(--transition)}
+.feature-toggle.active{border-color:var(--primary);background:rgba(108,99,255,.08)}
+.feature-toggle-left{display:flex;align-items:center;gap:12px}
+.feature-toggle-left .material-icons-outlined{font-size:20px;color:var(--primary-light)}
+.feature-toggle-info h4{font-size:.85rem;font-weight:600;margin-bottom:2px}
+.feature-toggle-info p{font-size:.7rem;color:var(--text-muted);line-height:1.4}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:12px;cursor:pointer;transition:var(--transition)}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:3px;transition:var(--transition)}
+.toggle-switch input:checked+.toggle-slider{background:var(--primary)}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px)}
+
+/* Constraints */
+.constraints-list{display:flex;flex-direction:column;gap:8px}
+.constraint-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);font-size:.8rem;color:var(--text)}
+.constraint-item .material-icons-outlined{font-size:16px;color:var(--primary-light)}
+.constraint-item .remove-constraint{margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;transition:var(--transition)}
+.constraint-item .remove-constraint:hover{color:var(--error)}
+.add-constraint-row{display:flex;gap:8px;margin-top:8px}
+.add-constraint-row input{flex:1;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.8rem;outline:none;transition:var(--transition)}
+.add-constraint-row input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.add-constraint-row input::placeholder{color:var(--text-muted)}
+
+/* Output Format Select */
+.format-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.format-pill{padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:var(--transition);text-align:center;font-size:.78rem;font-weight:500;color:var(--text-secondary);display:flex;align-items:center;gap:6px;justify-content:center}
+.format-pill:hover{border-color:var(--accent);color:var(--text);background:var(--surface-light)}
+.format-pill.active{border-color:var(--accent);background:rgba(0,210,255,.1);color:var(--accent)}
+.format-pill .material-icons-outlined{font-size:16px}
+
+/* Variations tabs */
+.variations-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.variation-tab{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:.78rem;font-weight:500;color:var(--text-secondary);transition:var(--transition)}
+.variation-tab:hover{border-color:var(--primary);color:var(--text)}
+.variation-tab.active{border-color:var(--primary);background:var(--primary);color:#fff}
+.variations-count-selector{display:flex;align-items:center;gap:8px;margin-top:8px}
+.variations-count-selector label{font-size:.78rem;color:var(--text-secondary);font-weight:500}
+.count-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer;font-size:.85rem;font-weight:600;transition:var(--transition);display:flex;align-items:center;justify-content:center}
+.count-btn:hover{border-color:var(--primary);color:var(--text)}
+.count-btn.active{border-color:var(--primary);background:var(--primary);color:#fff}
+
+/* Advanced Options Panel */
+.advanced-panel{margin-bottom:24px}
+.advanced-panel .card{overflow:hidden}
+.advanced-toggle-btn{display:flex;align-items:center;gap:8px;width:100%;padding:0;background:none;border:none;cursor:pointer;color:var(--text);font-family:inherit;font-size:.95rem;font-weight:600}
+.advanced-toggle-btn .material-icons-outlined{font-size:20px;color:var(--primary-light);transition:transform .3s ease}
+.advanced-toggle-btn.open .chevron{transform:rotate(180deg)}
+.advanced-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.advanced-body.open{max-height:3000px}
+.advanced-inner{padding-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.advanced-section{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border)}
+.advanced-section-title{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.advanced-section-title .material-icons-outlined{font-size:18px;color:var(--primary-light)}
+.advanced-section.full-width{grid-column:1/-1}
+
+/* Textareas */
+.textarea-wrapper{position:relative}
+.textarea-wrapper textarea{width:100%;min-height:160px;max-height:60vh;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.9rem;line-height:1.7;resize:vertical;transition:border-color .2s, box-shadow .2s;outline:none}
+.textarea-wrapper textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.textarea-wrapper textarea::placeholder{color:var(--text-muted)}
+.textarea-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:12px;flex-wrap:wrap}
+.char-count{font-size:.75rem;color:var(--text-muted);white-space:nowrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;transition:var(--transition);border:none;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 16px rgba(108,99,255,.3)}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(108,99,255,.45);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--surface-light);border-color:var(--border-light)}
+.btn-accent{background:linear-gradient(135deg,var(--accent),#0088AA);color:#fff;box-shadow:0 4px 16px rgba(0,210,255,.2)}
+.btn-accent:hover{box-shadow:0 6px 24px rgba(0,210,255,.35);transform:translateY(-1px)}
+.btn-sm{padding:8px 16px;font-size:.8rem}
+.btn-icon{padding:8px;min-width:36px;justify-content:center}
+.btn .material-icons-outlined,.btn .material-icons-round{font-size:18px}
+
+/* Output Area */
+.output-card{position:relative;overflow:hidden;display:flex;flex-direction:column}
+.output-content{min-height:160px;padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);font-size:.9rem;line-height:1.7;white-space:pre-wrap;word-wrap:break-word;max-height:600px;overflow-y:auto;flex:1}
+.output-content.enhanced-text{white-space:normal}
+.output-content.enhanced-text br + br{display:block;content:'';margin-top:.4em}
+.output-placeholder{color:var(--text-muted);font-style:italic;display:flex;align-items:center;justify-content:center;min-height:160px;flex-direction:column;gap:8px;text-align:center;padding:24px}
+.output-placeholder .material-icons-outlined{font-size:36px;opacity:.5}
+.output-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* Settings Panel */
+.settings-section{margin-bottom:24px}
+.settings-section:last-child{margin-bottom:0}
+.settings-label{font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.input-group{position:relative}
+.input-group input,.input-group select{width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.85rem;transition:var(--transition);outline:none}
+.input-group input:focus,.input-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.input-group input::placeholder{color:var(--text-muted)}
+.input-group select{cursor:pointer;appearance:none;padding-right:40px}
+.input-group select option{background:var(--bg-card);color:var(--text)}
+.input-group .select-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;font-size:20px}
+.input-group .toggle-vis{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;display:flex}
+.api-status{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:500;padding:2px 8px;border-radius:20px;margin-left:auto}
+.api-status.connected{color:var(--success);background:rgba(74,222,128,.1)}
+.api-status.disconnected{color:var(--error);background:rgba(248,113,113,.1)}
+
+/* History */
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 400px);overflow-y:auto}
+.history-item{padding:12px;border-radius:var(--radius);background:var(--surface);cursor:pointer;transition:var(--transition);border:1px solid transparent}
+.history-item:hover{border-color:var(--border-light);background:var(--surface-light)}
+.history-item-title{font-size:.8rem;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-item-meta{font-size:.7rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* Loading */
+.loading-dots{display:inline-flex;gap:4px;align-items:center}
+.loading-dots span{width:6px;height:6px;border-radius:50%;background:var(--primary-light);animation:dotPulse 1.4s infinite ease-in-out both}
+.loading-dots span:nth-child(1){animation-delay:-.32s}
+.loading-dots span:nth-child(2){animation-delay:-.16s}
+@keyframes dotPulse{0%,80%,100%{transform:scale(0);opacity:.5}40%{transform:scale(1);opacity:1}}
+.loading-bar{height:3px;background:var(--surface);border-radius:2px;overflow:hidden;margin-bottom:16px;display:none}
+.loading-bar.active{display:block}
+.loading-bar::after{content:'';display:block;height:100%;width:30%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;animation:loadSlide 1.5s infinite ease-in-out}
+@keyframes loadSlide{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+
+/* Toast */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius);background:var(--bg-card);border:1px solid var(--border);color:var(--text);font-size:.85rem;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:toastIn .3s ease;min-width:280px;max-width:420px}
+.toast.success{border-color:var(--success)}
+.toast.error{border-color:var(--error)}
+.toast.success .toast-icon{color:var(--success)}
+.toast.error .toast-icon{color:var(--error)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-dismiss{margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;display:flex}
+
+/* Stats bar */
+.stats-bar{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.stat-chip{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-radius:var(--radius);font-size:.8rem;color:var(--text-secondary)}
+.stat-chip .material-icons-outlined{font-size:16px;color:var(--primary-light)}
+.stat-chip strong{color:var(--text);font-weight:600}
+
+/* Enhanced output text */
+.enhanced-text{line-height:1.7}
+.enhanced-text h1,.enhanced-text h2,.enhanced-text h3,.enhanced-text h4,.enhanced-text h5,.enhanced-text h6{margin:.8em 0 .4em;line-height:1.3;font-weight:700;color:var(--text)}
+.enhanced-text h1{font-size:1.25rem}.enhanced-text h2{font-size:1.15rem}.enhanced-text h3{font-size:1.05rem}.enhanced-text h4{font-size:.95rem}
+.enhanced-text p{margin:0 0 .6em}
+.enhanced-text ul,.enhanced-text ol{margin:.4em 0;padding-left:1.4em}
+.enhanced-text li{margin:.2em 0}
+.enhanced-text code{background:var(--surface);padding:1px 6px;border-radius:4px;font-family:'SF Mono','Monaco','Cascadia Code','Roboto Mono',monospace;font-size:.85em;border:1px solid var(--border)}
+.enhanced-text pre{background:var(--surface);padding:12px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;margin:.6em 0}
+.enhanced-text pre code{background:none;border:none;padding:0;font-size:.82em}
+.enhanced-text blockquote{border-left:3px solid var(--primary);padding:4px 12px;margin:.6em 0;color:var(--text-secondary);background:var(--surface);border-radius:0 var(--radius) var(--radius) 0}
+.enhanced-text a{color:var(--primary-light);text-decoration:underline}
+.enhanced-text strong{color:var(--text);font-weight:700}
+.enhanced-text hr{border:none;border-top:1px solid var(--border);margin:.8em 0}
+
+/* Settings Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:24px 24px 0;margin-bottom:20px}
+.modal-header h2{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-header h2 .material-icons-outlined{color:var(--primary-light)}
+.modal-body{padding:0 24px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Slider */
+.slider-wrapper{display:flex;align-items:center;gap:12px}
+.slider-wrapper input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;background:var(--surface);border-radius:2px;outline:none}
+.slider-wrapper input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;border:3px solid var(--bg-card);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.slider-val{min-width:36px;text-align:center;font-size:.8rem;font-weight:600;color:var(--primary-light)}
+
+/* Grid Layout for main */
+.enhance-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+
+/* Provider badge */
+.provider-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.provider-badge.groq{background:rgba(255,101,132,.1);color:var(--secondary)}
+.provider-badge.openrouter{background:rgba(0,210,255,.1);color:var(--accent)}
+
+/* Active features indicator badges */
+.active-features{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.feature-badge{font-size:.65rem;padding:2px 8px;border-radius:10px;background:rgba(108,99,255,.1);color:var(--primary-light);font-weight:500}
+
+/* Responsive */
+@media(max-width:1024px){
+  .enhance-grid{grid-template-columns:1fr}
+  .advanced-inner{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);width:280px;max-width:85vw}
+  .sidebar.open{transform:translateX(0);box-shadow:var(--shadow-lg)}
+  .main-content{margin-left:0}
+  .menu-btn{display:flex}
+  .content-area{padding:16px}
+  .topbar{padding:12px 16px}
+  .mode-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-bar{flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .stat-chip{flex-shrink:0}
+  .advanced-inner{grid-template-columns:1fr}
+  .modal{max-height:95vh}
+  .topbar-title{font-size:.9rem}
+  .output-actions{flex-wrap:wrap}
+}
+@media(max-width:480px){
+  .mode-grid{grid-template-columns:1fr 1fr}
+  .format-grid{grid-template-columns:1fr 1fr}
+  .template-chips{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .template-chip{flex-shrink:0}
+  .preset-constraints{max-height:none}
+  .topbar{padding:10px 12px}
+  .content-area{padding:12px}
+  .btn{padding:10px 16px;font-size:.825rem}
+  .toast{min-width:auto;max-width:calc(100vw - 32px)}
+  .toast-container{left:12px;right:12px;bottom:12px}
+}
+/* page transitions */
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Token stream effect */
+.streaming .output-content{border-color:var(--primary)}
+.cursor-blink::after{content:'▌';animation:blink 1s step-end infinite;color:var(--primary-light)}
+@keyframes blink{50%{opacity:0}}
+
+/* Custom prompt template chips */
+.template-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.template-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:.75rem;color:var(--text-secondary);transition:var(--transition);white-space:nowrap}
+.template-chip:hover{border-color:var(--primary);color:var(--text)}
+
+/* Comparison */
+.comparison-toggle{display:flex;background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.comparison-toggle button{flex:1;padding:8px 16px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:500;transition:var(--transition)}
+.comparison-toggle button.active{background:var(--primary);color:#fff}
+
+/* Preset constraint chips */
+.preset-constraints{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.preset-constraint{padding:4px 10px;border-radius:14px;border:1px dashed var(--border);background:transparent;cursor:pointer;font-size:.7rem;color:var(--text-muted);transition:var(--transition)}
+.preset-constraint:hover{border-color:var(--primary);color:var(--primary-light);border-style:solid}
+
+/* Context input */
+.context-input{width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.8rem;outline:none;transition:var(--transition);resize:vertical;min-height:60px;line-height:1.5}
+.context-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.context-input::placeholder{color:var(--text-muted)}
+
+/* Variation progress */
+.variation-progress{height:2px;background:var(--surface);border-radius:2px;overflow:hidden;margin:8px 0}
+.variation-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s ease;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">⚡</div>
+      <div class="logo-text"><h1>PromptForge</h1><p>AI Prompt Enhancer</p></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <button class="nav-item active" data-page="enhance" onclick="showPage('enhance',this)">
+          <span class="material-icons-outlined">auto_fix_high</span>Enhance Prompt
+        </button>
+        <button class="nav-item" data-page="history" onclick="showPage('history',this)">
+          <span class="material-icons-outlined">history</span>History
+          <span id="historyCount" style="margin-left:auto;font-size:.7rem;background:var(--surface);padding:2px 8px;border-radius:10px"></span>
+        </button>
+        <button class="nav-item" data-page="templates" onclick="showPage('templates',this)">
+          <span class="material-icons-outlined">dashboard_customize</span>Templates
+        </button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Settings</div>
+        <button class="nav-item" onclick="openSettings()">
+          <span class="material-icons-outlined">key</span>API Keys
+        </button>
+        <button class="nav-item" onclick="openModelSettings()">
+          <span class="material-icons-outlined">tune</span>Model Config
+        </button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Provider</div>
+        <div style="padding:4px 12px">
+          <div class="input-group">
+            <select id="providerSelect" onchange="switchProvider(this.value)">
+              <option value="groq">Groq</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
+            <span class="material-icons-outlined select-arrow">expand_more</span>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+            <span id="providerStatus" class="api-status disconnected">
+              <span class="material-icons-round" style="font-size:10px">circle</span> Not configured
+            </span>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="toggleTheme()">
+        <span class="material-icons-outlined" id="themeIcon">dark_mode</span>
+        <span id="themeLabel">Dark Mode</span>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn icon-btn" onclick="toggleSidebar()">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <span class="topbar-title" id="pageTitle">Enhance Prompt</span>
+      </div>
+      <div class="topbar-right">
+        <span id="topProviderBadge" class="provider-badge groq">Groq</span>
+        <button class="icon-btn" onclick="openSettings()" title="API Settings">
+          <span class="material-icons-outlined">settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Enhance Page -->
+    <div class="content-area">
+      <div class="page active" id="page-enhance">
+        <!-- Stats -->
+        <div class="stats-bar">
+          <div class="stat-chip" title="Total prompts you've enhanced">
+            <span class="material-icons-outlined" aria-hidden="true">auto_fix_high</span>
+            <span>Enhancements: <strong id="statEnhance">0</strong></span>
+          </div>
+          <div class="stat-chip" title="Approximate tokens generated">
+            <span class="material-icons-outlined" aria-hidden="true">token</span>
+            <span>Tokens used: <strong id="statTokens">0</strong></span>
+          </div>
+          <div class="stat-chip" title="Average enhancement time">
+            <span class="material-icons-outlined" aria-hidden="true">timer</span>
+            <span>Avg time: <strong id="statTime">0s</strong></span>
+          </div>
+          <button class="stat-chip" onclick="resetStats()" title="Reset statistics" style="border:none;cursor:pointer;font-family:inherit;margin-left:auto" aria-label="Reset stats">
+            <span class="material-icons-outlined" aria-hidden="true">refresh</span>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <!-- Enhancement Mode -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header">
+            <span class="card-title"><span class="material-icons-outlined">category</span>Enhancement Mode</span>
+          </div>
+          <div class="mode-grid" id="modeGrid">
+            <button class="mode-pill active" data-mode="detailed" onclick="selectMode(this)">
+              <span class="material-icons-outlined">description</span>Detailed
+            </button>
+            <button class="mode-pill" data-mode="creative" onclick="selectMode(this)">
+              <span class="material-icons-outlined">palette</span>Creative
+            </button>
+            <button class="mode-pill" data-mode="technical" onclick="selectMode(this)">
+              <span class="material-icons-outlined">code</span>Technical
+            </button>
+            <button class="mode-pill" data-mode="structured" onclick="selectMode(this)">
+              <span class="material-icons-outlined">view_list</span>Structured
+            </button>
+            <button class="mode-pill" data-mode="concise" onclick="selectMode(this)">
+              <span class="material-icons-outlined">compress</span>Concise
+            </button>
+            <button class="mode-pill" data-mode="expert" onclick="selectMode(this)">
+              <span class="material-icons-outlined">psychology</span>Expert
+            </button>
+          </div>
+        </div>
+
+        <!-- ===== ADVANCED OPTIONS PANEL ===== -->
+        <div class="advanced-panel">
+          <div class="card">
+            <button class="advanced-toggle-btn" onclick="toggleAdvanced(this)" id="advancedToggleBtn" aria-expanded="false" aria-controls="advancedBody">
+              <span class="material-icons-outlined" aria-hidden="true">tune</span>
+              Advanced Enhancement Options
+              <span id="advancedSummary" style="font-size:.75rem;font-weight:500;color:var(--text-muted);margin-left:8px"></span>
+              <span class="material-icons-outlined chevron" style="margin-left:auto" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="advanced-body" id="advancedBody">
+              <div class="advanced-inner">
+
+                <!-- 1) TONE ENHANCEMENT -->
+                <div class="advanced-section">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">record_voice_over</span>Tone Enhancement
+                  </div>
+                  <div class="tone-grid" id="toneGrid">
+                    <button class="tone-pill" data-tone="professional" onclick="selectTone(this)">
+                      <span class="tone-emoji">💼</span>Professional
+                    </button>
+                    <button class="tone-pill" data-tone="casual" onclick="selectTone(this)">
+                      <span class="tone-emoji">😊</span>Casual
+                    </button>
+                    <button class="tone-pill" data-tone="academic" onclick="selectTone(this)">
+                      <span class="tone-emoji">🎓</span>Academic
+                    </button>
+                    <button class="tone-pill" data-tone="persuasive" onclick="selectTone(this)">
+                      <span class="tone-emoji">🎯</span>Persuasive
+                    </button>
+                    <button class="tone-pill" data-tone="friendly" onclick="selectTone(this)">
+                      <span class="tone-emoji">🤗</span>Friendly
+                    </button>
+                    <button class="tone-pill" data-tone="authoritative" onclick="selectTone(this)">
+                      <span class="tone-emoji">👔</span>Authoritative
+                    </button>
+                    <button class="tone-pill" data-tone="humorous" onclick="selectTone(this)">
+                      <span class="tone-emoji">😄</span>Humorous
+                    </button>
+                    <button class="tone-pill" data-tone="empathetic" onclick="selectTone(this)">
+                      <span class="tone-emoji">💗</span>Empathetic
+                    </button>
+                    <button class="tone-pill" data-tone="direct" onclick="selectTone(this)">
+                      <span class="tone-emoji">⚡</span>Direct
+                    </button>
+                    <button class="tone-pill" data-tone="inspirational" onclick="selectTone(this)">
+                      <span class="tone-emoji">🌟</span>Inspirational
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 2) CONTEXTUAL DETAILS -->
+                <div class="advanced-section">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">auto_stories</span>Contextual Details
+                  </div>
+                  <div class="feature-toggles">
+                    <div class="feature-toggle" id="contextToggle" onclick="toggleFeature('addContext', event)">
+                      <div class="feature-toggle-left">
+                        <span class="material-icons-outlined" aria-hidden="true">add_circle</span>
+                        <div class="feature-toggle-info">
+                          <h4>Auto-add Context</h4>
+                          <p>Automatically infer and add relevant contextual details</p>
+                        </div>
+                      </div>
+                      <label class="toggle-switch" onclick="event.stopPropagation()" aria-label="Auto-add context">
+                        <input type="checkbox" id="addContextCheck" onchange="toggleFeature('addContext', event)">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                  <textarea class="context-input" id="customContext" placeholder="Add custom context here (e.g., target audience, domain, purpose, background info...)&#10;Leave empty to auto-generate context." rows="3" style="margin-top:10px" oninput="persistCustomContext()"></textarea>
+                </div>
+
+                <!-- 3) CONSTRAINTS -->
+                <div class="advanced-section">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">rule</span>Quality Constraints
+                  </div>
+                  <div class="preset-constraints">
+                    <button class="preset-constraint" onclick="addPresetConstraint('Be specific and avoid vague language')">+ Be specific</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Include concrete examples')">+ Examples</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Limit response to 500 words')">+ Word limit</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Use simple, clear language')">+ Clear language</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Avoid jargon and technical terms')">+ No jargon</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Include actionable steps')">+ Actionable</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Cite sources when possible')">+ Cite sources</button>
+                    <button class="preset-constraint" onclick="addPresetConstraint('Consider multiple perspectives')">+ Multiple POV</button>
+                  </div>
+                  <div class="constraints-list" id="constraintsList"></div>
+                  <div class="add-constraint-row">
+                    <input type="text" id="newConstraint" placeholder="Add a custom constraint..." onkeydown="if(event.key==='Enter')addConstraint()">
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="addConstraint()" title="Add constraint">
+                      <span class="material-icons-outlined">add</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 4) STEP-BY-STEP REASONING -->
+                <div class="advanced-section">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">account_tree</span>Reasoning Instructions
+                  </div>
+                  <div class="feature-toggles">
+                    <div class="feature-toggle" onclick="toggleFeature('stepByStep', event)">
+                      <div class="feature-toggle-left">
+                        <span class="material-icons-outlined" aria-hidden="true">format_list_numbered</span>
+                        <div class="feature-toggle-info">
+                          <h4>Step-by-step Reasoning</h4>
+                          <p>Add chain-of-thought instructions to the enhanced prompt</p>
+                        </div>
+                      </div>
+                      <label class="toggle-switch" onclick="event.stopPropagation()" aria-label="Step-by-step reasoning">
+                        <input type="checkbox" id="stepByStepCheck" onchange="toggleFeature('stepByStep', event)">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="feature-toggle" onclick="toggleFeature('selfVerify', event)">
+                      <div class="feature-toggle-left">
+                        <span class="material-icons-outlined" aria-hidden="true">verified</span>
+                        <div class="feature-toggle-info">
+                          <h4>Self-verification</h4>
+                          <p>Ask the AI to verify and refine its own answer</p>
+                        </div>
+                      </div>
+                      <label class="toggle-switch" onclick="event.stopPropagation()" aria-label="Self verification">
+                        <input type="checkbox" id="selfVerifyCheck" onchange="toggleFeature('selfVerify', event)">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="feature-toggle" onclick="toggleFeature('thinkFirst', event)">
+                      <div class="feature-toggle-left">
+                        <span class="material-icons-outlined" aria-hidden="true">lightbulb</span>
+                        <div class="feature-toggle-info">
+                          <h4>Think Before Answering</h4>
+                          <p>Instruct AI to analyze the problem before responding</p>
+                        </div>
+                      </div>
+                      <label class="toggle-switch" onclick="event.stopPropagation()" aria-label="Think before answering">
+                        <input type="checkbox" id="thinkFirstCheck" onchange="toggleFeature('thinkFirst', event)">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 5) OUTPUT FORMATTING -->
+                <div class="advanced-section full-width">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">format_shapes</span>Output Formatting Instructions
+                  </div>
+                  <div class="format-grid" id="formatGrid">
+                    <button class="format-pill" data-format="markdown" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">code</span>Markdown
+                    </button>
+                    <button class="format-pill" data-format="bullet_points" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">format_list_bulleted</span>Bullet Points
+                    </button>
+                    <button class="format-pill" data-format="numbered_list" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">format_list_numbered</span>Numbered List
+                    </button>
+                    <button class="format-pill" data-format="paragraphs" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">notes</span>Paragraphs
+                    </button>
+                    <button class="format-pill" data-format="table" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">table_chart</span>Table
+                    </button>
+                    <button class="format-pill" data-format="json" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">data_object</span>JSON
+                    </button>
+                    <button class="format-pill" data-format="code_block" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">terminal</span>Code Block
+                    </button>
+                    <button class="format-pill" data-format="executive_summary" onclick="selectFormat(this)">
+                      <span class="material-icons-outlined">summarize</span>Exec Summary
+                    </button>
+                  </div>
+                </div>
+
+                <!-- RESET ALL ADVANCED OPTIONS -->
+                <div class="advanced-section full-width" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:transparent;border:none;padding:8px 0">
+                  <p style="font-size:.75rem;color:var(--text-muted);margin:0">Tip: Hold <kbd style="padding:1px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);font-size:.7rem">Ctrl/Cmd + Enter</kbd> to enhance · <kbd style="padding:1px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);font-size:.7rem">Ctrl/Cmd + /</kbd> to toggle this panel</p>
+                  <button class="btn btn-sm btn-secondary" onclick="resetAdvancedOptions()" title="Reset all advanced options to defaults">
+                    <span class="material-icons-outlined" aria-hidden="true">restart_alt</span>Reset Options
+                  </button>
+                </div>
+
+                <!-- 6) MULTIPLE VARIATIONS -->
+                <div class="advanced-section full-width">
+                  <div class="advanced-section-title">
+                    <span class="material-icons-outlined">dynamic_feed</span>Multiple Variations
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                    <div class="feature-toggle" style="flex:1;min-width:200px" onclick="toggleFeature('multiVariations', event)">
+                      <div class="feature-toggle-left">
+                        <span class="material-icons-outlined" aria-hidden="true">view_carousel</span>
+                        <div class="feature-toggle-info">
+                          <h4>Generate Multiple Versions</h4>
+                          <p>Get multiple distinct enhanced variations to compare</p>
+                        </div>
+                      </div>
+                      <label class="toggle-switch" onclick="event.stopPropagation()" aria-label="Generate multiple variations">
+                        <input type="checkbox" id="multiVariationsCheck" onchange="toggleFeature('multiVariations', event)">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="variations-count-selector" id="variationsCountSelector" style="display:none">
+                      <label>Variations:</label>
+                      <button class="count-btn active" data-count="2" onclick="selectVariationCount(this)">2</button>
+                      <button class="count-btn" data-count="3" onclick="selectVariationCount(this)">3</button>
+                      <button class="count-btn" data-count="4" onclick="selectVariationCount(this)">4</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input / Output Grid -->
+        <div class="enhance-grid">
+          <!-- Input -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="material-icons-outlined">edit_note</span>Your Prompt</span>
+              <button class="btn btn-sm btn-secondary" onclick="clearInput()">
+                <span class="material-icons-outlined">clear</span>Clear
+              </button>
+            </div>
+            <!-- Quick Templates -->
+            <div class="template-chips" role="group" aria-label="Quick prompt templates">
+              <button type="button" class="template-chip" onclick="insertTemplate('code')">💻 Code help</button>
+              <button type="button" class="template-chip" onclick="insertTemplate('write')">✍️ Writing</button>
+              <button type="button" class="template-chip" onclick="insertTemplate('analyze')">📊 Analysis</button>
+              <button type="button" class="template-chip" onclick="insertTemplate('explain')">🧠 Explain</button>
+              <button type="button" class="template-chip" onclick="insertTemplate('image')">🎨 Image gen</button>
+            </div>
+            <div class="textarea-wrapper">
+              <textarea id="inputPrompt" placeholder="Enter your prompt here... e.g., 'Write a function that sorts a list'" rows="8"></textarea>
+            </div>
+            <div class="textarea-footer">
+              <span class="char-count">
+                <span id="charCount">0</span> chars ·
+                <span id="wordCount">0</span> words ·
+                ~<span id="tokenCount">0</span> tokens
+              </span>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                <div class="active-features" id="activeFeaturesBadges"></div>
+                <button class="btn btn-primary" id="enhanceBtn" onclick="enhancePrompt()" title="Enhance (Ctrl/Cmd+Enter)">
+                  <span class="material-icons-outlined" aria-hidden="true">auto_fix_high</span>Enhance
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output -->
+          <div class="card output-card" id="outputCard">
+            <div class="card-header">
+              <span class="card-title"><span class="material-icons-outlined" aria-hidden="true">auto_awesome</span>Enhanced Prompt</span>
+              <div class="output-actions">
+                <div class="comparison-toggle" id="viewToggle" style="display:none">
+                  <button class="active" data-view="rendered" onclick="setOutputView('rendered')" title="Rendered view">View</button>
+                  <button data-view="raw" onclick="setOutputView('raw')" title="Raw text">Raw</button>
+                </div>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="copyOutput()" title="Copy">
+                  <span class="material-icons-outlined">content_copy</span>
+                </button>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="downloadOutput()" title="Download">
+                  <span class="material-icons-outlined">download</span>
+                </button>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="reenhance(event.shiftKey)" title="Re-enhance current input (Shift+click to chain previous output as new input)" aria-label="Re-enhance">
+                  <span class="material-icons-outlined" aria-hidden="true">replay</span>
+                </button>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="useAsInput()" title="Use this output as input (chain enhancement)" aria-label="Use as input">
+                  <span class="material-icons-outlined" aria-hidden="true">east</span>
+                </button>
+              </div>
+            </div>
+            <!-- Variation Tabs -->
+            <div class="variations-header" id="variationsHeader" style="display:none"></div>
+            <div class="variation-progress" id="variationProgress" style="display:none">
+              <div class="variation-progress-fill" id="variationProgressFill" style="width:0%"></div>
+            </div>
+            <div class="loading-bar" id="loadingBar"></div>
+            <div class="output-content" id="outputContent">
+              <div class="output-placeholder">
+                <span class="material-icons-outlined">auto_fix_high</span>
+                <span>Your enhanced prompt will appear here</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Page -->
+      <div class="page" id="page-history">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><span class="material-icons-outlined" aria-hidden="true">history</span>Enhancement History</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-sm btn-secondary" onclick="exportHistory()" title="Export history as JSON">
+                <span class="material-icons-outlined" aria-hidden="true">file_download</span>Export
+              </button>
+              <button class="btn btn-sm btn-secondary" onclick="clearHistory()">
+                <span class="material-icons-outlined" aria-hidden="true">delete_sweep</span>Clear All
+              </button>
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom:12px">
+            <input type="text" id="historySearch" placeholder="Search history..." oninput="setHistoryFilter(this.value)" aria-label="Search history">
+            <span class="material-icons-outlined select-arrow" aria-hidden="true">search</span>
+          </div>
+          <div class="history-list" id="historyList" aria-live="polite">
+            <div class="output-placeholder">
+              <span class="material-icons-outlined" aria-hidden="true">history</span>
+              <span>No history yet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Templates Page -->
+      <div class="page" id="page-templates">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><span class="material-icons-outlined">dashboard_customize</span>System Prompt Templates</span>
+          </div>
+          <p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:16px">Customize the system prompt used for enhancement. Modify below or choose a preset.</p>
+          <div class="template-chips" style="margin-bottom:16px" role="group" aria-label="System prompt presets">
+            <button type="button" class="template-chip" onclick="loadSystemTemplate('default')">🔧 Default</button>
+            <button type="button" class="template-chip" onclick="loadSystemTemplate('midjourney')">🎨 Midjourney</button>
+            <button type="button" class="template-chip" onclick="loadSystemTemplate('coder')">💻 Coder</button>
+            <button type="button" class="template-chip" onclick="loadSystemTemplate('writer')">✍️ Writer</button>
+            <button type="button" class="template-chip" onclick="loadSystemTemplate('academic')">📚 Academic</button>
+          </div>
+          <div class="textarea-wrapper">
+            <textarea id="systemPromptEdit" rows="14" placeholder="Enter custom system prompt..."></textarea>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveSystemPrompt()">
+              <span class="material-icons-outlined">save</span>Save
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetSystemPrompt()">
+              <span class="material-icons-outlined">restart_alt</span>Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><span class="material-icons-outlined">key</span>API Configuration</h2>
+      <button class="icon-btn" onclick="closeSettings()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <label class="settings-label"><span class="material-icons-outlined" style="font-size:16px">cloud</span>Groq API Key</label>
+        <div class="input-group">
+          <input type="password" id="groqKeyInput" placeholder="gsk_..." autocomplete="off">
+          <button class="toggle-vis" onclick="toggleVis('groqKeyInput',this)"><span class="material-icons-outlined" style="font-size:18px">visibility</span></button>
+        </div>
+        <p style="font-size:.7rem;color:var(--text-muted);margin-top:6px">Get your key at <a href="https://console.groq.com" target="_blank" style="color:var(--primary-light)">console.groq.com</a></p>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label"><span class="material-icons-outlined" style="font-size:16px">router</span>OpenRouter API Key</label>
+        <div class="input-group">
+          <input type="password" id="openrouterKeyInput" placeholder="sk-or-..." autocomplete="off">
+          <button class="toggle-vis" onclick="toggleVis('openrouterKeyInput',this)"><span class="material-icons-outlined" style="font-size:18px">visibility</span></button>
+        </div>
+        <p style="font-size:.7rem;color:var(--text-muted);margin-top:6px">Get your key at <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--primary-light)">openrouter.ai/keys</a></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveApiKeys()"><span class="material-icons-outlined">save</span>Save Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- Model Settings Modal -->
+<div class="modal-overlay" id="modelModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><span class="material-icons-outlined">tune</span>Model Configuration</h2>
+      <button class="icon-btn" onclick="closeModelSettings()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <label class="settings-label" for="groqModel">Groq Model</label>
+        <div class="input-group">
+          <select id="groqModel">
+            <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B Versatile (Recommended)</option>
+            <option value="llama-3.1-8b-instant">LLaMA 3.1 8B Instant (Fast)</option>
+            <option value="meta-llama/llama-4-scout-17b-16e-instruct">LLaMA 4 Scout 17B</option>
+            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">LLaMA 4 Maverick 17B</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B (Reasoning)</option>
+            <option value="qwen-qwq-32b">Qwen QwQ 32B (Reasoning)</option>
+            <option value="gemma2-9b-it">Gemma 2 9B</option>
+          </select>
+          <span class="material-icons-outlined select-arrow" aria-hidden="true">expand_more</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label" for="openrouterModel">OpenRouter Model</label>
+        <div class="input-group">
+          <select id="openrouterModel">
+            <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
+            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+            <option value="anthropic/claude-3.7-sonnet">Claude 3.7 Sonnet</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+            <option value="openai/gpt-4o">GPT-4o</option>
+            <option value="openai/gpt-4.1-mini">GPT-4.1 Mini</option>
+            <option value="meta-llama/llama-3.3-70b-instruct">LLaMA 3.3 70B</option>
+            <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+            <option value="deepseek/deepseek-r1">DeepSeek R1 (Reasoning)</option>
+            <option value="mistralai/mistral-large">Mistral Large</option>
+          </select>
+          <span class="material-icons-outlined select-arrow" aria-hidden="true">expand_more</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">Temperature: <span id="tempVal">0.7</span></label>
+        <div class="slider-wrapper">
+          <span style="font-size:.75rem;color:var(--text-muted)">0</span>
+          <input type="range" id="temperature" min="0" max="1.5" step="0.1" value="0.7" oninput="document.getElementById('tempVal').textContent=this.value">
+          <span style="font-size:.75rem;color:var(--text-muted)">1.5</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">Max Tokens: <span id="tokVal">2048</span></label>
+        <div class="slider-wrapper">
+          <span style="font-size:.75rem;color:var(--text-muted)">256</span>
+          <input type="range" id="maxTokens" min="256" max="4096" step="128" value="2048" oninput="document.getElementById('tokVal').textContent=this.value">
+          <span style="font-size:.75rem;color:var(--text-muted)">4096</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModelSettings()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveModelSettings()"><span class="material-icons-outlined">save</span>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ───── STATE ───── */
+const STATE = {
+  provider: localStorage.getItem('pf_provider') || 'groq',
+  groqKey: localStorage.getItem('pf_groq_key') || '',
+  openrouterKey: localStorage.getItem('pf_or_key') || '',
+  groqModel: localStorage.getItem('pf_groq_model') || 'llama-3.3-70b-versatile',
+  openrouterModel: localStorage.getItem('pf_or_model') || 'google/gemini-2.0-flash-001',
+  temperature: parseFloat(localStorage.getItem('pf_temp') || '0.7'),
+  maxTokens: parseInt(localStorage.getItem('pf_max_tokens') || '2048'),
+  mode: localStorage.getItem('pf_mode') || 'detailed',
+  theme: localStorage.getItem('pf_theme') || 'dark',
+  history: JSON.parse(localStorage.getItem('pf_history') || '[]'),
+  stats: JSON.parse(localStorage.getItem('pf_stats') || '{"count":0,"tokens":0,"totalTime":0}'),
+  customSystemPrompt: localStorage.getItem('pf_system_prompt') || '',
+  currentOutput: '',
+  // New enhancement features
+  tone: localStorage.getItem('pf_tone') || '',
+  addContext: localStorage.getItem('pf_add_context') === 'true',
+  customContext: localStorage.getItem('pf_custom_context') || '',
+  constraints: JSON.parse(localStorage.getItem('pf_constraints') || '[]'),
+  stepByStep: localStorage.getItem('pf_step_by_step') === 'true',
+  selfVerify: localStorage.getItem('pf_self_verify') === 'true',
+  thinkFirst: localStorage.getItem('pf_think_first') === 'true',
+  outputFormat: localStorage.getItem('pf_output_format') || '',
+  multiVariations: localStorage.getItem('pf_multi_variations') === 'true',
+  variationCount: parseInt(localStorage.getItem('pf_variation_count') || '2'),
+  // Variations storage
+  variations: [],
+  activeVariation: 0
+};
+
+/* ───── SYSTEM PROMPTS ───── */
+const MODE_PROMPTS = {
+  detailed: `You are an expert prompt engineer. Your task is to take the user's prompt and enhance it to be significantly more detailed, specific, and effective. Add context, clarify intent, specify desired format, tone, and constraints. Include edge cases and quality criteria. Return ONLY the enhanced prompt text, no explanations or meta-commentary.`,
+
+  creative: `You are a creative prompt alchemist. Transform the user's prompt into a vivid, imaginative, and inspiring version. Use rich descriptive language, evocative imagery, and creative framing while maintaining the original intent. Add sensory details, emotional undertones, and unique perspectives. Return ONLY the enhanced prompt text.`,
+
+  technical: `You are a technical prompt architect. Enhance the user's prompt with precise technical specifications, exact requirements, performance criteria, error handling expectations, and implementation constraints. Use proper technical terminology. Define input/output formats, edge cases, and quality benchmarks. Return ONLY the enhanced prompt text.`,
+
+  structured: `You are a prompt structuring specialist. Reorganize and enhance the user's prompt with a clear hierarchical structure including: objective, context, specific requirements (numbered), constraints, expected output format, and success criteria. Use markdown formatting for clarity. Return ONLY the enhanced prompt text.`,
+
+  concise: `You are a prompt optimization expert. Refine the user's prompt to be maximally clear and effective while using minimal words. Remove ambiguity, sharpen intent, and ensure every word earns its place. The result should be crisp, precise, and unambiguous. Return ONLY the enhanced prompt text.`,
+
+  expert: `You are a world-class prompt engineer with deep expertise in AI systems. Enhance this prompt using advanced prompting techniques: chain-of-thought guidance, role-setting, few-shot examples where helpful, explicit reasoning steps, output format specification, and quality rubrics. Add metacognitive instructions and self-verification steps. Return ONLY the enhanced prompt text.`
+};
+
+const SYSTEM_TEMPLATES = {
+  default: MODE_PROMPTS.detailed,
+  midjourney: `You are a Midjourney prompt expert. Transform the user's description into an optimized Midjourney image generation prompt. Include artistic style, lighting, composition, mood, camera angle, color palette, rendering quality parameters (--ar, --v, --q, --s). Use comma-separated descriptive phrases. Return ONLY the enhanced Midjourney prompt.`,
+  coder: `You are an elite software engineering prompt specialist. Enhance the user's coding-related prompt with: specific language/framework, design patterns, error handling requirements, performance constraints, testing expectations, code style preferences, documentation needs, and edge cases. Return ONLY the enhanced prompt.`,
+  writer: `You are a master creative writing prompt designer. Enhance the user's writing prompt with: genre conventions, narrative voice, character depth, setting details, thematic elements, pacing guidance, dialogue style, and emotional arc. Return ONLY the enhanced prompt.`,
+  academic: `You are an academic research prompt specialist. Enhance the user's prompt with: scholarly rigor, methodological frameworks, citation expectations, analytical depth, theoretical grounding, critical perspectives, and structured argumentation requirements. Return ONLY the enhanced prompt.`
+};
+
+/* ───── TONE DEFINITIONS ───── */
+const TONE_INSTRUCTIONS = {
+  professional: 'Use a professional, polished tone. Employ formal language, industry-standard terminology, and maintain a business-appropriate register.',
+  casual: 'Use a casual, conversational tone. Keep language relaxed, approachable, and natural — like talking to a friend.',
+  academic: 'Use an academic, scholarly tone. Employ precise terminology, cite-ready language, objective phrasing, and rigorous analytical framing.',
+  persuasive: 'Use a persuasive, compelling tone. Include strong arguments, emotional appeals, logical reasoning, and clear calls to action.',
+  friendly: 'Use a warm, friendly tone. Be encouraging, supportive, and welcoming while keeping the content helpful and engaging.',
+  authoritative: 'Use an authoritative, expert tone. Project confidence, credibility, and deep knowledge while being clear and decisive.',
+  humorous: 'Use a humorous, witty tone. Include clever wordplay, light humor, and entertaining elements while still delivering value.',
+  empathetic: 'Use an empathetic, understanding tone. Show emotional intelligence, validate feelings, and communicate with compassion and sensitivity.',
+  direct: 'Use a direct, no-nonsense tone. Be straightforward, cut to the chase, and deliver information without unnecessary filler.',
+  inspirational: 'Use an inspirational, motivating tone. Uplift the reader with powerful language, visionary thinking, and encouraging perspectives.'
+};
+
+/* ───── OUTPUT FORMAT DEFINITIONS ───── */
+const FORMAT_INSTRUCTIONS = {
+  markdown: 'Format the output using Markdown with proper headings (##), bold text, bullet points, and code blocks where appropriate.',
+  bullet_points: 'Format the output as organized bullet points with clear hierarchical grouping. Use main bullets and sub-bullets for detail.',
+  numbered_list: 'Format the output as a numbered step-by-step list. Each item should be clear, actionable, and in logical order.',
+  paragraphs: 'Format the output as well-structured paragraphs with clear topic sentences, supporting details, and smooth transitions.',
+  table: 'Format the output using tables where applicable. Include clear headers, organized rows, and relevant categorization.',
+  json: 'Format the output as structured JSON with clear key-value pairs, nested objects, and descriptive field names.',
+  code_block: 'Format the output primarily using code blocks with proper syntax highlighting, comments, and clear documentation.',
+  executive_summary: 'Format as an executive summary: start with key takeaways, then provide brief details, and end with recommended actions.'
+};
+
+/* ───── INIT ───── */
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(STATE.theme);
+  document.getElementById('providerSelect').value = STATE.provider;
+  ensureSelectValue(document.getElementById('groqModel'), STATE.groqModel);
+  ensureSelectValue(document.getElementById('openrouterModel'), STATE.openrouterModel);
+  document.getElementById('temperature').value = STATE.temperature;
+  document.getElementById('tempVal').textContent = STATE.temperature;
+  document.getElementById('maxTokens').value = STATE.maxTokens;
+  document.getElementById('tokVal').textContent = STATE.maxTokens;
+  updateProviderStatus();
+  updateProviderBadge();
+  selectModeByName(STATE.mode);
+  updateStats();
+  renderHistory();
+  loadSystemPromptEditor();
+
+  // Restore new feature states
+  restoreFeatureStates();
+
+  const inputEl = document.getElementById('inputPrompt');
+  inputEl.addEventListener('input', updateInputStats);
+  updateInputStats();
+
+  // Auto-grow textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 400) + 'px';
+  });
+});
+
+function updateInputStats() {
+  const v = document.getElementById('inputPrompt').value || '';
+  const words = v.trim() ? v.trim().split(/\s+/).length : 0;
+  const tokens = Math.ceil(v.length / 4); // rough estimate: ~4 chars per token
+  const charEl = document.getElementById('charCount');
+  const wordEl = document.getElementById('wordCount');
+  const tokEl  = document.getElementById('tokenCount');
+  if (charEl) charEl.textContent = v.length;
+  if (wordEl) wordEl.textContent = words;
+  if (tokEl)  tokEl.textContent  = tokens;
+}
+
+function restoreFeatureStates() {
+  // Restore tone
+  if (STATE.tone) {
+    const tonePill = document.querySelector(`.tone-pill[data-tone="${STATE.tone}"]`);
+    if (tonePill) tonePill.classList.add('active');
+  }
+
+  // Restore context toggle
+  document.getElementById('addContextCheck').checked = STATE.addContext;
+  if (STATE.addContext) document.getElementById('contextToggle').classList.add('active');
+  document.getElementById('customContext').value = STATE.customContext;
+
+  // Restore constraints
+  renderConstraints();
+
+  // Restore reasoning toggles
+  document.getElementById('stepByStepCheck').checked = STATE.stepByStep;
+  document.getElementById('selfVerifyCheck').checked = STATE.selfVerify;
+  document.getElementById('thinkFirstCheck').checked = STATE.thinkFirst;
+  document.querySelectorAll('.feature-toggle').forEach(ft => {
+    const check = ft.querySelector('input[type=checkbox]');
+    if (check && check.checked) ft.classList.add('active');
+  });
+
+  // Restore output format
+  if (STATE.outputFormat) {
+    const fmtPill = document.querySelector(`.format-pill[data-format="${STATE.outputFormat}"]`);
+    if (fmtPill) fmtPill.classList.add('active');
+  }
+
+  // Restore multi-variations
+  document.getElementById('multiVariationsCheck').checked = STATE.multiVariations;
+  if (STATE.multiVariations) {
+    document.getElementById('variationsCountSelector').style.display = 'flex';
+  }
+  selectVariationCountByNum(STATE.variationCount);
+
+  // Update feature badges
+  updateFeatureBadges();
+}
+
+/* ───── PAGES ───── */
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const titles = { enhance: 'Enhance Prompt', history: 'History', templates: 'Templates' };
+  document.getElementById('pageTitle').textContent = titles[page] || 'PromptForge';
+  closeSidebar();
+}
+
+/* ───── SIDEBAR ───── */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+/* ───── THEME ───── */
+function toggleTheme() {
+  STATE.theme = STATE.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(STATE.theme);
+  localStorage.setItem('pf_theme', STATE.theme);
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeIcon').textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+  document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+}
+
+/* ───── PROVIDER ───── */
+function switchProvider(p) {
+  STATE.provider = p;
+  localStorage.setItem('pf_provider', p);
+  updateProviderStatus();
+  updateProviderBadge();
+}
+function updateProviderStatus() {
+  const el = document.getElementById('providerStatus');
+  const key = STATE.provider === 'groq' ? STATE.groqKey : STATE.openrouterKey;
+  if (key) {
+    el.className = 'api-status connected';
+    el.innerHTML = '<span class="material-icons-round" style="font-size:10px">circle</span> Connected';
+  } else {
+    el.className = 'api-status disconnected';
+    el.innerHTML = '<span class="material-icons-round" style="font-size:10px">circle</span> Not configured';
+  }
+}
+function updateProviderBadge() {
+  const el = document.getElementById('topProviderBadge');
+  el.textContent = STATE.provider === 'groq' ? 'Groq' : 'OpenRouter';
+  el.className = 'provider-badge ' + STATE.provider;
+}
+
+/* ───── MODE ───── */
+function selectMode(btn) {
+  document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  STATE.mode = btn.dataset.mode;
+  localStorage.setItem('pf_mode', STATE.mode);
+}
+function selectModeByName(name) {
+  const btn = document.querySelector(`.mode-pill[data-mode="${name}"]`);
+  if (btn) selectMode(btn);
+}
+
+/* ───── TONE ───── */
+function selectTone(btn) {
+  const wasActive = btn.classList.contains('active');
+  document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+  if (!wasActive) {
+    btn.classList.add('active');
+    STATE.tone = btn.dataset.tone;
+  } else {
+    STATE.tone = '';
+  }
+  localStorage.setItem('pf_tone', STATE.tone);
+  updateFeatureBadges();
+}
+
+/* ───── FEATURE TOGGLE (fixed: no double-toggle, deterministic) ───── */
+function toggleFeature(feature, event) {
+  const checkbox = document.getElementById(feature + 'Check');
+  if (!checkbox) return;
+
+  // Determine the new state. If the event originated from the checkbox itself
+  // (change event), the checkbox is already in its new state — just read it.
+  // Otherwise (row click), flip it.
+  const target = event && event.target;
+  const cameFromCheckbox = target && (target === checkbox || target.classList?.contains('toggle-slider'));
+  if (!cameFromCheckbox) {
+    checkbox.checked = !checkbox.checked;
+  }
+
+  STATE[feature] = checkbox.checked;
+  localStorage.setItem('pf_' + camelToSnake(feature), checkbox.checked);
+
+  const toggle = checkbox.closest('.feature-toggle');
+  if (toggle) toggle.classList.toggle('active', checkbox.checked);
+
+  if (feature === 'multiVariations') {
+    document.getElementById('variationsCountSelector').style.display = checkbox.checked ? 'flex' : 'none';
+  }
+
+  updateFeatureBadges();
+}
+
+/* Persist custom context only when its own value actually changes */
+function persistCustomContext() {
+  STATE.customContext = document.getElementById('customContext').value;
+  localStorage.setItem('pf_custom_context', STATE.customContext);
+}
+
+function camelToSnake(str) {
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+}
+
+/* ───── CONSTRAINTS ───── */
+function addConstraint() {
+  const input = document.getElementById('newConstraint');
+  const text = input.value.trim();
+  if (!text) return;
+  if (STATE.constraints.includes(text)) { showToast('Constraint already exists', 'error'); return; }
+  STATE.constraints.push(text);
+  localStorage.setItem('pf_constraints', JSON.stringify(STATE.constraints));
+  input.value = '';
+  renderConstraints();
+  updateFeatureBadges();
+}
+
+function addPresetConstraint(text) {
+  if (STATE.constraints.includes(text)) { showToast('Constraint already added', 'error'); return; }
+  STATE.constraints.push(text);
+  localStorage.setItem('pf_constraints', JSON.stringify(STATE.constraints));
+  renderConstraints();
+  updateFeatureBadges();
+  showToast('Constraint added', 'success');
+}
+
+function removeConstraint(index) {
+  STATE.constraints.splice(index, 1);
+  localStorage.setItem('pf_constraints', JSON.stringify(STATE.constraints));
+  renderConstraints();
+  updateFeatureBadges();
+}
+
+function renderConstraints() {
+  const list = document.getElementById('constraintsList');
+  if (!STATE.constraints.length) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = STATE.constraints.map((c, i) => `
+    <div class="constraint-item">
+      <span class="material-icons-outlined">check_circle</span>
+      <span>${escapeHtml(c)}</span>
+      <button class="remove-constraint" onclick="removeConstraint(${i})" title="Remove">
+        <span class="material-icons-outlined" style="font-size:16px">close</span>
+      </button>
+    </div>
+  `).join('');
+}
+
+/* ───── OUTPUT FORMAT ───── */
+function selectFormat(btn) {
+  const wasActive = btn.classList.contains('active');
+  document.querySelectorAll('.format-pill').forEach(p => p.classList.remove('active'));
+  if (!wasActive) {
+    btn.classList.add('active');
+    STATE.outputFormat = btn.dataset.format;
+  } else {
+    STATE.outputFormat = '';
+  }
+  localStorage.setItem('pf_output_format', STATE.outputFormat);
+  updateFeatureBadges();
+}
+
+/* ───── VARIATIONS COUNT ───── */
+function selectVariationCount(btn) {
+  document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  STATE.variationCount = parseInt(btn.dataset.count);
+  localStorage.setItem('pf_variation_count', STATE.variationCount);
+}
+
+function selectVariationCountByNum(num) {
+  const btn = document.querySelector(`.count-btn[data-count="${num}"]`);
+  if (btn) {
+    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+/* ───── ADVANCED PANEL TOGGLE ───── */
+function toggleAdvanced(btn) {
+  const isOpen = btn.classList.toggle('open');
+  document.getElementById('advancedBody').classList.toggle('open', isOpen);
+  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+function resetAdvancedOptions() {
+  if (!confirm('Reset all advanced options (tone, constraints, reasoning, format, variations)?')) return;
+  // Clear tone
+  STATE.tone = '';
+  localStorage.removeItem('pf_tone');
+  document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+
+  // Clear context
+  STATE.addContext = false;
+  STATE.customContext = '';
+  localStorage.setItem('pf_add_context', 'false');
+  localStorage.removeItem('pf_custom_context');
+  const ctx = document.getElementById('customContext');
+  if (ctx) ctx.value = '';
+  document.getElementById('addContextCheck').checked = false;
+  document.getElementById('contextToggle').classList.remove('active');
+
+  // Clear constraints
+  STATE.constraints = [];
+  localStorage.setItem('pf_constraints', '[]');
+  renderConstraints();
+
+  // Clear reasoning toggles
+  ['stepByStep','selfVerify','thinkFirst'].forEach(f => {
+    STATE[f] = false;
+    localStorage.setItem('pf_' + camelToSnake(f), 'false');
+    const cb = document.getElementById(f + 'Check');
+    if (cb) {
+      cb.checked = false;
+      cb.closest('.feature-toggle')?.classList.remove('active');
+    }
+  });
+
+  // Clear output format
+  STATE.outputFormat = '';
+  localStorage.removeItem('pf_output_format');
+  document.querySelectorAll('.format-pill').forEach(p => p.classList.remove('active'));
+
+  // Clear variations
+  STATE.multiVariations = false;
+  STATE.variationCount = 2;
+  localStorage.setItem('pf_multi_variations', 'false');
+  localStorage.setItem('pf_variation_count', '2');
+  document.getElementById('multiVariationsCheck').checked = false;
+  document.getElementById('multiVariationsCheck').closest('.feature-toggle')?.classList.remove('active');
+  document.getElementById('variationsCountSelector').style.display = 'none';
+  selectVariationCountByNum(2);
+
+  updateFeatureBadges();
+  showToast('Advanced options reset', 'success');
+}
+
+/* ───── FEATURE BADGES ───── */
+function updateFeatureBadges() {
+  const badges = [];
+  if (STATE.tone) badges.push(`🎭 ${STATE.tone}`);
+  if (STATE.addContext) badges.push('📝 Context');
+  if (STATE.constraints.length) badges.push(`⚙️ ${STATE.constraints.length} constraint${STATE.constraints.length>1?'s':''}`);
+  if (STATE.stepByStep) badges.push('🔢 Steps');
+  if (STATE.selfVerify) badges.push('✅ Verify');
+  if (STATE.thinkFirst) badges.push('💡 Think');
+  if (STATE.outputFormat) badges.push(`📋 ${STATE.outputFormat.replace(/_/g,' ')}`);
+  if (STATE.multiVariations) badges.push(`🔄 ${STATE.variationCount} vars`);
+
+  const container = document.getElementById('activeFeaturesBadges');
+  if (container) container.innerHTML = badges.map(b => `<span class="feature-badge">${escapeHtml(b)}</span>`).join('');
+
+  // Update advanced panel summary
+  const summary = document.getElementById('advancedSummary');
+  if (summary) {
+    summary.textContent = badges.length ? `· ${badges.length} active` : '';
+  }
+}
+
+/* ───── SETTINGS ───── */
+function openSettings() {
+  document.getElementById('groqKeyInput').value = STATE.groqKey;
+  document.getElementById('openrouterKeyInput').value = STATE.openrouterKey;
+  document.getElementById('settingsModal').classList.add('active');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+function saveApiKeys() {
+  STATE.groqKey = document.getElementById('groqKeyInput').value.trim();
+  STATE.openrouterKey = document.getElementById('openrouterKeyInput').value.trim();
+  localStorage.setItem('pf_groq_key', STATE.groqKey);
+  localStorage.setItem('pf_or_key', STATE.openrouterKey);
+  updateProviderStatus();
+  closeSettings();
+  showToast('API keys saved successfully', 'success');
+}
+function toggleVis(id, btn) {
+  const input = document.getElementById(id);
+  const icon = btn.querySelector('.material-icons-outlined');
+  if (input.type === 'password') { input.type = 'text'; icon.textContent = 'visibility_off'; }
+  else { input.type = 'password'; icon.textContent = 'visibility'; }
+}
+
+/* ───── MODEL SETTINGS ───── */
+function ensureSelectValue(selectEl, value) {
+  if (!selectEl) return;
+  const hasOption = Array.from(selectEl.options).some(o => o.value === value);
+  if (!hasOption && value) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value + ' (custom)';
+    selectEl.appendChild(opt);
+  }
+  selectEl.value = value || selectEl.options[0]?.value || '';
+}
+
+function openModelSettings() {
+  ensureSelectValue(document.getElementById('groqModel'), STATE.groqModel);
+  ensureSelectValue(document.getElementById('openrouterModel'), STATE.openrouterModel);
+  document.getElementById('temperature').value = STATE.temperature;
+  document.getElementById('tempVal').textContent = STATE.temperature;
+  document.getElementById('maxTokens').value = STATE.maxTokens;
+  document.getElementById('tokVal').textContent = STATE.maxTokens;
+  document.getElementById('modelModal').classList.add('active');
+}
+function closeModelSettings() {
+  document.getElementById('modelModal').classList.remove('active');
+}
+function saveModelSettings() {
+  STATE.groqModel = document.getElementById('groqModel').value;
+  STATE.openrouterModel = document.getElementById('openrouterModel').value;
+  STATE.temperature = parseFloat(document.getElementById('temperature').value);
+  STATE.maxTokens = parseInt(document.getElementById('maxTokens').value);
+  localStorage.setItem('pf_groq_model', STATE.groqModel);
+  localStorage.setItem('pf_or_model', STATE.openrouterModel);
+  localStorage.setItem('pf_temp', STATE.temperature);
+  localStorage.setItem('pf_max_tokens', STATE.maxTokens);
+  closeModelSettings();
+  showToast('Model settings saved', 'success');
+}
+
+/* ───── TEMPLATES ───── */
+function insertTemplate(type) {
+  const templates = {
+    code: 'Write a Python function that ',
+    write: 'Write a blog post about ',
+    analyze: 'Analyze the following data and provide insights: ',
+    explain: 'Explain the concept of ',
+    image: 'Generate an image of '
+  };
+  const snippet = templates[type] || '';
+  const input = document.getElementById('inputPrompt');
+  // Non-destructive: append if there's existing content, otherwise replace
+  if (input.value.trim().length > 0 && !confirm('Replace current prompt with template?')) {
+    input.value = input.value.replace(/\s*$/, ' ') + snippet;
+  } else {
+    input.value = snippet;
+  }
+  updateInputStats();
+  input.focus();
+  // Put cursor at the end
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
+function loadSystemTemplate(name) {
+  document.getElementById('systemPromptEdit').value = SYSTEM_TEMPLATES[name] || SYSTEM_TEMPLATES.default;
+}
+function loadSystemPromptEditor() {
+  document.getElementById('systemPromptEdit').value = STATE.customSystemPrompt || SYSTEM_TEMPLATES.default;
+}
+function saveSystemPrompt() {
+  STATE.customSystemPrompt = document.getElementById('systemPromptEdit').value.trim();
+  localStorage.setItem('pf_system_prompt', STATE.customSystemPrompt);
+  showToast('System prompt saved', 'success');
+}
+function resetSystemPrompt() {
+  STATE.customSystemPrompt = '';
+  localStorage.removeItem('pf_system_prompt');
+  document.getElementById('systemPromptEdit').value = SYSTEM_TEMPLATES.default;
+  showToast('System prompt reset to default', 'success');
+}
+
+/* ───── BUILD ENHANCED SYSTEM PROMPT ───── */
+function buildSystemPrompt() {
+  // Start with the base mode prompt (or custom)
+  let systemPrompt = STATE.customSystemPrompt || MODE_PROMPTS[STATE.mode] || MODE_PROMPTS.detailed;
+
+  // Build additional instructions
+  const additions = [];
+
+  // Tone
+  if (STATE.tone && TONE_INSTRUCTIONS[STATE.tone]) {
+    additions.push(`\n\n**Tone Requirement:** ${TONE_INSTRUCTIONS[STATE.tone]}`);
+  }
+
+  // Contextual details
+  if (STATE.addContext) {
+    additions.push(`\n\n**Contextual Enhancement:** Automatically infer and add relevant contextual details such as target audience, domain context, background information, assumptions, and situational parameters that would make the prompt more effective.`);
+  }
+
+  // Constraints
+  if (STATE.constraints.length > 0) {
+    additions.push(`\n\n**Quality Constraints to include in the enhanced prompt:**\n${STATE.constraints.map((c, i) => `${i+1}. ${c}`).join('\n')}`);
+  }
+
+  // Step-by-step reasoning
+  if (STATE.stepByStep) {
+    additions.push(`\n\n**Reasoning Instructions:** Include explicit step-by-step reasoning instructions in the enhanced prompt. Guide the AI to break down its thinking process into numbered steps, showing its work and logic at each stage.`);
+  }
+
+  // Self-verification
+  if (STATE.selfVerify) {
+    additions.push(`\n\n**Self-verification:** Add instructions in the enhanced prompt telling the AI to review its own output for accuracy, completeness, and consistency before presenting the final answer.`);
+  }
+
+  // Think before answering
+  if (STATE.thinkFirst) {
+    additions.push(`\n\n**Think-first Protocol:** Add instructions in the enhanced prompt for the AI to first analyze and understand the problem fully, identify key requirements and potential challenges, then formulate a plan before generating the response.`);
+  }
+
+  // Output format
+  if (STATE.outputFormat && FORMAT_INSTRUCTIONS[STATE.outputFormat]) {
+    additions.push(`\n\n**Output Format Requirement:** ${FORMAT_INSTRUCTIONS[STATE.outputFormat]}`);
+  }
+
+  if (additions.length > 0) {
+    systemPrompt += '\n\n--- ADDITIONAL ENHANCEMENT INSTRUCTIONS ---' + additions.join('');
+  }
+
+  return systemPrompt;
+}
+
+/* ───── BUILD USER MESSAGE ───── */
+function buildUserMessage(input) {
+  let message = `Enhance this prompt:\n\n${input}`;
+
+  // Add custom context if provided
+  const customCtx = document.getElementById('customContext').value.trim();
+  if (customCtx) {
+    message += `\n\n--- Additional Context provided by user ---\n${customCtx}`;
+  }
+
+  return message;
+}
+
+/* ───── BUILD VARIATION USER MESSAGE ───── */
+function buildVariationMessage(input, variationIndex, totalVariations) {
+  let message = buildUserMessage(input);
+  message += `\n\n--- VARIATION INSTRUCTION ---\nThis is variation ${variationIndex + 1} of ${totalVariations}. Generate a DISTINCTLY DIFFERENT enhanced version of the prompt. Each variation should take a unique angle, emphasis, or approach while maintaining the core intent. This variation should be clearly distinguishable from other versions.`;
+
+  if (variationIndex === 0) message += ' Focus on the most straightforward, comprehensive enhancement.';
+  else if (variationIndex === 1) message += ' Focus on a more creative or unconventional approach.';
+  else if (variationIndex === 2) message += ' Focus on maximum specificity and precision.';
+  else if (variationIndex === 3) message += ' Focus on brevity and impact — the most concise yet powerful version.';
+
+  return message;
+}
+
+/* ───── ENHANCE ───── */
+async function enhancePrompt() {
+  const input = document.getElementById('inputPrompt').value.trim();
+  if (!input) { showToast('Please enter a prompt to enhance', 'error'); return; }
+
+  const key = STATE.provider === 'groq' ? STATE.groqKey : STATE.openrouterKey;
+  if (!key) { showToast(`Please configure your ${STATE.provider === 'groq' ? 'Groq' : 'OpenRouter'} API key`, 'error'); openSettings(); return; }
+
+  // Save custom context
+  STATE.customContext = document.getElementById('customContext').value;
+  localStorage.setItem('pf_custom_context', STATE.customContext);
+
+  if (STATE.multiVariations) {
+    await enhanceWithVariations(input);
+  } else {
+    await enhanceSingle(input);
+  }
+}
+
+function setEnhancingUi(active, label) {
+  const btn = document.getElementById('enhanceBtn');
+  if (active) {
+    btn.dataset.cancel = '1';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    btn.innerHTML = `<span class="loading-dots"><span></span><span></span><span></span></span> ${escapeHtml(label || 'Cancel')}`;
+    btn.onclick = () => { cancelEnhancement(); };
+  } else {
+    delete btn.dataset.cancel;
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-secondary');
+    btn.innerHTML = '<span class="material-icons-outlined" aria-hidden="true">auto_fix_high</span>Enhance';
+    btn.onclick = () => enhancePrompt();
+  }
+}
+
+async function enhanceSingle(input) {
+  const loadingBar = document.getElementById('loadingBar');
+  const outputContent = document.getElementById('outputContent');
+  const outputCard = document.getElementById('outputCard');
+
+  document.getElementById('variationsHeader').style.display = 'none';
+  document.getElementById('variationProgress').style.display = 'none';
+
+  setEnhancingUi(true, 'Cancel');
+  loadingBar.classList.add('active');
+  outputContent.classList.remove('enhanced-text');
+  outputContent.innerHTML = '<span class="cursor-blink" style="color:var(--text-muted)">Enhancing your prompt</span>';
+  outputCard.classList.add('streaming');
+  const viewToggle = document.getElementById('viewToggle');
+  if (viewToggle) viewToggle.style.display = 'none';
+
+  const systemPrompt = buildSystemPrompt();
+  const userMessage = buildUserMessage(input);
+  const model = STATE.provider === 'groq' ? STATE.groqModel : STATE.openrouterModel;
+  const startTime = performance.now();
+
+  try {
+    const result = await streamApiCall(systemPrompt, userMessage, model, outputContent);
+    if (!result || !result.trim()) throw new Error('Empty response from model');
+
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+    STATE.currentOutput = result;
+    STATE.variations = [result];
+    STATE.activeVariation = 0;
+
+    STATE.stats.count++;
+    STATE.stats.tokens += Math.ceil(result.length / 4);
+    STATE.stats.totalTime += parseFloat(elapsed);
+    localStorage.setItem('pf_stats', JSON.stringify(STATE.stats));
+    updateStats();
+
+    renderOutput();
+    addToHistory(input, result, STATE.mode, STATE.provider, elapsed);
+    showToast(`Enhanced in ${elapsed}s`, 'success');
+
+  } catch (error) {
+    if (error.message === 'Cancelled') {
+      outputContent.innerHTML = `<div style="color:var(--text-muted);display:flex;align-items:center;gap:8px"><span class="material-icons-outlined">cancel</span>Enhancement cancelled</div>`;
+      showToast('Enhancement cancelled', 'error');
+    } else {
+      outputContent.innerHTML = `<div style="color:var(--error);display:flex;align-items:flex-start;gap:8px;padding:12px"><span class="material-icons-outlined">error</span><div><strong>Enhancement failed</strong><br><span style="font-size:.85rem">${escapeHtml(error.message)}</span></div></div>`;
+      showToast('Enhancement failed: ' + error.message, 'error');
+    }
+  } finally {
+    setEnhancingUi(false);
+    loadingBar.classList.remove('active');
+    outputCard.classList.remove('streaming');
+    _activeAbortController = null;
+  }
+}
+
+async function enhanceWithVariations(input) {
+  const loadingBar = document.getElementById('loadingBar');
+  const outputContent = document.getElementById('outputContent');
+  const outputCard = document.getElementById('outputCard');
+  const variationProgress = document.getElementById('variationProgress');
+  const progressFill = document.getElementById('variationProgressFill');
+  const count = STATE.variationCount;
+
+  setEnhancingUi(true, 'Cancel');
+  loadingBar.classList.add('active');
+  outputCard.classList.add('streaming');
+  variationProgress.style.display = 'block';
+  progressFill.style.width = '0%';
+  const viewToggle = document.getElementById('viewToggle');
+  if (viewToggle) viewToggle.style.display = 'none';
+  outputContent.classList.remove('enhanced-text');
+
+  const systemPrompt = buildSystemPrompt();
+  const model = STATE.provider === 'groq' ? STATE.groqModel : STATE.openrouterModel;
+  const startTime = performance.now();
+
+  STATE.variations = [];
+  STATE.activeVariation = 0;
+  let cancelled = false;
+
+  try {
+    for (let i = 0; i < count; i++) {
+      progressFill.style.width = `${((i) / count) * 100}%`;
+      outputContent.innerHTML = `<span class="cursor-blink" style="color:var(--text-muted)">Generating variation ${i + 1} of ${count}...</span>`;
+
+      const userMessage = buildVariationMessage(input, i, count);
+      const tempVariation = Math.min(1.5, STATE.temperature + (i * 0.1));
+
+      try {
+        const result = await streamApiCall(systemPrompt, userMessage, model, outputContent, tempVariation);
+        if (result && result.trim()) STATE.variations.push(result);
+      } catch (e) {
+        if (e.message === 'Cancelled') { cancelled = true; break; }
+        throw e;
+      }
+
+      progressFill.style.width = `${((i + 1) / count) * 100}%`;
+    }
+
+    if (!STATE.variations.length) {
+      if (cancelled) throw new Error('Cancelled');
+      throw new Error('No variations were generated');
+    }
+
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+    STATE.currentOutput = STATE.variations[0];
+    STATE.activeVariation = 0;
+
+    renderVariationTabs();
+    showVariation(0);
+
+    STATE.stats.count += STATE.variations.length;
+    STATE.stats.tokens += Math.ceil(STATE.variations.join('').length / 4);
+    STATE.stats.totalTime += parseFloat(elapsed);
+    localStorage.setItem('pf_stats', JSON.stringify(STATE.stats));
+    updateStats();
+
+    addToHistory(input, STATE.variations[0], STATE.mode, STATE.provider, elapsed, STATE.variations.length);
+    showToast(`Generated ${STATE.variations.length} variation${STATE.variations.length>1?'s':''} in ${elapsed}s${cancelled ? ' (cancelled)' : ''}`, cancelled ? 'error' : 'success');
+
+  } catch (error) {
+    if (error.message === 'Cancelled') {
+      outputContent.innerHTML = `<div style="color:var(--text-muted);display:flex;align-items:center;gap:8px"><span class="material-icons-outlined">cancel</span>Enhancement cancelled</div>`;
+      showToast('Enhancement cancelled', 'error');
+    } else {
+      outputContent.innerHTML = `<div style="color:var(--error);display:flex;align-items:flex-start;gap:8px;padding:12px"><span class="material-icons-outlined">error</span><div><strong>Enhancement failed</strong><br><span style="font-size:.85rem">${escapeHtml(error.message)}</span></div></div>`;
+      showToast('Enhancement failed: ' + error.message, 'error');
+    }
+  } finally {
+    setEnhancingUi(false);
+    loadingBar.classList.remove('active');
+    outputCard.classList.remove('streaming');
+    _activeAbortController = null;
+    setTimeout(() => { variationProgress.style.display = 'none'; }, 800);
+  }
+}
+
+/* ───── STREAM API CALL ───── */
+let _activeAbortController = null;
+
+function cancelEnhancement() {
+  if (_activeAbortController) {
+    _activeAbortController.abort();
+    _activeAbortController = null;
+  }
+}
+
+async function streamApiCall(systemPrompt, userMessage, model, outputEl, tempOverride) {
+  let url, headers;
+
+  if (STATE.provider === 'groq') {
+    url = 'https://api.groq.com/openai/v1/chat/completions';
+    headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${STATE.groqKey}` };
+  } else {
+    url = 'https://openrouter.ai/api/v1/chat/completions';
+    headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${STATE.openrouterKey}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'PromptForge'
+    };
+  }
+
+  const body = JSON.stringify({
+    model: model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userMessage }
+    ],
+    temperature: tempOverride !== undefined ? tempOverride : STATE.temperature,
+    max_tokens: STATE.maxTokens,
+    stream: true
+  });
+
+  _activeAbortController = new AbortController();
+
+  let response;
+  try {
+    response = await fetch(url, { method: 'POST', headers, body, signal: _activeAbortController.signal });
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Cancelled');
+    throw new Error('Network error: ' + e.message);
+  }
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.error?.message || err.error?.code || `API error ${response.status}`;
+    throw new Error(msg);
+  }
+
+  if (!response.body) throw new Error('Streaming not supported by this browser');
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let buffer = '';
+  outputEl.textContent = '';
+  outputEl.classList.add('enhanced-text');
+
+  // Throttle DOM updates with requestAnimationFrame
+  let pendingUpdate = false;
+  const scheduleUpdate = () => {
+    if (pendingUpdate) return;
+    pendingUpdate = true;
+    requestAnimationFrame(() => {
+      outputEl.textContent = result;
+      outputEl.scrollTop = outputEl.scrollHeight;
+      pendingUpdate = false;
+    });
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      // SSE events are separated by blank lines; split on newlines and process complete lines
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // keep partial last line
+
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line || !line.startsWith('data:')) continue;
+        const data = line.slice(5).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            result += delta;
+            scheduleUpdate();
+          }
+        } catch (_) { /* skip malformed chunks */ }
+      }
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Cancelled');
+    throw e;
+  }
+
+  // Final flush
+  outputEl.textContent = result;
+  return result;
+}
+
+/* ───── VARIATION TABS ───── */
+function renderVariationTabs() {
+  const header = document.getElementById('variationsHeader');
+  if (STATE.variations.length <= 1) {
+    header.style.display = 'none';
+    return;
+  }
+  header.style.display = 'flex';
+  header.innerHTML = STATE.variations.map((_, i) => `
+    <button class="variation-tab ${i === STATE.activeVariation ? 'active' : ''}" onclick="showVariation(${i})">
+      <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle">auto_awesome</span>
+      Variation ${i + 1}
+    </button>
+  `).join('') + `
+    <button class="btn btn-sm btn-secondary" onclick="copyAllVariations()" style="margin-left:auto" title="Copy all variations">
+      <span class="material-icons-outlined">copy_all</span>All
+    </button>
+  `;
+}
+
+function showVariation(index) {
+  if (index >= STATE.variations.length) return;
+  STATE.activeVariation = index;
+  STATE.currentOutput = STATE.variations[index];
+  renderOutput();
+  document.querySelectorAll('.variation-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+}
+
+/* ───── OUTPUT VIEW (rendered vs raw) ───── */
+let _outputView = 'rendered';
+function setOutputView(view) {
+  _outputView = view;
+  document.querySelectorAll('#viewToggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  renderOutput();
+}
+
+function renderOutput() {
+  const el = document.getElementById('outputContent');
+  if (!STATE.currentOutput) return;
+  el.classList.add('enhanced-text');
+  if (_outputView === 'rendered') {
+    el.innerHTML = renderMarkdown(STATE.currentOutput);
+  } else {
+    el.textContent = STATE.currentOutput;
+  }
+  // Show view toggle when there's content
+  const toggle = document.getElementById('viewToggle');
+  if (toggle) toggle.style.display = 'flex';
+}
+
+/* Minimal, safe markdown renderer (no external deps). Escapes HTML first. */
+function renderMarkdown(text) {
+  let s = escapeHtml(text);
+  // Code blocks ```lang\n...\n```
+  s = s.replace(/```([\w-]*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code class="lang-${escapeHtml(lang)}">${code}</code></pre>`);
+  // Inline code `x`
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  // Headers
+  s = s.replace(/^###### (.*)$/gm, '<h6>$1</h6>')
+       .replace(/^##### (.*)$/gm, '<h5>$1</h5>')
+       .replace(/^#### (.*)$/gm, '<h4>$1</h4>')
+       .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+       .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+       .replace(/^# (.*)$/gm, '<h1>$1</h1>');
+  // Bold and italic
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+       .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+       .replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+  // Links [text](url) — restrict to http(s) and relative
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Unordered lists
+  s = s.replace(/(^|\n)((?:[-*+] .+\n?)+)/g, (_, pre, block) => {
+    const items = block.trim().split('\n').map(li => `<li>${li.replace(/^[-*+]\s+/, '')}</li>`).join('');
+    return `${pre}<ul>${items}</ul>`;
+  });
+  // Ordered lists
+  s = s.replace(/(^|\n)((?:\d+\. .+\n?)+)/g, (_, pre, block) => {
+    const items = block.trim().split('\n').map(li => `<li>${li.replace(/^\d+\.\s+/, '')}</li>`).join('');
+    return `${pre}<ol>${items}</ol>`;
+  });
+  // Blockquotes
+  s = s.replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>');
+  // Horizontal rules
+  s = s.replace(/^---$/gm, '<hr>');
+  // Paragraphs / line breaks: convert remaining double newlines to <br><br>
+  s = s.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+  return s;
+}
+
+function copyAllVariations() {
+  if (!STATE.variations.length) { showToast('Nothing to copy', 'error'); return; }
+  const text = STATE.variations.map((v, i) => `=== VARIATION ${i+1} ===\n\n${v}`).join('\n\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('All variations copied', 'success'));
+}
+
+/* Re-enhance: re-run enhancement against the CURRENT input (not piping output into input,
+   which was destructive). Holding Shift will instead chain the previous output as new input. */
+function reenhance(chain) {
+  const input = document.getElementById('inputPrompt').value.trim();
+  if (chain && STATE.currentOutput) {
+    document.getElementById('inputPrompt').value = STATE.currentOutput;
+    updateInputStats();
+    enhancePrompt();
+    return;
+  }
+  if (!input) {
+    showToast('Nothing to re-enhance — input is empty', 'error');
+    return;
+  }
+  enhancePrompt();
+}
+
+/* ───── OUTPUT ACTIONS ───── */
+function copyOutput() {
+  if (!STATE.currentOutput) { showToast('Nothing to copy', 'error'); return; }
+  navigator.clipboard.writeText(STATE.currentOutput).then(() => showToast('Copied to clipboard', 'success'));
+}
+function downloadOutput() {
+  if (!STATE.currentOutput) { showToast('Nothing to download', 'error'); return; }
+  let content = STATE.currentOutput;
+  if (STATE.variations.length > 1) {
+    content = STATE.variations.map((v, i) => `=== VARIATION ${i+1} ===\n\n${v}`).join('\n\n\n');
+  }
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `enhanced-prompt-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded', 'success');
+}
+function clearInput() {
+  const el = document.getElementById('inputPrompt');
+  if (!el.value) return;
+  el.value = '';
+  el.style.height = '';
+  updateInputStats();
+  el.focus();
+}
+
+/* ───── HISTORY ───── */
+function addToHistory(input, output, mode, provider, time, variationCount) {
+  STATE.history.unshift({
+    id: Date.now(),
+    input,                                  // full input preserved
+    preview: input.substring(0, 160),       // short preview for the list
+    output,
+    mode,
+    provider,
+    time,
+    date: new Date().toISOString(),
+    tone: STATE.tone || null,
+    format: STATE.outputFormat || null,
+    variations: variationCount || null
+  });
+  if (STATE.history.length > 100) STATE.history = STATE.history.slice(0, 100);
+  try {
+    localStorage.setItem('pf_history', JSON.stringify(STATE.history));
+  } catch (e) {
+    // localStorage quota exceeded — trim aggressively and retry
+    STATE.history = STATE.history.slice(0, 30);
+    try { localStorage.setItem('pf_history', JSON.stringify(STATE.history)); } catch (_) {}
+  }
+  renderHistory();
+}
+
+let _historyFilter = '';
+function setHistoryFilter(value) {
+  _historyFilter = (value || '').toLowerCase().trim();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const count = document.getElementById('historyCount');
+  count.textContent = STATE.history.length || '';
+
+  if (!STATE.history.length) {
+    list.innerHTML = '<div class="output-placeholder"><span class="material-icons-outlined">history</span><span>No history yet — enhanced prompts will appear here</span></div>';
+    return;
+  }
+
+  const filtered = _historyFilter
+    ? STATE.history.filter(h => {
+        const txt = ((h.input || '') + ' ' + (h.output || '') + ' ' + (h.mode || '') + ' ' + (h.tone || '')).toLowerCase();
+        return txt.includes(_historyFilter);
+      })
+    : STATE.history;
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="output-placeholder"><span class="material-icons-outlined">search_off</span><span>No matches found</span></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(h => {
+    const preview = h.preview || (h.input || '').substring(0, 160);
+    return `
+    <div class="history-item" onclick="loadHistory(${h.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter')loadHistory(${h.id})">
+      <div class="history-item-title">${escapeHtml(preview)}</div>
+      <div class="history-item-meta">
+        <span class="provider-badge ${h.provider}" style="font-size:.6rem;padding:1px 6px">${escapeHtml(h.provider || '')}</span>
+        <span>${escapeHtml(h.mode || '')}</span>
+        ${h.tone ? `<span>🎭 ${escapeHtml(h.tone)}</span>` : ''}
+        ${h.format ? `<span>📋 ${escapeHtml(h.format)}</span>` : ''}
+        ${h.variations ? `<span>🔄 ${h.variations} vars</span>` : ''}
+        <span>${escapeHtml(h.time || '')}s</span>
+        <span>${new Date(h.date).toLocaleDateString()} ${new Date(h.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+        <button onclick="event.stopPropagation();deleteHistory(${h.id})" title="Delete" aria-label="Delete history item" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;border-radius:6px">
+          <span class="material-icons-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadHistory(id) {
+  const item = STATE.history.find(h => h.id === id);
+  if (!item) return;
+  const input = item.input || item.preview || '';
+  document.getElementById('inputPrompt').value = input;
+  STATE.currentOutput = item.output;
+  STATE.variations = [item.output];
+  STATE.activeVariation = 0;
+  document.getElementById('variationsHeader').style.display = 'none';
+  renderOutput();
+  showPage('enhance', document.querySelector('[data-page="enhance"]'));
+  updateInputStats();
+  showToast('History item loaded', 'success');
+}
+
+function deleteHistory(id) {
+  STATE.history = STATE.history.filter(h => h.id !== id);
+  localStorage.setItem('pf_history', JSON.stringify(STATE.history));
+  renderHistory();
+  showToast('Item deleted', 'success');
+}
+
+function clearHistory() {
+  if (!STATE.history.length) return;
+  if (!confirm(`Delete all ${STATE.history.length} history items? This cannot be undone.`)) return;
+  STATE.history = [];
+  localStorage.setItem('pf_history', '[]');
+  renderHistory();
+  showToast('History cleared', 'success');
+}
+
+function exportHistory() {
+  if (!STATE.history.length) { showToast('No history to export', 'error'); return; }
+  const blob = new Blob([JSON.stringify(STATE.history, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `promptforge-history-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('History exported', 'success');
+}
+
+function useAsInput() {
+  if (!STATE.currentOutput) { showToast('No output to use as input', 'error'); return; }
+  const input = document.getElementById('inputPrompt');
+  input.value = STATE.currentOutput;
+  updateInputStats();
+  input.focus();
+  // scroll to input
+  input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('Output moved to input — ready to chain enhance', 'success');
+}
+
+/* ───── STATS ───── */
+function updateStats() {
+  document.getElementById('statEnhance').textContent = STATE.stats.count;
+  document.getElementById('statTokens').textContent = formatNumber(STATE.stats.tokens);
+  const avg = STATE.stats.count > 0 ? (STATE.stats.totalTime / STATE.stats.count).toFixed(1) : '0';
+  document.getElementById('statTime').textContent = avg + 's';
+}
+
+function formatNumber(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'k';
+  return String(n);
+}
+
+function resetStats() {
+  if (!confirm('Reset all enhancement statistics?')) return;
+  STATE.stats = { count: 0, tokens: 0, totalTime: 0 };
+  localStorage.setItem('pf_stats', JSON.stringify(STATE.stats));
+  updateStats();
+  showToast('Statistics reset', 'success');
+}
+
+/* ───── TOAST ───── */
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span class="material-icons-outlined toast-icon" style="font-size:20px">${type === 'success' ? 'check_circle' : 'error'}</span>
+    <span>${escapeHtml(message)}</span>
+    <button class="toast-dismiss" onclick="this.parentElement.remove()"><span class="material-icons-outlined" style="font-size:18px">close</span></button>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+/* ───── UTILS ───── */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+/* ───── KEYBOARD SHORTCUTS ───── */
+document.addEventListener('keydown', (e) => {
+  const isMod = e.ctrlKey || e.metaKey;
+
+  // Ctrl/Cmd + Enter → Enhance
+  if (isMod && e.key === 'Enter') {
+    e.preventDefault();
+    enhancePrompt();
+    return;
+  }
+  // Ctrl/Cmd + K → focus input
+  if (isMod && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    const inp = document.getElementById('inputPrompt');
+    if (inp) { inp.focus(); inp.select(); }
+    return;
+  }
+  // Ctrl/Cmd + / → toggle advanced
+  if (isMod && e.key === '/') {
+    e.preventDefault();
+    toggleAdvanced(document.getElementById('advancedToggleBtn'));
+    return;
+  }
+  // Ctrl/Cmd + S → copy output
+  if (isMod && e.key.toLowerCase() === 's' && STATE.currentOutput) {
+    e.preventDefault();
+    copyOutput();
+    return;
+  }
+  // Escape → close modals / sidebar
+  if (e.key === 'Escape') {
+    closeSettings();
+    closeModelSettings();
+    closeSidebar();
+  }
+});
+
+/* ───── MODAL CLICK-OUTSIDE TO CLOSE ───── */
+document.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('active');
+  }
+});
+</script>
+</body>
+</html>
