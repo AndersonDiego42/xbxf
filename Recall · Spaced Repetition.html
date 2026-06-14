@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recall · Spaced Repetition</title>
+<style>
+/* ============================================
+   DESIGN TOKENS
+   ============================================ */
+:root {
+  /* Color primitives — dark neutral palette */
+  --c-bg-0: #0a0a0c;
+  --c-bg-1: #111114;
+  --c-bg-2: #16161a;
+  --c-bg-3: #1c1c21;
+  --c-bg-4: #232329;
+  --c-border: #28282f;
+  --c-border-strong: #34343d;
+  --c-text-0: #f4f4f6;
+  --c-text-1: #b4b4bd;
+  --c-text-2: #7c7c87;
+  --c-text-3: #56565f;
+
+  /* Accent */
+  --c-accent: #6d8bff;
+  --c-accent-hover: #8099ff;
+  --c-accent-dim: rgba(109, 139, 255, 0.12);
+  --c-accent-border: rgba(109, 139, 255, 0.35);
+
+  /* Semantic */
+  --c-green: #3fbf7f;
+  --c-green-dim: rgba(63, 191, 127, 0.13);
+  --c-amber: #e0a14a;
+  --c-amber-dim: rgba(224, 161, 74, 0.13);
+  --c-red: #e0645f;
+  --c-red-dim: rgba(224, 100, 95, 0.13);
+  --c-purple: #b07cff;
+  --c-purple-dim: rgba(176, 124, 255, 0.13);
+
+  /* Rating colors */
+  --c-again: #e0645f;
+  --c-hard: #e0a14a;
+  --c-good: #3fbf7f;
+  --c-easy: #6d8bff;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-3xl: 34px;
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Radius */
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 0 1px var(--c-accent-border), 0 8px 30px rgba(109,139,255,0.15);
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 360ms;
+
+  --sidebar-w: 248px;
+}
+
+/* ============================================
+   RESET
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  color: var(--c-text-0);
+  background: var(--c-bg-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; }
+::selection { background: var(--c-accent-dim); color: var(--c-text-0); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: var(--r-full); border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #44444f; background-clip: padding-box; }
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+.app { display: flex; height: 100vh; }
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--c-bg-1);
+  border-right: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--dur) var(--ease);
+}
+.sidebar-header {
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.logo {
+  width: 30px; height: 30px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-purple));
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 15px; color: #fff;
+  box-shadow: 0 2px 12px rgba(109,139,255,0.3);
+}
+.logo-text { font-weight: 650; font-size: var(--fs-lg); letter-spacing: -0.01em; }
+.logo-text span { color: var(--c-text-2); font-weight: 400; font-size: var(--fs-sm); display: block; margin-top: -2px; }
+
+.nav { padding: var(--sp-2) var(--sp-3); }
+.nav-label {
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--c-text-3); font-weight: 600;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  color: var(--c-text-1);
+  font-weight: 500;
+  width: 100%; text-align: left;
+  transition: all var(--dur-fast) var(--ease);
+  position: relative;
+}
+.nav-item:hover { background: var(--c-bg-3); color: var(--c-text-0); }
+.nav-item.active { background: var(--c-accent-dim); color: var(--c-accent); }
+.nav-item.active::before {
+  content: ''; position: absolute; left: -3px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--c-accent); border-radius: var(--r-full);
+}
+.nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.nav-item .badge {
+  margin-left: auto; font-size: var(--fs-xs); font-weight: 600;
+  background: var(--c-bg-4); color: var(--c-text-1);
+  padding: 1px 7px; border-radius: var(--r-full); min-width: 20px; text-align: center;
+}
+.nav-item.active .badge { background: var(--c-accent); color: #fff; }
+
+.deck-list { flex: 1; overflow-y: auto; padding: var(--sp-2) var(--sp-3); }
+.deck-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  color: var(--c-text-1); font-weight: 500;
+  width: 100%; text-align: left;
+  transition: all var(--dur-fast) var(--ease);
+}
+.deck-item:hover { background: var(--c-bg-3); color: var(--c-text-0); }
+.deck-item.active { background: var(--c-bg-3); color: var(--c-text-0); }
+.deck-dot { width: 9px; height: 9px; border-radius: var(--r-full); flex-shrink: 0; }
+.deck-item .deck-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-item .deck-due { font-size: var(--fs-xs); font-weight: 600; color: var(--c-accent); }
+.deck-item .deck-due.zero { color: var(--c-text-3); }
+
+.sidebar-footer { padding: var(--sp-3); border-top: 1px solid var(--c-border); }
+.streak-card {
+  background: var(--c-bg-2); border: 1px solid var(--c-border);
+  border-radius: var(--r-md); padding: var(--sp-3);
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.streak-flame { font-size: 20px; }
+.streak-info { line-height: 1.2; }
+.streak-info b { font-size: var(--fs-md); }
+.streak-info span { color: var(--c-text-2); font-size: var(--fs-xs); display: block; }
+
+/* ---- Main ---- */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.topbar {
+  height: 56px; flex-shrink: 0;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-bg-0);
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: 0 var(--sp-6);
+}
+.topbar-title { font-size: var(--fs-lg); font-weight: 650; letter-spacing: -0.01em; }
+.topbar-sub { color: var(--c-text-2); font-size: var(--fs-sm); }
+.menu-toggle { display: none; }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); }
+
+.content { flex: 1; overflow-y: auto; padding: var(--sp-8); }
+.view { animation: fadeUp var(--dur-slow) var(--ease-out); max-width: 1200px; margin: 0 auto; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================
+   COMPONENTS
+   ============================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); height: 36px;
+  border-radius: var(--r-md); font-weight: 550; font-size: var(--fs-base);
+  background: var(--c-bg-3); color: var(--c-text-0);
+  border: 1px solid var(--c-border);
+  transition: all var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+.btn:hover { background: var(--c-bg-4); border-color: var(--c-border-strong); }
+.btn:active { transform: scale(0.97); }
+.btn svg { width: 15px; height: 15px; }
+.btn-primary { background: var(--c-accent); border-color: transparent; color: #fff; }
+.btn-primary:hover { background: var(--c-accent-hover); }
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-ghost:hover { background: var(--c-bg-3); }
+.btn-sm { height: 30px; padding: var(--sp-1) var(--sp-3); font-size: var(--fs-sm); }
+.btn-icon { width: 36px; padding: 0; }
+.btn-icon.btn-sm { width: 30px; }
+.btn-danger { color: var(--c-red); }
+.btn-danger:hover { background: var(--c-red-dim); border-color: var(--c-red); }
+
+.card {
+  background: var(--c-bg-1); border: 1px solid var(--c-border);
+  border-radius: var(--r-lg); padding: var(--sp-5);
+}
+
+.input, .textarea, .select {
+  width: 100%; padding: var(--sp-2) var(--sp-3); height: 38px;
+  background: var(--c-bg-0); border: 1px solid var(--c-border);
+  border-radius: var(--r-md); color: var(--c-text-0);
+  transition: all var(--dur-fast) var(--ease);
+}
+.input:focus, .textarea:focus, .select:focus {
+  outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-accent-dim);
+}
+.input::placeholder, .textarea::placeholder { color: var(--c-text-3); }
+.textarea { height: auto; min-height: 88px; resize: vertical; line-height: 1.6; }
+.select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c7c87' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.field { margin-bottom: var(--sp-4); }
+.field-label { display: block; font-size: var(--fs-sm); font-weight: 550; color: var(--c-text-1); margin-bottom: var(--sp-2); }
+
+/* Search */
+.search-box { position: relative; flex: 0 1 320px; }
+.search-box svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--c-text-3); }
+.search-box input { padding-left: 34px; height: 36px; }
+
+/* Stat tiles */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.stat-tile {
+  background: var(--c-bg-1); border: 1px solid var(--c-border);
+  border-radius: var(--r-lg); padding: var(--sp-4) var(--sp-5);
+  position: relative; overflow: hidden;
+  transition: all var(--dur) var(--ease);
+}
+.stat-tile:hover { border-color: var(--c-border-strong); transform: translateY(-2px); }
+.stat-tile .stat-icon { width: 34px; height: 34px; border-radius: var(--r-md); display: grid; place-items: center; margin-bottom: var(--sp-3); }
+.stat-tile .stat-icon svg { width: 18px; height: 18px; }
+.stat-value { font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-label { color: var(--c-text-2); font-size: var(--fs-sm); margin-top: var(--sp-2); }
+.stat-trend { font-size: var(--fs-xs); font-weight: 600; margin-top: var(--sp-1); }
+.stat-trend.up { color: var(--c-green); }
+.stat-trend.down { color: var(--c-red); }
+
+/* Deck grid */
+.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+.deck-card {
+  background: var(--c-bg-1); border: 1px solid var(--c-border);
+  border-radius: var(--r-lg); padding: var(--sp-5);
+  cursor: pointer; transition: all var(--dur) var(--ease);
+  position: relative; overflow: hidden;
+}
+.deck-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--deck-color, var(--c-accent)); opacity: 0.85;
+}
+.deck-card:hover { border-color: var(--c-border-strong); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.deck-card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--sp-3); }
+.deck-card-title { font-size: var(--fs-lg); font-weight: 650; letter-spacing: -0.01em; }
+.deck-card-desc { color: var(--c-text-2); font-size: var(--fs-sm); margin-top: var(--sp-1); min-height: 18px; }
+.deck-card-stats { display: flex; gap: var(--sp-5); margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--c-border); }
+.deck-stat { line-height: 1.2; }
+.deck-stat b { font-size: var(--fs-lg); font-weight: 650; font-variant-numeric: tabular-nums; }
+.deck-stat span { display: block; color: var(--c-text-3); font-size: var(--fs-xs); }
+.deck-stat.due b { color: var(--c-accent); }
+.deck-card-menu { opacity: 0; transition: opacity var(--dur-fast); }
+.deck-card:hover .deck-card-menu { opacity: 1; }
+
+/* Pills / chips for card breakdown */
+.card-breakdown { display: flex; gap: var(--sp-1); margin-top: var(--sp-3); height: 5px; border-radius: var(--r-full); overflow: hidden; background: var(--c-bg-3); }
+.card-breakdown div { height: 100%; transition: width var(--dur-slow) var(--ease); }
+
+/* Section header */
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-5); }
+.section-head h2 { font-size: var(--fs-xl); font-weight: 650; letter-spacing: -0.01em; }
+.section-head .sub { color: var(--c-text-2); font-size: var(--fs-sm); margin-top: 2px; }
+
+/* Empty state */
+.empty { text-align: center; padding: var(--sp-12) var(--sp-6); color: var(--c-text-2); }
+.empty-icon { width: 56px; height: 56px; border-radius: var(--r-lg); background: var(--c-bg-2); display: grid; place-items: center; margin: 0 auto var(--sp-4); }
+.empty-icon svg { width: 26px; height: 26px; color: var(--c-text-3); }
+.empty h3 { color: var(--c-text-0); font-size: var(--fs-lg); margin-bottom: var(--sp-2); }
+.empty p { margin-bottom: var(--sp-5); max-width: 360px; margin-left: auto; margin-right: auto; }
+
+/* Tag */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--fs-xs); font-weight: 550;
+  padding: 2px 9px; border-radius: var(--r-full);
+  background: var(--c-bg-3); color: var(--c-text-1); border: 1px solid var(--c-border);
+}
+
+/* ============================================
+   STUDY SESSION
+   ============================================ */
+.study-wrap { max-width: 720px; margin: 0 auto; }
+.study-progress { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.progress-track { flex: 1; height: 6px; background: var(--c-bg-3); border-radius: var(--r-full); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--c-accent), var(--c-purple)); border-radius: var(--r-full); transition: width var(--dur-slow) var(--ease-out); }
+.study-counts { display: flex; gap: var(--sp-3); font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.study-counts .c-new { color: var(--c-accent); }
+.study-counts .c-learn { color: var(--c-red); }
+.study-counts .c-due { color: var(--c-green); }
+
+.flashcard {
+  perspective: 1600px; min-height: 360px; margin-bottom: var(--sp-6);
+}
+.flashcard-inner {
+  position: relative; width: 100%; min-height: 360px;
+  transition: transform var(--dur-slow) var(--ease);
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateX(180deg); }
+.flashcard-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  background: var(--c-bg-1); border: 1px solid var(--c-border);
+  border-radius: var(--r-xl); padding: var(--sp-10);
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-md);
+}
+.flashcard-face.back { transform: rotateX(180deg); }
+.flashcard-meta { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-5); }
+.flashcard-label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.1em; color: var(--c-text-3); font-weight: 600; }
+.flashcard-content { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; }
+.flashcard-content .text { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
+.flashcard-face.back .flashcard-content .text { font-size: var(--fs-xl); font-weight: 500; }
+.flashcard-divider { height: 1px; background: var(--c-border); margin: var(--sp-4) 0; }
+.flashcard-hint { color: var(--c-text-2); font-size: var(--fs-md); text-align: center; line-height: 1.6; }
+
+.study-controls { display: flex; flex-direction: column; gap: var(--sp-3); align-items: center; }
+.btn-show { width: 100%; max-width: 280px; height: 46px; font-size: var(--fs-md); }
+.rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); width: 100%; }
+.rating-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--sp-3); height: 64px;
+  border-radius: var(--r-md); border: 1px solid var(--c-border);
+  background: var(--c-bg-2);
+  transition: all var(--dur-fast) var(--ease);
+}
+.rating-btn:hover { transform: translateY(-2px); }
+.rating-btn:active { transform: translateY(0) scale(0.97); }
+.rating-btn .r-label { font-weight: 600; font-size: var(--fs-md); }
+.rating-btn .r-interval { font-size: var(--fs-xs); color: var(--c-text-2); font-variant-numeric: tabular-nums; }
+.rating-btn .r-key { font-size: 10px; color: var(--c-text-3); margin-top: 1px; }
+.rating-btn.again { color: var(--c-again); } .rating-btn.again:hover { background: var(--c-red-dim); border-color: var(--c-again); }
+.rating-btn.hard { color: var(--c-hard); } .rating-btn.hard:hover { background: var(--c-amber-dim); border-color: var(--c-hard); }
+.rating-btn.good { color: var(--c-good); } .rating-btn.good:hover { background: var(--c-green-dim); border-color: var(--c-good); }
+.rating-btn.easy { color: var(--c-easy); } .rating-btn.easy:hover { background: var(--c-accent-dim); border-color: var(--c-easy); }
+
+.study-toolbar { display: flex; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-5); }
+.kbd { display: inline-block; padding: 1px 6px; border-radius: var(--r-sm); background: var(--c-bg-3); border: 1px solid var(--c-border); font-family: var(--font-mono); font-size: 10px; color: var(--c-text-2); }
+
+/* Session complete */
+.complete-card { text-align: center; padding: var(--sp-10); max-width: 460px; margin: var(--sp-10) auto; }
+.complete-icon { width: 72px; height: 72px; border-radius: var(--r-full); background: var(--c-green-dim); display: grid; place-items: center; margin: 0 auto var(--sp-5); animation: pop var(--dur-slow) var(--ease-spring); }
+.complete-icon svg { width: 36px; height: 36px; color: var(--c-green); }
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+.complete-card h2 { font-size: var(--fs-2xl); margin-bottom: var(--sp-2); }
+.complete-card p { color: var(--c-text-2); margin-bottom: var(--sp-6); }
+.complete-stats { display: flex; justify-content: center; gap: var(--sp-8); margin-bottom: var(--sp-6); }
+.complete-stat b { display: block; font-size: var(--fs-2xl); font-weight: 700; }
+.complete-stat span { color: var(--c-text-2); font-size: var(--fs-sm); }
+
+/* ============================================
+   TABLE (manage cards)
+   ============================================ */
+.table-wrap { background: var(--c-bg-1); border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-text-3); font-weight: 600; border-bottom: 1px solid var(--c-border); background: var(--c-bg-2); }
+td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--c-border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background var(--dur-fast); }
+tbody tr:hover { background: var(--c-bg-2); }
+.cell-front { font-weight: 550; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-back { color: var(--c-text-2); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.state-pill { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 600; padding: 2px 8px; border-radius: var(--r-full); }
+.state-pill::before { content: ''; width: 6px; height: 6px; border-radius: var(--r-full); background: currentColor; }
+.state-new { color: var(--c-accent); background: var(--c-accent-dim); }
+.state-learning { color: var(--c-red); background: var(--c-red-dim); }
+.state-review { color: var(--c-green); background: var(--c-green-dim); }
+.state-suspended { color: var(--c-text-2); background: var(--c-bg-3); }
+.row-actions { display: flex; gap: var(--sp-1); opacity: 0; transition: opacity var(--dur-fast); }
+tr:hover .row-actions { opacity: 1; }
+
+/* ============================================
+   MODAL
+   ============================================ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-6);
+  z-index: 100; animation: fadeIn var(--dur) var(--ease);
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--c-bg-1); border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-xl); width: 100%; max-width: 520px; max-height: 90vh;
+  display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+  animation: modalIn var(--dur-slow) var(--ease-spring);
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-head { padding: var(--sp-5) var(--sp-5) var(--sp-4); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--c-border); }
+.modal-head h3 { font-size: var(--fs-lg); font-weight: 650; }
+.modal-body { padding: var(--sp-5); overflow-y: auto; }
+.modal-foot { padding: var(--sp-4) var(--sp-5); display: flex; gap: var(--sp-3); justify-content: flex-end; border-top: 1px solid var(--c-border); }
+.color-picker { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.color-swatch { width: 30px; height: 30px; border-radius: var(--r-md); cursor: pointer; border: 2px solid transparent; transition: all var(--dur-fast); }
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.selected { border-color: var(--c-text-0); box-shadow: 0 0 0 2px var(--c-bg-1), 0 0 0 4px currentColor; }
+
+/* ============================================
+   STATS / HEATMAP
+   ============================================ */
+.heatmap { display: grid; grid-template-columns: repeat(auto-fill, 13px); gap: 3px; }
+.heat-cell { width: 13px; height: 13px; border-radius: 3px; background: var(--c-bg-3); transition: transform var(--dur-fast); cursor: pointer; }
+.heat-cell:hover { transform: scale(1.25); outline: 1px solid var(--c-text-1); }
+.heat-1 { background: rgba(109,139,255,0.25); }
+.heat-2 { background: rgba(109,139,255,0.5); }
+.heat-3 { background: rgba(109,139,255,0.75); }
+.heat-4 { background: var(--c-accent); }
+.bar-chart { display: flex; align-items: flex-end; gap: var(--sp-2); height: 180px; padding-top: var(--sp-4); }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); height: 100%; justify-content: flex-end; }
+.bar { width: 100%; max-width: 32px; background: linear-gradient(180deg, var(--c-accent), rgba(109,139,255,0.4)); border-radius: var(--r-sm) var(--r-sm) 0 0; transition: height var(--dur-slow) var(--ease-out); min-height: 2px; }
+.bar-label { font-size: var(--fs-xs); color: var(--c-text-3); }
+
+/* Toast */
+.toast-container { position: fixed; bottom: var(--sp-6); left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: var(--sp-2); align-items: center; }
+.toast {
+  background: var(--c-bg-4); border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-3); box-shadow: var(--shadow-lg);
+  font-weight: 500; font-size: var(--fs-base);
+  animation: toastIn var(--dur-slow) var(--ease-spring);
+}
+.toast svg { width: 17px; height: 17px; flex-shrink: 0; }
+.toast.success svg { color: var(--c-green); }
+.toast.error svg { color: var(--c-red); }
+.toast.info svg { color: var(--c-accent); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.toast.removing { animation: toastOut var(--dur) var(--ease) forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateY(16px); } }
+
+/* Misc */
+.row-flex { display: flex; gap: var(--sp-3); }
+.row-flex > * { flex: 1; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
+.fade-in { animation: fadeIn var(--dur) var(--ease); }
+.text-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+.scrim { display: none; }
+@media (max-width: 880px) {
+  .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 90; margin-left: calc(-1 * var(--sidebar-w)); box-shadow: var(--shadow-lg); }
+  .app.nav-open .sidebar { margin-left: 0; }
+  .app.nav-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 80; }
+  .menu-toggle { display: inline-flex; }
+  .content { padding: var(--sp-5); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .topbar { padding: 0 var(--sp-4); }
+  .rating-grid { grid-template-columns: repeat(2, 1fr); }
+  .flashcard-face { padding: var(--sp-6); }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .complete-stats { gap: var(--sp-5); }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">R</div>
+      <div class="logo-text">Recall<span>Spaced repetition</span></div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-view="decks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4"/></svg>
+        Decks
+        <span class="badge" id="nav-deck-count">0</span>
+      </button>
+      <button class="nav-item" data-view="study" id="nav-study">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z"/><path d="M12 6.5v13"/></svg>
+        Study
+        <span class="badge" id="nav-due-count">0</span>
+      </button>
+      <button class="nav-item" data-view="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+        Statistics
+      </button>
+    </nav>
+
+    <div class="nav-label">Your Decks</div>
+    <div class="deck-list" id="sidebar-decks"></div>
+
+    <div class="sidebar-footer">
+      <div class="streak-card">
+        <span class="streak-flame">🔥</span>
+        <div class="streak-info">
+          <b id="streak-days">0 days</b>
+          <span id="streak-sub">Start your streak today</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <header class="topbar">
+      <button class="btn btn-icon btn-ghost menu-toggle" id="menu-toggle" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-sub" id="topbar-sub"></div>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   ICONS
+   ============================================================ */
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>',
+  layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4"/></svg>',
+  fire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 3 4 5 4 9a4 4 0 0 1-8 0c0-1 .5-2 1-2.5C9 11 12 8 12 2z"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  brain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2a3 3 0 0 0-3 3c-1.5.5-2.5 2-2.5 3.5 0 1 .5 2 1 2.5-.5.5-1 1.5-1 2.5 0 2 1.5 3.5 3.5 3.5a3 3 0 0 0 3 3V2z"/><path d="M14.5 2a3 3 0 0 1 3 3c1.5.5 2.5 2 2.5 3.5 0 1-.5 2-1 2.5.5.5 1 1.5 1 2.5 0 2-1.5 3.5-3.5 3.5a3 3 0 0 1-3 3V2z"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 4h12v5a6 6 0 0 1-12 0V4z"/><path d="M9 18h6"/><path d="M12 14v4"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+};
+
+/* ============================================================
+   STORAGE & STATE
+   ============================================================ */
+const STORE_KEY = 'recall_app_v1';
+const COLORS = ['#6d8bff','#3fbf7f','#e0a14a','#e0645f','#b07cff','#4ec9d4','#ec6cb9','#9ccc4f'];
+
+const DEFAULT_SETTINGS = {
+  newPerDay: 20,
+  reviewsPerDay: 200,
+  learningSteps: [1, 10],   // minutes
+  graduatingInterval: 1,    // days
+  easyInterval: 4,          // days
+  startingEase: 2.5,
+  easyBonus: 1.3,
+  intervalModifier: 1.0,
+  hardInterval: 1.2,
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      parsed.settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
+      return parsed;
+    }
+  } catch (e) { console.warn('Load failed', e); }
+  return seedState();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn('Save failed', e); }
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function todayStr(d = new Date()) { return d.toISOString().slice(0, 10); }
+const DAY_MS = 86400000;
+
+function seedState() {
+  const now = Date.now();
+  const mk = (front, back, tags = []) => ({
+    id: uid(), front, back, tags,
+    state: 'new', due: now, interval: 0, ease: DEFAULT_SETTINGS.startingEase,
+    reps: 0, lapses: 0, learningStep: 0, suspended: false, created: now,
+  });
+  const d1 = uid(), d2 = uid(), d3 = uid();
+  return {
+    settings: Object.assign({}, DEFAULT_SETTINGS),
+    decks: [
+      { id: d1, name: 'Spanish Vocabulary', desc: 'Common everyday words', color: COLORS[0], created: now },
+      { id: d2, name: 'JavaScript Concepts', desc: 'Core language features', color: COLORS[1], created: now },
+      { id: d3, name: 'World Capitals', desc: 'Capital cities by country', color: COLORS[4], created: now },
+    ],
+    cards: {
+      [d1]: [
+        mk('la casa', 'the house', ['nouns']),
+        mk('el perro', 'the dog', ['nouns','animals']),
+        mk('comer', 'to eat', ['verbs']),
+        mk('rápido', 'fast / quick', ['adjectives']),
+        mk('siempre', 'always', ['adverbs']),
+        mk('el agua', 'water', ['nouns']),
+      ],
+      [d2]: [
+        mk('What is a closure?', 'A function bundled with references to its surrounding lexical scope.', ['functions']),
+        mk('typeof null', '"object" — a long-standing language quirk.', ['types']),
+        mk('What does Promise.all do?', 'Resolves when all promises resolve, rejects on first rejection.', ['async']),
+        mk('Difference: let vs var', 'let is block-scoped; var is function-scoped and hoisted.', ['scope']),
+        mk('What is the event loop?', 'Mechanism that processes the callback queue when the call stack is empty.', ['async']),
+      ],
+      [d3]: [
+        mk('France', 'Paris', ['europe']),
+        mk('Japan', 'Tokyo', ['asia']),
+        mk('Australia', 'Canberra', ['oceania']),
+        mk('Brazil', 'Brasília', ['americas']),
+        mk('Egypt', 'Cairo', ['africa']),
+      ],
+    },
+    stats: { reviewLog: [], streak: 0, lastStudy: null },
+  };
+}
+
+/* ============================================================
+   SPACED REPETITION ENGINE (SM-2 variant, Anki-like)
+   ============================================================ */
+const SR = {
+  // Returns preview interval (ms) for a given rating without mutating
+  preview(card, rating) {
+    const c = JSON.parse(JSON.stringify(card));
+    SR.apply(c, rating, false);
+    return c._previewDue - Date.now();
+  },
+
+  apply(card, rating, commit = true) {
+    const s = state.settings;
+    const now = Date.now();
+    let due, interval = card.interval, ease = card.ease, st = card.state, step = card.learningStep;
+    let lapses = card.lapses, reps = card.reps + 1;
+
+    if (st === 'new' || st === 'learning' || st === 'relearning') {
+      const steps = st === 'relearning' ? [Math.max(1, s.learningSteps[0])] : s.learningSteps;
+      if (rating === 1) { // Again
+        step = 0;
+        due = now + steps[0] * 60000;
+        st = st === 'relearning' ? 'relearning' : 'learning';
+      } else if (rating === 2) { // Hard
+        const m = steps[step] || steps[steps.length - 1];
+        due = now + m * 60000 * 1.5;
+        st = st === 'relearning' ? 'relearning' : 'learning';
+      } else if (rating === 3) { // Good
+        step += 1;
+        if (step >= steps.length) {
+          // graduate
+          st = 'review';
+          interval = st === 'relearning' ? Math.max(1, Math.round(interval)) : s.graduatingInterval;
+          if (card.state === 'relearning' || st === 'relearning') interval = Math.max(1, Math.round(card.interval * 0.5)) || 1;
+          else interval = s.graduatingInterval;
+          due = now + interval * DAY_MS;
+          step = 0;
+        } else {
+          due = now + steps[step] * 60000;
+          st = st === 'relearning' ? 'relearning' : 'learning';
+        }
+      } else { // Easy = graduate immediately
+        st = 'review';
+        interval = s.easyInterval;
+        due = now + interval * DAY_MS;
+        step = 0;
+      }
+    } else { // review
+      if (rating === 1) { // Again -> lapse
+        lapses += 1;
+        ease = Math.max(1.3, ease - 0.2);
+        st = 'relearning';
+        step = 0;
+        interval = Math.max(1, Math.round(interval * 0.5));
+        due = now + (s.learningSteps[0] || 10) * 60000;
+      } else {
+        if (rating === 2) { // Hard
+          ease = Math.max(1.3, ease - 0.15);
+          interval = Math.max(interval + 1, Math.round(interval * s.hardInterval * s.intervalModifier));
+        } else if (rating === 3) { // Good
+          interval = Math.max(interval + 1, Math.round(interval * ease * s.intervalModifier));
+        } else { // Easy
+          ease += 0.15;
+          interval = Math.max(interval + 1, Math.round(interval * ease * s.easyBonus * s.intervalModifier));
+        }
+        due = now + interval * DAY_MS;
+      }
+    }
+
+    if (!commit) { card._previewDue = due; return; }
+    card.due = due;
+    card.interval = interval;
+    card.ease = ease;
+    card.state = st;
+    card.learningStep = step;
+    card.lapses = lapses;
+    card.reps = reps;
+    card.lastReview = now;
+  },
+};
+
+function fmtInterval(ms) {
+  const min = ms / 60000;
+  if (min < 60) return `${Math.max(1, Math.round(min))}m`;
+  const hrs = min / 60;
+  if (hrs < 24) return `${Math.round(hrs)}h`;
+  const days = hrs / 24;
+  if (days < 30) return `${Math.round(days)}d`;
+  const months = days / 30;
+  if (months < 12) return `${Math.round(months)}mo`;
+  return `${(days / 365).toFixed(1)}y`;
+}
+
+/* ============================================================
+   QUEUE / SCHEDULING HELPERS
+   ============================================================ */
+function deckCards(deckId) { return state.cards[deckId] || []; }
+function allCards() { return state.decks.flatMap(d => deckCards(d.id).map(c => ({ ...c, deckId: d.id }))); }
+
+function cardCounts(deckId) {
+  const cards = deckCards(deckId);
+  const now = Date.now();
+  let nw = 0, learn = 0, due = 0;
+  let newSeen = 0;
+  for (const c of cards) {
+    if (c.suspended) continue;
+    if (c.state === 'new') { nw++; }
+    else if ((c.state === 'learning' || c.state === 'relearning') && c.due <= now) learn++;
+    else if (c.state === 'review' && c.due <= now) due++;
+  }
+  return {
+    total: cards.length,
+    new: Math.min(nw, state.settings.newPerDay),
+    newTotal: nw,
+    learning: learn,
+    due: Math.min(due, state.settings.reviewsPerDay),
+    dueTotal: due,
+    studyable: Math.min(nw, state.settings.newPerDay) + learn + Math.min(due, state.settings.reviewsPerDay),
+    byState: {
+      new: cards.filter(c=>c.state==='new').length,
+      learning: cards.filter(c=>(c.state==='learning'||c.state==='relearning')).length,
+      review: cards.filter(c=>c.state==='review').length,
+      suspended: cards.filter(c=>c.suspended).length,
+    }
+  };
+}
+
+function buildQueue(deckId) {
+  const now = Date.now();
+  const cards = deckCards(deckId).filter(c => !c.suspended);
+  const learning = cards.filter(c => (c.state==='learning'||c.state==='relearning') && c.due <= now).sort((a,b)=>a.due-b.due);
+  const review = cards.filter(c => c.state==='review' && c.due <= now).sort((a,b)=>a.due-b.due).slice(0, state.settings.reviewsPerDay);
+  const fresh = cards.filter(c => c.state==='new').slice(0, state.settings.newPerDay);
+  // Interleave: due reviews first, then learning, then sprinkle new
+  let queue = [...review, ...learning];
+  // mix new in
+  fresh.forEach((c, i) => {
+    const pos = Math.floor((i+1) * (queue.length + fresh.length) / (fresh.length+1));
+    queue.splice(Math.min(pos, queue.length), 0, c);
+  });
+  return queue.map(c => c.id);
+}
+
+/* ============================================================
+   STREAK
+   ============================================================ */
+function updateStreak() {
+  const t = todayStr();
+  const last = state.stats.lastStudy;
+  if (last === t) return;
+  if (last) {
+    const diff = Math.round((new Date(t) - new Date(last)) / DAY_MS);
+    state.stats.streak = diff === 1 ? state.stats.streak + 1 : 1;
+  } else {
+    state.stats.streak = 1;
+  }
+  state.stats.lastStudy = t;
+  saveState();
+}
+
+function logReview(deckId, rating) {
+  state.stats.reviewLog.push({ t: Date.now(), deckId, rating, day: todayStr() });
+  if (state.stats.reviewLog.length > 5000) state.stats.reviewLog = state.stats.reviewLog.slice(-5000);
+}
+
+/* ============================================================
+   ROUTING / VIEW STATE
+   ============================================================ */
+let currentView = 'dashboard';
+let session = null; // active study session
+
+const titles = {
+  dashboard: ['Dashboard', 'Your learning at a glance'],
+  decks: ['Decks', 'Manage your card collections'],
+  study: ['Study', 'Review your due cards'],
+  stats: ['Statistics', 'Track your progress over time'],
+};
+
+function navigate(view, opts = {}) {
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  const [title, sub] = titles[view] || ['', ''];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+  document.getElementById('app').classList.remove('nav-open');
+  render(opts);
+}
+
+/* ============================================================
+   RENDER ROOT
+   ============================================================ */
+const content = document.getElementById('content');
+const topbarActions = document.getElementById('topbar-actions');
+
+function render(opts = {}) {
+  renderSidebar();
+  topbarActions.innerHTML = '';
+  if (currentView === 'dashboard') renderDashboard();
+  else if (currentView === 'decks') renderDecks();
+  else if (currentView === 'study') renderStudy(opts);
+  else if (currentView === 'stats') renderStats();
+}
+
+function renderSidebar() {
+  // counts
+  const totalDue = state.decks.reduce((s, d) => s + cardCounts(d.id).studyable, 0);
+  document.getElementById('nav-deck-count').textContent = state.decks.length;
+  document.getElementById('nav-due-count').textContent = totalDue;
+  // streak
+  document.getElementById('streak-days').textContent = state.stats.streak + (state.stats.streak === 1 ? ' day' : ' days');
+  document.getElementById('streak-sub').textContent = state.stats.lastStudy === todayStr() ? 'Studied today! Keep going' : (totalDue > 0 ? `${totalDue} cards waiting` : 'No cards due');
+
+  const list = document.getElementById('sidebar-decks');
+  list.innerHTML = '';
+  if (state.decks.length === 0) {
+    list.innerHTML = `<div style="padding:12px;color:var(--c-text-3);font-size:var(--fs-sm)">No decks yet</div>`;
+  }
+  state.decks.forEach(d => {
+    const c = cardCounts(d.id);
+    const el = document.createElement('button');
+    el.className = 'deck-item' + (session && session.deckId === d.id ? ' active' : '');
+    el.innerHTML = `
+      <span class="deck-dot" style="background:${d.color}"></span>
+      <span class="deck-name">${esc(d.name)}</span>
+      <span class="deck-due ${c.studyable === 0 ? 'zero':''}">${c.studyable}</span>`;
+    el.onclick = () => { if (c.studyable > 0) startSession(d.id); else { navigate('decks'); } };
+    list.appendChild(el);
+  });
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard() {
+  const totalCards = allCards().length;
+  const totalDue = state.decks.reduce((s, d) => s + cardCounts(d.id).studyable, 0);
+  const reviewedToday = state.stats.reviewLog.filter(r => r.day === todayStr()).length;
+  const matureCards = allCards().filter(c => c.state === 'review' && c.interval >= 21).length;
+  const retention = computeRetention();
+
+  topbarActions.innerHTML = `<button class="btn btn-primary" id="dash-study">${ICON.play} Study Now</button>`;
+
+  content.innerHTML = `
+  <div class="view">
+    <div class="stat-grid">
+      ${statTile(ICON.clock, totalDue, 'Cards due now', 'var(--c-accent)', 'var(--c-accent-dim)', totalDue > 0 ? 'Ready to study' : 'All caught up')}
+      ${statTile(ICON.check, reviewedToday, 'Reviewed today', 'var(--c-green)', 'var(--c-green-dim)')}
+      ${statTile(ICON.layers, totalCards, 'Total cards', 'var(--c-purple)', 'var(--c-purple-dim)')}
+      ${statTile(ICON.target, retention + '%', 'Retention rate', 'var(--c-amber)', 'var(--c-amber-dim)')}
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-head"><div><h2>Due Decks</h2><div class="sub">Decks with cards ready to review</div></div></div>
+        <div id="dash-decks"></div>
+      </div>
+      <div>
+        <div class="section-head"><div><h2>This Week</h2><div class="sub">Reviews completed per day</div></div></div>
+        <div class="card">${weekChart()}</div>
+        <div class="card" style="margin-top:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="stat-icon" style="background:var(--c-green-dim);color:var(--c-green);width:38px;height:38px;border-radius:8px;display:grid;place-items:center">${ICON.trophy}</div>
+            <div>
+              <b style="font-size:16px">${matureCards} mature cards</b>
+              <div style="color:var(--c-text-2);font-size:12px">Cards with intervals over 21 days</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // due decks
+  const dd = document.getElementById('dash-decks');
+  const dueDecks = state.decks.filter(d => cardCounts(d.id).studyable > 0);
+  if (dueDecks.length === 0) {
+    dd.innerHTML = `<div class="card empty"><div class="empty-icon">${ICON.check}</div><h3>All caught up!</h3><p>You've reviewed everything due. Come back later or add new cards.</p></div>`;
+  } else {
+    dueDecks.forEach(d => {
+      const c = cardCounts(d.id);
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.style.cssText = 'margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:16px;padding:16px 20px';
+      el.innerHTML = `
+        <span class="deck-dot" style="background:${d.color};width:11px;height:11px"></span>
+        <div style="flex:1">
+          <div style="font-weight:600">${esc(d.name)}</div>
+          <div style="color:var(--c-text-2);font-size:12px">${esc(d.desc || '')}</div>
+        </div>
+        <div class="study-counts">
+          ${c.new ? `<span class="c-new">${c.new} new</span>`:''}
+          ${c.learning ? `<span class="c-learn">${c.learning} learn</span>`:''}
+          ${c.due ? `<span class="c-due">${c.due} due</span>`:''}
+        </div>
+        <button class="btn btn-sm btn-primary">Study</button>`;
+      el.onclick = () => startSession(d.id);
+      dd.appendChild(el);
+    });
+  }
+
+  document.getElementById('dash-study').onclick = () => startSmartSession();
+}
+
+function statTile(icon, value, label, color, bg, trend) {
+  return `<div class="stat-tile">
+    <div class="stat-icon" style="background:${bg};color:${color}">${icon}</div>
+    <div class="stat-value">${value}</div>
+    <div class="stat-label">${label}</div>
+    ${trend ? `<div class="stat-trend up">${trend}</div>` : ''}
+  </div>`;
+}
+
+function weekChart() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * DAY_MS);
+    const ds = todayStr(d);
+    const count = state.stats.reviewLog.filter(r => r.day === ds).length;
+    days.push({ label: ['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()], count });
+  }
+  const max = Math.max(1, ...days.map(d => d.count));
+  return `<div class="bar-chart">${days.map(d => `
+    <div class="bar-col">
+      <div class="bar" style="height:${(d.count / max) * 100}%" title="${d.count} reviews"></div>
+      <div class="bar-label">${d.label}</div>
+    </div>`).join('')}</div>`;
+}
+
+function computeRetention() {
+  const reviews = state.stats.reviewLog.filter(r => r.rating !== undefined);
+  const recent = reviews.slice(-200);
+  const matureReviews = recent.filter(r => r.wasReview);
+  const pool = matureReviews.length ? matureReviews : recent;
+  if (pool.length === 0) return 100;
+  const correct = pool.filter(r => r.rating > 1).length;
+  return Math.round((correct / pool.length) * 100);
+}
+
+/* ============================================================
+   DECKS
+   ============================================================ */
+function renderDecks() {
+  topbarActions.innerHTML = `
+    <button class="btn" id="import-btn">${ICON.upload} Import</button>
+    <button class="btn" id="export-btn">${ICON.download} Export</button>
+    <button class="btn btn-primary" id="new-deck">${ICON.plus} New Deck</button>`;
+
+  content.innerHTML = `<div class="view"><div class="deck-grid" id="deck-grid"></div></div>`;
+  const grid = document.getElementById('deck-grid');
+
+  if (state.decks.length === 0) {
+    grid.style.display = 'block';
+    grid.innerHTML = `<div class="card empty"><div class="empty-icon">${ICON.layers}</div><h3>No decks yet</h3><p>Create your first deck to start building your spaced-repetition library.</p><button class="btn btn-primary" onclick="openDeckModal()">${ICON.plus} Create Deck</button></div>`;
+  } else {
+    state.decks.forEach(d => {
+      const c = cardCounts(d.id);
+      const bd = c.byState;
+      const tot = Math.max(1, bd.new + bd.learning + bd.review);
+      const card = document.createElement('div');
+      card.className = 'deck-card';
+      card.style.setProperty('--deck-color', d.color);
+      card.innerHTML = `
+        <div class="deck-card-head">
+          <div>
+            <div class="deck-card-title">${esc(d.name)}</div>
+            <div class="deck-card-desc">${esc(d.desc || 'No description')}</div>
+          </div>
+          <div class="deck-card-menu">
+            <button class="btn btn-icon btn-sm btn-ghost" data-act="menu">${ICON.more}</button>
+          </div>
+        </div>
+        <div class="card-breakdown">
+          <div style="width:${bd.new/tot*100}%;background:var(--c-accent)"></div>
+          <div style="width:${bd.learning/tot*100}%;background:var(--c-red)"></div>
+          <div style="width:${bd.review/tot*100}%;background:var(--c-green)"></div>
+        </div>
+        <div class="deck-card-stats">
+          <div class="deck-stat ${c.studyable?'due':''}"><b>${c.studyable}</b><span>Due</span></div>
+          <div class="deck-stat"><b>${c.total}</b><span>Cards</span></div>
+          <div class="deck-stat"><b>${bd.review}</b><span>Mature</span></div>
+        </div>`;
+      card.querySelector('[data-act="menu"]').onclick = (e) => { e.stopPropagation(); openDeckMenu(d, e.currentTarget); };
+      card.onclick = () => openDeckDetail(d.id);
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById('new-deck').onclick = () => openDeckModal();
+  document.getElementById('export-btn').onclick = exportData;
+  document.getElementById('import-btn').onclick = importData;
+}
+
+function openDeckMenu(deck, anchor) {
+  closeMenus();
+  const menu = document.createElement('div');
+  menu.className = 'context-menu card';
+  menu.style.cssText = 'position:fixed;z-index:150;padding:6px;width:180px;box-shadow:var(--shadow-lg)';
+  const r = anchor.getBoundingClientRect();
+  menu.style.top = (r.bottom + 6) + 'px';
+  menu.style.left = (r.right - 180) + 'px';
+  const item = (label, icon, fn, danger) => {
+    const b = document.createElement('button');
+    b.className = 'nav-item';
+    if (danger) b.style.color = 'var(--c-red)';
+    b.innerHTML = `${icon}${label}`;
+    b.onclick = (e) => { e.stopPropagation(); closeMenus(); fn(); };
+    return b;
+  };
+  menu.appendChild(item('Study', ICON.play, () => startSession(deck.id)));
+  menu.appendChild(item('Manage cards', ICON.layers, () => openDeckDetail(deck.id)));
+  menu.appendChild(item('Edit deck', ICON.edit, () => openDeckModal(deck)));
+  menu.appendChild(item('Delete', ICON.trash, () => confirmDeleteDeck(deck), true));
+  document.body.appendChild(menu);
+  setTimeout(() => document.addEventListener('click', closeMenus, { once: true }), 0);
+}
+function closeMenus() { document.querySelectorAll('.context-menu').forEach(m => m.remove()); }
+
+/* ---- Deck detail (card table) ---- */
+let detailDeckId = null;
+let detailFilter = '';
+let detailStateFilter = 'all';
+
+function openDeckDetail(deckId) {
+  detailDeckId = deckId;
+  detailFilter = '';
+  const deck = state.decks.find(d => d.id === deckId);
+  currentView = 'deck-detail';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('topbar-title').textContent = deck.name;
+  const c = cardCounts(deckId);
+  document.getElementById('topbar-sub').textContent = `${c.total} cards · ${c.studyable} due`;
+  topbarActions.innerHTML = `
+    <button class="btn btn-ghost" id="back-decks">← Decks</button>
+    <button class="btn" id="study-deck">${ICON.play} Study</button>
+    <button class="btn btn-primary" id="add-card">${ICON.plus} Add Card</button>`;
+  renderDeckDetail();
+  document.getElementById('back-decks').onclick = () => navigate('decks');
+  document.getElementById('study-deck').onclick = () => startSession(deckId);
+  document.getElementById('add-card').onclick = () => openCardModal(deckId);
+}
+
+function renderDeckDetail() {
+  const cards = deckCards(detailDeckId);
+  const q = detailFilter.toLowerCase();
+  let filtered = cards.filter(c =>
+    (detailStateFilter === 'all' || (detailStateFilter === 'suspended' ? c.suspended : (!c.suspended && stateGroup(c) === detailStateFilter))) &&
+    (!q || c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q) || (c.tags||[]).join(' ').toLowerCase().includes(q))
+  );
+
+  content.innerHTML = `<div class="view">
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap">
+      <div class="search-box">${ICON.search}<input class="input" id="card-search" placeholder="Search cards, tags..." value="${esc(detailFilter)}"></div>
+      <select class="select" id="state-filter" style="width:auto">
+        <option value="all">All states</option>
+        <option value="new">New</option>
+        <option value="learning">Learning</option>
+        <option value="review">Review</option>
+        <option value="suspended">Suspended</option>
+      </select>
+      <div style="margin-left:auto;color:var(--c-text-2);font-size:13px">${filtered.length} of ${cards.length} cards</div>
+    </div>
+    ${filtered.length === 0 ? `<div class="card empty"><div class="empty-icon">${ICON.layers}</div><h3>${cards.length===0?'No cards yet':'No matches'}</h3><p>${cards.length===0?'Add your first card to this deck.':'Try a different search or filter.'}</p>${cards.length===0?`<button class="btn btn-primary" onclick="openCardModal('${detailDeckId}')">${ICON.plus} Add Card</button>`:''}</div>` : `
+    <div class="table-wrap"><table>
+      <thead><tr><th>Front</th><th>Back</th><th style="width:110px">State</th><th style="width:90px">Interval</th><th style="width:80px">Ease</th><th style="width:90px"></th></tr></thead>
+      <tbody id="card-tbody"></tbody>
+    </table></div>`}
+  </div>`;
+
+  const search = document.getElementById('card-search');
+  if (search) {
+    search.oninput = (e) => { detailFilter = e.target.value; const t = document.getElementById('card-tbody'); if (t) fillRows(filtered); else renderDeckDetail(); };
+    search.oninput = debounce((e) => { detailFilter = e.target.value; renderDeckDetail(); document.getElementById('card-search').focus(); }, 200);
+  }
+  const sf = document.getElementById('state-filter');
+  if (sf) { sf.value = detailStateFilter; sf.onchange = (e) => { detailStateFilter = e.target.value; renderDeckDetail(); }; }
+
+  const tbody = document.getElementById('card-tbody');
+  if (tbody) fillRows(filtered);
+}
+
+function fillRows(cards) {
+  const tbody = document.getElementById('card-tbody');
+  tbody.innerHTML = '';
+  cards.forEach(c => {
+    const tr = document.createElement('tr');
+    const grp = c.suspended ? 'suspended' : stateGroup(c);
+    tr.innerHTML = `
+      <td class="cell-front">${esc(c.front)}</td>
+      <td class="cell-back">${esc(c.back)}</td>
+      <td><span class="state-pill state-${grp}">${grp}</span></td>
+      <td class="text-mono" style="color:var(--c-text-2)">${c.state==='new'?'—':fmtInterval(c.interval*DAY_MS)}</td>
+      <td class="text-mono" style="color:var(--c-text-2)">${c.state==='new'?'—':c.ease.toFixed(2)}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-icon btn-sm btn-ghost" title="Edit" data-act="edit">${ICON.edit}</button>
+        <button class="btn btn-icon btn-sm btn-ghost" title="${c.suspended?'Unsuspend':'Suspend'}" data-act="suspend">${ICON.flag}</button>
+        <button class="btn btn-icon btn-sm btn-ghost btn-danger" title="Delete" data-act="del">${ICON.trash}</button>
+      </div></td>`;
+    tr.querySelector('[data-act="edit"]').onclick = () => openCardModal(detailDeckId, c);
+    tr.querySelector('[data-act="suspend"]').onclick = () => { c.suspended = !c.suspended; saveState(); renderDeckDetail(); toast(c.suspended?'Card suspended':'Card unsuspended', 'info'); };
+    tr.querySelector('[data-act="del"]').onclick = () => { deckCards(detailDeckId).splice(deckCards(detailDeckId).indexOf(c), 1); saveState(); renderDeckDetail(); toast('Card deleted', 'success'); };
+    tbody.appendChild(tr);
+  });
+}
+
+function stateGroup(c) {
+  if (c.state === 'new') return 'new';
+  if (c.state === 'learning' || c.state === 'relearning') return 'learning';
+  return 'review';
+}
+
+/* ============================================================
+   STUDY SESSION
+   ============================================================ */
+function startSmartSession() {
+  // pick deck with most due, or combined
+  const due = state.decks.filter(d => cardCounts(d.id).studyable > 0);
+  if (due.length === 0) { toast('No cards due right now', 'info'); navigate('dashboard'); return; }
+  // combined session across all due decks
+  startSession(null);
+}
+
+function startSession(deckId) {
+  let queueIds, deckName, color;
+  if (deckId === null) {
+    // all decks combined
+    let combined = [];
+    state.decks.forEach(d => { combined = combined.concat(buildQueue(d.id).map(id => ({ id, deckId: d.id }))); });
+    if (combined.length === 0) { toast('No cards due', 'info'); navigate('dashboard'); return; }
+    queueIds = combined;
+    deckName = 'All Decks';
+    color = 'var(--c-accent)';
+  } else {
+    const q = buildQueue(deckId);
+    if (q.length === 0) { toast('No cards due in this deck', 'info'); openDeckDetail(deckId); return; }
+    queueIds = q.map(id => ({ id, deckId }));
+    const d = state.decks.find(x => x.id === deckId);
+    deckName = d.name; color = d.color;
+  }
+  session = {
+    deckId, deckName, color,
+    queue: queueIds,
+    index: 0,
+    total: queueIds.length,
+    flipped: false,
+    completed: 0,
+    correct: 0,
+    startTime: Date.now(),
+    answers: { again:0, hard:0, good:0, easy:0 },
+  };
+  currentView = 'study';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === 'study'));
+  document.getElementById('topbar-title').textContent = 'Studying';
+  document.getElementById('topbar-sub').textContent = deckName;
+  topbarActions.innerHTML = `<button class="btn btn-ghost" id="end-session">${ICON.x} End Session</button>`;
+  document.getElementById('end-session').onclick = endSession;
+  renderSidebar();
+  renderStudyCard();
+}
+
+function getCardById(deckId, id) { return deckCards(deckId).find(c => c.id === id); }
+
+function currentSessionCard() {
+  if (!session || session.index >= session.queue.length) return null;
+  const ref = session.queue[session.index];
+  return { card: getCardById(ref.deckId, ref.id), deckId: ref.deckId };
+}
+
+function renderStudy(opts) {
+  if (!session) { navigate('dashboard'); return; }
+  renderStudyCard();
+}
+
+function renderStudyCard() {
+  const cur = currentSessionCard();
+  if (!cur || !cur.card) { renderComplete(); return; }
+  const card = cur.card;
+  const deck = state.decks.find(d => d.id === cur.deckId);
+
+  // remaining counts for current session
+  const remaining = session.queue.slice(session.index);
+  let nNew=0,nLearn=0,nDue=0;
+  remaining.forEach(ref => {
+    const c = getCardById(ref.deckId, ref.id);
+    if (!c) return;
+    if (c.state === 'new') nNew++;
+    else if (c.state==='learning'||c.state==='relearning') nLearn++;
+    else nDue++;
+  });
+
+  const progress = (session.index / session.total) * 100;
+  const stateLabel = card.state === 'new' ? 'New card' : (card.state==='learning'||card.state==='relearning' ? 'Learning' : 'Review');
+
+  content.innerHTML = `<div class="view"><div class="study-wrap">
+    <div class="study-progress">
+      <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="study-counts">
+        <span class="c-new">${nNew}</span>
+        <span class="c-learn">${nLearn}</span>
+        <span class="c-due">${nDue}</span>
+      </div>
+    </div>
+
+    <div class="flashcard ${session.flipped?'flipped':''}" id="flashcard">
+      <div class="flashcard-inner">
+        <div class="flashcard-face front">
+          <div class="flashcard-meta">
+            <span class="deck-dot" style="background:${deck.color};width:8px;height:8px"></span>
+            <span class="flashcard-label">${esc(deck.name)} · ${stateLabel}</span>
+          </div>
+          <div class="flashcard-content"><div class="text">${esc(card.front)}</div></div>
+          ${(card.tags&&card.tags.length)?`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${card.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+        </div>
+        <div class="flashcard-face back">
+          <div class="flashcard-meta"><span class="flashcard-label">Answer</span></div>
+          <div class="flashcard-content"><div class="text">${esc(card.back)}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="study-controls" id="study-controls"></div>
+    <div class="study-toolbar">
+      <button class="btn btn-sm btn-ghost" id="edit-current">${ICON.edit} Edit</button>
+      <button class="btn btn-sm btn-ghost" id="suspend-current">${ICON.flag} Suspend</button>
+      <button class="btn btn-sm btn-ghost btn-danger" id="bury-current">Skip</button>
+    </div>
+  </div></div>`;
+
+  renderStudyControls(card);
+
+  document.getElementById('edit-current').onclick = () => openCardModal(cur.deckId, card, true);
+  document.getElementById('suspend-current').onclick = () => { card.suspended = true; saveState(); advanceCard(); toast('Card suspended', 'info'); };
+  document.getElementById('bury-current').onclick = () => { session.index++; renderStudyCard(); };
+}
+
+function renderStudyControls(card) {
+  const ctrl = document.getElementById('study-controls');
+  if (!session.flipped) {
+    ctrl.innerHTML = `<button class="btn btn-primary btn-show" id="show-answer">Show Answer <span class="kbd" style="margin-left:6px">Space</span></button>`;
+    document.getElementById('show-answer').onclick = flipCard;
+  } else {
+    const r = [
+      { rating: 1, label: 'Again', cls: 'again', key: '1' },
+      { rating: 2, label: 'Hard', cls: 'hard', key: '2' },
+      { rating: 3, label: 'Good', cls: 'good', key: '3' },
+      { rating: 4, label: 'Easy', cls: 'easy', key: '4' },
+    ];
+    ctrl.innerHTML = `<div class="rating-grid">${r.map(x => {
+      const iv = fmtInterval(SR.preview(card, x.rating));
+      return `<button class="rating-btn ${x.cls}" data-rating="${x.rating}">
+        <span class="r-interval">${iv}</span>
+        <span class="r-label">${x.label}</span>
+        <span class="r-key">${x.key}</span>
+      </button>`;
+    }).join('')}</div>`;
+    ctrl.querySelectorAll('.rating-btn').forEach(b => b.onclick = () => rateCard(parseInt(b.dataset.rating)));
+  }
+}
+
+function flipCard() {
+  if (!session || session.flipped) return;
+  session.flipped = true;
+  const fc = document.getElementById('flashcard');
+  if (fc) fc.classList.add('flipped');
+  const cur = currentSessionCard();
+  setTimeout(() => renderStudyControls(cur.card), 180);
+}
+
+function rateCard(rating) {
+  const cur = currentSessionCard();
+  if (!cur || !cur.card) return;
+  const card = cur.card;
+  const wasReview = card.state === 'review';
+  SR.apply(card, rating, true);
+  const log = { t: Date.now(), deckId: cur.deckId, rating, day: todayStr(), wasReview };
+  state.stats.reviewLog.push(log);
+  session.completed++;
+  session.answers[['','again','hard','good','easy'][rating]]++;
+  if (rating > 1) session.correct++;
+  updateStreak();
+
+  // If still in learning and due soon, re-add to queue near end
+  if ((card.state === 'learning' || card.state === 'relearning') && card.due <= Date.now() + (state.settings.learningSteps[0]||10)*60000 + 1000) {
+    // push to back so it's seen again this session
+    session.queue.push({ id: card.id, deckId: cur.deckId });
+    session.total = Math.max(session.total, session.queue.length);
+  }
+  saveState();
+  advanceCard();
+}
+
+function advanceCard() {
+  session.index++;
+  session.flipped = false;
+  renderSidebar();
+  renderStudyCard();
+}
+
+function renderComplete() {
+  const dur = Math.round((Date.now() - session.startTime) / 1000);
+  const mins = Math.floor(dur/60), secs = dur%60;
+  const acc = session.completed ? Math.round((session.correct/session.completed)*100) : 0;
+  const a = session.answers;
+  content.innerHTML = `<div class="view"><div class="card complete-card">
+    <div class="complete-icon">${ICON.check}</div>
+    <h2>Session complete!</h2>
+    <p>Great work reviewing <b>${esc(session.deckName)}</b></p>
+    <div class="complete-stats">
+      <div class="complete-stat"><b>${session.completed}</b><span>Reviewed</span></div>
+      <div class="complete-stat"><b style="color:var(--c-green)">${acc}%</b><span>Correct</span></div>
+      <div class="complete-stat"><b>${mins}:${String(secs).padStart(2,'0')}</b><span>Time</span></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap">
+      <span class="tag" style="color:var(--c-again)">Again ${a.again}</span>
+      <span class="tag" style="color:var(--c-hard)">Hard ${a.hard}</span>
+      <span class="tag" style="color:var(--c-good)">Good ${a.good}</span>
+      <span class="tag" style="color:var(--c-easy)">Easy ${a.easy}</span>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn" id="complete-dash">Dashboard</button>
+      <button class="btn btn-primary" id="complete-more">Study More</button>
+    </div>
+  </div></div>`;
+  session = null;
+  renderSidebar();
+  document.getElementById('complete-dash').onclick = () => navigate('dashboard');
+  document.getElementById('complete-more').onclick = () => startSmartSession();
+}
+
+function endSession() {
+  if (session && session.completed > 0) {
+    renderComplete();
+  } else {
+    session = null;
+    navigate('dashboard');
+  }
+}
+
+/* ============================================================
+   STATISTICS
+   ============================================================ */
+function renderStats() {
+  const cards = allCards();
+  const byState = { new:0, learning:0, review:0, suspended:0 };
+  cards.forEach(c => { if (c.suspended) byState.suspended++; else byState[stateGroup(c)]++; });
+  const totalReviews = state.stats.reviewLog.length;
+  const retention = computeRetention();
+
+  // interval distribution buckets
+  const buckets = { '1d':0,'2-7d':0,'8-30d':0,'1-3mo':0,'3mo+':0 };
+  cards.filter(c=>c.state==='review').forEach(c=>{
+    const d = c.interval;
+    if (d<=1) buckets['1d']++;
+    else if (d<=7) buckets['2-7d']++;
+    else if (d<=30) buckets['8-30d']++;
+    else if (d<=90) buckets['1-3mo']++;
+    else buckets['3mo+']++;
+  });
+
+  topbarActions.innerHTML = '';
+  content.innerHTML = `<div class="view">
+    <div class="stat-grid">
+      ${statTile(ICON.brain, totalReviews, 'Total reviews', 'var(--c-accent)', 'var(--c-accent-dim)')}
+      ${statTile(ICON.target, retention+'%', 'Retention rate', 'var(--c-green)', 'var(--c-green-dim)')}
+      ${statTile(ICON.fire, state.stats.streak, 'Day streak', 'var(--c-amber)', 'var(--c-amber-dim)')}
+      ${statTile(ICON.layers, byState.review, 'Mature cards', 'var(--c-purple)', 'var(--c-purple-dim)')}
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-head"><div><h2 style="font-size:16px">Card States</h2></div></div>
+        ${stateBar('New', byState.new, cards.length, 'var(--c-accent)')}
+        ${stateBar('Learning', byState.learning, cards.length, 'var(--c-red)')}
+        ${stateBar('Review', byState.review, cards.length, 'var(--c-green)')}
+        ${stateBar('Suspended', byState.suspended, cards.length, 'var(--c-text-2)')}
+      </div>
+      <div class="card">
+        <div class="section-head"><div><h2 style="font-size:16px">Interval Distribution</h2></div></div>
+        <div class="bar-chart" style="height:150px">
+          ${Object.entries(buckets).map(([k,v])=>{
+            const max = Math.max(1,...Object.values(buckets));
+            return `<div class="bar-col"><div class="bar" style="height:${v/max*100}%" title="${v} cards"></div><div class="bar-label">${k}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="section-head"><div><h2 style="font-size:16px">Review Activity</h2><div class="sub">Last 18 weeks</div></div></div>
+      <div class="heatmap" id="heatmap"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--c-text-3);font-size:12px">
+        Less <span class="heat-cell"></span><span class="heat-cell heat-1"></span><span class="heat-cell heat-2"></span><span class="heat-cell heat-3"></span><span class="heat-cell heat-4"></span> More
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="section-head"><div><h2 style="font-size:16px">Settings</h2><div class="sub">Tune your study scheduling</div></div>
+        <button class="btn btn-sm" id="open-settings">${ICON.edit} Edit</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px">
+        <div><div style="color:var(--c-text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em">New / day</div><b style="font-size:18px">${state.settings.newPerDay}</b></div>
+        <div><div style="color:var(--c-text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Reviews / day</div><b style="font-size:18px">${state.settings.reviewsPerDay}</b></div>
+        <div><div style="color:var(--c-text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Starting ease</div><b style="font-size:18px">${state.settings.startingEase}</b></div>
+        <div><div style="color:var(--c-text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Easy bonus</div><b style="font-size:18px">${state.settings.easyBonus}×</b></div>
+      </div>
+    </div>
+  </div>`;
+
+  renderHeatmap();
+  document.getElementById('open-settings').onclick = openSettingsModal;
+}
+
+function stateBar(label, val, total, color) {
+  const pct = total ? (val/total*100) : 0;
+  return `<div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span>${label}</span><b class="text-mono">${val}</b></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function renderHeatmap() {
+  const hm = document.getElementById('heatmap');
+  const counts = {};
+  state.stats.reviewLog.forEach(r => { counts[r.day] = (counts[r.day]||0)+1; });
+  const cells = [];
+  for (let i = 18*7-1; i >= 0; i--) {
+    const d = new Date(Date.now() - i*DAY_MS);
+    const ds = todayStr(d);
+    const n = counts[ds]||0;
+    let lvl = 0;
+    if (n>0) lvl = n>=30?4:n>=15?3:n>=5?2:1;
+    cells.push(`<div class="heat-cell ${lvl?'heat-'+lvl:''}" title="${ds}: ${n} reviews"></div>`);
+  }
+  hm.innerHTML = cells.join('');
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function openModal(html, onMount) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(overlay); };
+  document.body.appendChild(overlay);
+  const esc = (e) => { if (e.key === 'Escape') { closeModal(overlay); document.removeEventListener('keydown', esc); } };
+  document.addEventListener('keydown', esc);
+  if (onMount) onMount(overlay);
+  return overlay;
+}
+function closeModal(overlay) { overlay.style.animation = 'fadeIn var(--dur) reverse'; setTimeout(() => overlay.remove(), 150); }
+
+let editingDeck = null;
+function openDeckModal(deck = null) {
+  editingDeck = deck;
+  let selColor = deck ? deck.color : COLORS[0];
+  const html = `
+    <div class="modal-head"><h3>${deck?'Edit Deck':'New Deck'}</h3><button class="btn btn-icon btn-sm btn-ghost" id="close-x">${ICON.x}</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="field-label">Deck name</label><input class="input" id="deck-name" placeholder="e.g. French Verbs" value="${deck?esc(deck.name):''}"></div>
+      <div class="field"><label class="field-label">Description <span style="color:var(--c-text-3)">(optional)</span></label><input class="input" id="deck-desc" placeholder="What's this deck about?" value="${deck?esc(deck.desc||''):''}"></div>
+      <div class="field"><label class="field-label">Color</label><div class="color-picker" id="color-picker">${COLORS.map(c=>`<div class="color-swatch ${c===selColor?'selected':''}" style="background:${c};color:${c}" data-color="${c}"></div>`).join('')}</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" id="cancel">Cancel</button><button class="btn btn-primary" id="save">${deck?'Save Changes':'Create Deck'}</button></div>`;
+  openModal(html, (ov) => {
+    const nameInput = ov.querySelector('#deck-name');
+    nameInput.focus();
+    ov.querySelector('#color-picker').onclick = (e) => {
+      const sw = e.target.closest('.color-swatch'); if (!sw) return;
+      selColor = sw.dataset.color;
+      ov.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === selColor));
+    };
+    const save = () => {
+      const name = nameInput.value.trim();
+      if (!name) { nameInput.focus(); toast('Deck name is required', 'error'); return; }
+      const desc = ov.querySelector('#deck-desc').value.trim();
+      if (deck) { deck.name = name; deck.desc = desc; deck.color = selColor; toast('Deck updated', 'success'); }
+      else { const id = uid(); state.decks.push({ id, name, desc, color: selColor, created: Date.now() }); state.cards[id] = []; toast('Deck created', 'success'); }
+      saveState(); closeModal(ov);
+      if (currentView === 'decks') renderDecks(); else renderSidebar();
+    };
+    ov.querySelector('#save').onclick = save;
+    ov.querySelector('#cancel').onclick = () => closeModal(ov);
+    ov.querySelector('#close-x').onclick = () => closeModal(ov);
+    nameInput.onkeydown = (e) => { if (e.key === 'Enter') save(); };
+  });
+}
+
+function confirmDeleteDeck(deck) {
+  const html = `
+    <div class="modal-head"><h3>Delete deck?</h3><button class="btn btn-icon btn-sm btn-ghost" id="close-x">${ICON.x}</button></div>
+    <div class="modal-body"><p style="color:var(--c-text-1)">Are you sure you want to delete <b>${esc(deck.name)}</b> and all ${deckCards(deck.id).length} of its cards? This cannot be undone.</p></div>
+    <div class="modal-foot"><button class="btn" id="cancel">Cancel</button><button class="btn btn-danger" id="confirm">Delete Deck</button></div>`;
+  openModal(html, (ov) => {
+    ov.querySelector('#confirm').onclick = () => {
+      state.decks = state.decks.filter(d => d.id !== deck.id);
+      delete state.cards[deck.id];
+      saveState(); closeModal(ov); renderDecks(); toast('Deck deleted', 'success');
+    };
+    ov.querySelector('#cancel').onclick = () => closeModal(ov);
+    ov.querySelector('#close-x').onclick = () => closeModal(ov);
+  });
+}
+
+function openCardModal(deckId, card = null, fromStudy = false) {
+  const html = `
+    <div class="modal-head"><h3>${card?'Edit Card':'Add Card'}</h3><button class="btn btn-icon btn-sm btn-ghost" id="close-x">${ICON.x}</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="field-label">Front</label><textarea class="textarea" id="card-front" placeholder="Question or prompt...">${card?esc(card.front):''}</textarea></div>
+      <div class="field"><label class="field-label">Back</label><textarea class="textarea" id="card-back" placeholder="Answer...">${card?esc(card.back):''}</textarea></div>
+      <div class="field"><label class="field-label">Tags <span style="color:var(--c-text-3)">(comma separated)</span></label><input class="input" id="card-tags" placeholder="grammar, beginner" value="${card?esc((card.tags||[]).join(', ')):''}"></div>
+    </div>
+    <div class="modal-foot">
+      ${!card?'<button class="btn" id="save-add" style="margin-right:auto">Save &amp; Add Another</button>':''}
+      <button class="btn" id="cancel">Cancel</button>
+      <button class="btn btn-primary" id="save">${card?'Save Changes':'Add Card'}</button>
+    </div>`;
+  openModal(html, (ov) => {
+    const front = ov.querySelector('#card-front'), back = ov.querySelector('#card-back'), tags = ov.querySelector('#card-tags');
+    front.focus();
+    const collect = () => {
+      const f = front.value.trim(), b = back.value.trim();
+      if (!f || !b) { toast('Both front and back are required', 'error'); return null; }
+      const t = tags.value.split(',').map(s=>s.trim()).filter(Boolean);
+      return { f, b, t };
+    };
+    const doSave = (keepOpen) => {
+      const data = collect(); if (!data) return;
+      if (card) {
+        card.front = data.f; card.back = data.b; card.tags = data.t;
+        toast('Card updated', 'success');
+      } else {
+        deckCards(deckId).push({
+          id: uid(), front: data.f, back: data.b, tags: data.t,
+          state: 'new', due: Date.now(), interval: 0, ease: state.settings.startingEase,
+          reps: 0, lapses: 0, learningStep: 0, suspended: false, created: Date.now(),
+        });
+        toast('Card added', 'success');
+      }
+      saveState();
+      if (keepOpen) { front.value=''; back.value=''; tags.value=''; front.focus(); if(currentView==='deck-detail')renderDeckDetail(); }
+      else { closeModal(ov);
+        if (fromStudy) renderStudyCard();
+        else if (currentView==='deck-detail') renderDeckDetail();
+        else if (currentView==='decks') renderDecks();
+      }
+      renderSidebar();
+    };
+    ov.querySelector('#save').onclick = () => doSave(false);
+    const sa = ov.querySelector('#save-add'); if (sa) sa.onclick = () => doSave(true);
+    ov.querySelector('#cancel').onclick = () => closeModal(ov);
+    ov.querySelector('#close-x').onclick = () => closeModal(ov);
+    const submitKey = (e) => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') doSave(false); };
+    front.onkeydown = submitKey; back.onkeydown = submitKey; tags.onkeydown = submitKey;
+  });
+}
+
+function openSettingsModal() {
+  const s = state.settings;
+  const html = `
+    <div class="modal-head"><h3>Study Settings</h3><button class="btn btn-icon btn-sm btn-ghost" id="close-x">${ICON.x}</button></div>
+    <div class="modal-body">
+      <div class="row-flex">
+        <div class="field"><label class="field-label">New cards / day</label><input class="input" type="number" id="s-new" value="${s.newPerDay}" min="0"></div>
+        <div class="field"><label class="field-label">Max reviews / day</label><input class="input" type="number" id="s-rev" value="${s.reviewsPerDay}" min="0"></div>
+      </div>
+      <div class="field"><label class="field-label">Learning steps (minutes, comma separated)</label><input class="input" id="s-steps" value="${s.learningSteps.join(', ')}"></div>
+      <div class="row-flex">
+        <div class="field"><label class="field-label">Graduating interval (days)</label><input class="input" type="number" id="s-grad" value="${s.graduatingInterval}" min="1"></div>
+        <div class="field"><label class="field-label">Easy interval (days)</label><input class="input" type="number" id="s-easy-iv" value="${s.easyInterval}" min="1"></div>
+      </div>
+      <div class="row-flex">
+        <div class="field"><label class="field-label">Starting ease</label><input class="input" type="number" step="0.1" id="s-ease" value="${s.startingEase}" min="1.3"></div>
+        <div class="field"><label class="field-label">Easy bonus</label><input class="input" type="number" step="0.05" id="s-bonus" value="${s.easyBonus}" min="1"></div>
+      </div>
+      <div class="field"><label class="field-label">Interval modifier (${(s.intervalModifier*100).toFixed(0)}%)</label><input class="input" type="number" step="0.05" id="s-mod" value="${s.intervalModifier}" min="0.5"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="reset-data" style="margin-right:auto">Reset All Data</button>
+      <button class="btn" id="cancel">Cancel</button>
+      <button class="btn btn-primary" id="save">Save Settings</button>
+    </div>`;
+  openModal(html, (ov) => {
+    ov.querySelector('#save').onclick = () => {
+      s.newPerDay = Math.max(0, parseInt(ov.querySelector('#s-new').value)||0);
+      s.reviewsPerDay = Math.max(0, parseInt(ov.querySelector('#s-rev').value)||0);
+      s.learningSteps = ov.querySelector('#s-steps').value.split(',').map(x=>parseFloat(x.trim())).filter(x=>x>0);
+      if (s.learningSteps.length === 0) s.learningSteps = [1,10];
+      s.graduatingInterval = Math.max(1, parseInt(ov.querySelector('#s-grad').value)||1);
+      s.easyInterval = Math.max(1, parseInt(ov.querySelector('#s-easy-iv').value)||4);
+      s.startingEase = Math.max(1.3, parseFloat(ov.querySelector('#s-ease').value)||2.5);
+      s.easyBonus = Math.max(1, parseFloat(ov.querySelector('#s-bonus').value)||1.3);
+      s.intervalModifier = Math.max(0.5, parseFloat(ov.querySelector('#s-mod').value)||1);
+      saveState(); closeModal(ov); renderStats(); toast('Settings saved', 'success');
+    };
+    ov.querySelector('#reset-data').onclick = () => {
+      closeModal(ov);
+      openModal(`<div class="modal-head"><h3>Reset all data?</h3></div><div class="modal-body"><p style="color:var(--c-text-1)">This will permanently delete all decks, cards, and statistics, restoring the sample data. This cannot be undone.</p></div><div class="modal-foot"><button class="btn" id="c2">Cancel</button><button class="btn btn-danger" id="r2">Reset Everything</button></div>`, (ov2) => {
+        ov2.querySelector('#r2').onclick = () => { state = seedState(); saveState(); closeModal(ov2); navigate('dashboard'); toast('All data reset', 'success'); };
+        ov2.querySelector('#c2').onclick = () => closeModal(ov2);
+      });
+    };
+    ov.querySelector('#cancel').onclick = () => closeModal(ov);
+    ov.querySelector('#close-x').onclick = () => closeModal(ov);
+  });
+}
+
+/* ============================================================
+   IMPORT / EXPORT
+   ============================================================ */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `recall-export-${todayStr()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Data exported', 'success');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json,application/json';
+  input.onchange = () => {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data.decks || !data.cards) throw new Error('Invalid format');
+        data.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || {});
+        data.stats = data.stats || { reviewLog: [], streak: 0, lastStudy: null };
+        state = data; saveState(); navigate('decks'); toast('Data imported successfully', 'success');
+      } catch (e) { toast('Import failed: invalid file', 'error'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icon = type === 'success' ? ICON.check : type === 'error' ? ICON.x : ICON.flag;
+  el.innerHTML = `${icon}<span>${esc(msg)}</span>`;
+  container.appendChild(el);
+  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 250); }, 2600);
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
+document.addEventListener('keydown', (e) => {
+  if (document.querySelector('.modal-overlay')) return;
+  if (e.target.matches('input, textarea, select')) return;
+  if (currentView === 'study' && session) {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (!session.flipped) flipCard();
+      else if (e.key === 'Enter') rateCard(3); // default good
+    }
+    if (session.flipped && ['1','2','3','4'].includes(e.key)) { e.preventDefault(); rateCard(parseInt(e.key)); }
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => navigate(n.dataset.view));
+document.getElementById('menu-toggle').onclick = () => document.getElementById('app').classList.toggle('nav-open');
+document.getElementById('scrim').onclick = () => document.getElementById('app').classList.remove('nav-open');
+
+navigate('dashboard');
+</script>
+</body>
+</html>
