@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkbreaker — Writer's Block Tools</title>
+<style>
+/* ============ DESIGN TOKENS ============ */
+:root {
+  /* Color primitives */
+  --c-bg-900: #0a0b0e;
+  --c-bg-850: #0e1014;
+  --c-bg-800: #121419;
+  --c-bg-750: #161922;
+  --c-bg-700: #1b1f29;
+  --c-bg-600: #232834;
+  --c-bg-500: #2c323f;
+  --c-border: #262b36;
+  --c-border-soft: #1e222c;
+  --c-text-hi: #f2f4f8;
+  --c-text: #c4cad6;
+  --c-text-mid: #8b93a4;
+  --c-text-low: #5d6575;
+  --c-accent: #7c8cff;
+  --c-accent-hi: #9aa6ff;
+  --c-accent-dim: #4a55a8;
+  --c-accent-glow: rgba(124,140,255,0.15);
+  --c-mint: #46d6a8;
+  --c-amber: #f5b14c;
+  --c-rose: #f0688a;
+  --c-violet: #b388ff;
+  --c-cyan: #4fd1e0;
+
+  /* Spacing scale */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+
+  /* Radius */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-full: 999px;
+
+  /* Typography */
+  --f-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, monospace;
+  --f-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  /* Shadows */
+  --sh-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --sh-md: 0 4px 14px rgba(0,0,0,0.35);
+  --sh-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --sh-glow: 0 0 0 1px var(--c-accent-glow), 0 8px 30px var(--c-accent-glow);
+
+  /* Motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 380ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+::selection { background: var(--c-accent-dim); color: #fff; }
+
+html, body { height: 100%; }
+body {
+  font-family: var(--f-sans);
+  background: var(--c-bg-900);
+  color: var(--c-text);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Scrollbar */
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--c-bg-600); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--c-bg-500); background-clip: content-box; }
+
+/* ============ LAYOUT ============ */
+.app {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  grid-template-rows: 100vh;
+  height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: var(--c-bg-850);
+  border-right: 1px solid var(--c-border-soft);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.brand-logo {
+  width: 34px; height: 34px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-violet));
+  display: grid; place-items: center;
+  font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 4px 14px var(--c-accent-glow);
+}
+.brand-name { font-weight: 700; color: var(--c-text-hi); font-size: 15px; letter-spacing: -0.2px; }
+.brand-sub { font-size: 11px; color: var(--c-text-low); letter-spacing: 0.3px; }
+
+.nav { flex: 1; overflow-y: auto; padding: var(--s-3) var(--s-3); }
+.nav-group-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--c-text-low); padding: var(--s-3) var(--s-3) var(--s-2); font-weight: 600;
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 9px var(--s-3); border-radius: var(--r-md);
+  color: var(--c-text-mid); cursor: pointer; font-size: 13px; font-weight: 500;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  position: relative; user-select: none;
+}
+.nav-item:hover { background: var(--c-bg-750); color: var(--c-text); }
+.nav-item.active { background: var(--c-bg-700); color: var(--c-text-hi); }
+.nav-item.active::before {
+  content: ''; position: absolute; left: -3px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--c-accent); border-radius: 99px;
+}
+.nav-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.9; }
+.nav-badge {
+  margin-left: auto; font-size: 10px; background: var(--c-bg-600);
+  color: var(--c-text-mid); padding: 1px 7px; border-radius: 99px; font-weight: 600;
+}
+
+.sidebar-footer { padding: var(--s-3); border-top: 1px solid var(--c-border-soft); }
+.api-status {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 9px var(--s-3); border-radius: var(--r-md);
+  cursor: pointer; transition: background var(--dur-fast);
+}
+.api-status:hover { background: var(--c-bg-750); }
+.status-dot { width: 8px; height: 8px; border-radius: 99px; background: var(--c-text-low); flex-shrink: 0; }
+.status-dot.ok { background: var(--c-mint); box-shadow: 0 0 8px var(--c-mint); }
+.status-label { font-size: 12px; color: var(--c-text-mid); font-weight: 500; }
+.status-sub { font-size: 10.5px; color: var(--c-text-low); margin-left: auto; }
+
+/* ===== MAIN ===== */
+.main { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--c-bg-900); }
+.topbar {
+  height: 56px; flex-shrink: 0;
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: 0 var(--s-6); border-bottom: 1px solid var(--c-border-soft);
+  background: var(--c-bg-850);
+}
+.page-title { font-size: 15px; font-weight: 700; color: var(--c-text-hi); letter-spacing: -0.2px; }
+.page-desc { font-size: 12px; color: var(--c-text-low); }
+.topbar-spacer { flex: 1; }
+
+.model-picker {
+  display: flex; align-items: center; gap: var(--s-2);
+  background: var(--c-bg-700); border: 1px solid var(--c-border);
+  border-radius: var(--r-md); padding: 5px var(--s-3); cursor: pointer;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+  max-width: 280px;
+}
+.model-picker:hover { border-color: var(--c-accent-dim); }
+.model-picker select {
+  background: transparent; border: none; color: var(--c-text); font-size: 12px;
+  font-family: var(--f-sans); cursor: pointer; outline: none; max-width: 220px;
+  text-overflow: ellipsis;
+}
+.model-picker select option { background: var(--c-bg-700); }
+.provider-pill {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.provider-pill.groq { background: rgba(245,177,76,0.15); color: var(--c-amber); }
+.provider-pill.gemini { background: rgba(79,209,224,0.15); color: var(--c-cyan); }
+.provider-pill.openrouter { background: rgba(179,136,255,0.15); color: var(--c-violet); }
+.provider-pill.none { background: var(--c-bg-600); color: var(--c-text-low); }
+
+.content { flex: 1; overflow-y: auto; padding: var(--s-6); }
+.content-inner { max-width: 1180px; margin: 0 auto; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  font-family: var(--f-sans); font-size: 13px; font-weight: 600;
+  padding: 9px var(--s-4); border-radius: var(--r-md); border: 1px solid transparent;
+  cursor: pointer; transition: all var(--dur-fast) var(--ease-soft);
+  white-space: nowrap; user-select: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--c-accent); color: #0a0b0e; }
+.btn-primary:hover { background: var(--c-accent-hi); box-shadow: 0 4px 16px var(--c-accent-glow); }
+.btn-ghost { background: var(--c-bg-700); color: var(--c-text); border-color: var(--c-border); }
+.btn-ghost:hover { background: var(--c-bg-600); border-color: var(--c-border); }
+.btn-subtle { background: transparent; color: var(--c-text-mid); }
+.btn-subtle:hover { background: var(--c-bg-750); color: var(--c-text); }
+.btn-icon { padding: 8px; }
+.btn-sm { padding: 6px var(--s-3); font-size: 12px; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--c-bg-800); border: 1px solid var(--c-border-soft);
+  border-radius: var(--r-lg); padding: var(--s-5);
+  transition: border-color var(--dur), transform var(--dur) var(--ease);
+}
+.card-hd { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-4); }
+.card-icon {
+  width: 36px; height: 36px; border-radius: var(--r-md); display: grid; place-items: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--c-text-hi); }
+.card-sub { font-size: 12px; color: var(--c-text-low); }
+
+/* Hero / output zone */
+.prompt-stage {
+  background: linear-gradient(160deg, var(--c-bg-800), var(--c-bg-850));
+  border: 1px solid var(--c-border); border-radius: var(--r-xl);
+  padding: var(--s-10) var(--s-8); min-height: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; position: relative; overflow: hidden;
+}
+.prompt-stage::before {
+  content: ''; position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--c-accent-glow), transparent 65%);
+  pointer-events: none; opacity: 0.6;
+}
+.prompt-text {
+  font-family: var(--f-serif); font-size: 26px; line-height: 1.4; color: var(--c-text-hi);
+  max-width: 700px; position: relative; font-weight: 400; letter-spacing: -0.3px;
+}
+.prompt-text.ai-mode { font-family: var(--f-sans); font-size: 17px; line-height: 1.7; text-align: left; }
+.prompt-meta { margin-top: var(--s-5); font-size: 12px; color: var(--c-text-low); position: relative; display: flex; gap: var(--s-3); align-items: center; }
+.prompt-controls { margin-top: var(--s-6); display: flex; gap: var(--s-3); position: relative; flex-wrap: wrap; justify-content: center; }
+
+.tag-row { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-4); }
+.tag {
+  font-size: 11px; padding: 4px var(--s-3); border-radius: var(--r-full);
+  background: var(--c-bg-700); color: var(--c-text-mid); cursor: pointer;
+  border: 1px solid var(--c-border-soft); transition: all var(--dur-fast); font-weight: 500;
+}
+.tag:hover { color: var(--c-text); border-color: var(--c-accent-dim); }
+.tag.active { background: var(--c-accent-dim); color: #fff; border-color: var(--c-accent); }
+
+/* Inputs */
+.field { margin-bottom: var(--s-4); }
+.field-label { display: block; font-size: 12px; font-weight: 600; color: var(--c-text-mid); margin-bottom: var(--s-2); }
+.input, .textarea, .select {
+  width: 100%; background: var(--c-bg-750); border: 1px solid var(--c-border);
+  border-radius: var(--r-md); padding: 10px var(--s-3); color: var(--c-text-hi);
+  font-family: var(--f-sans); font-size: 13px; outline: none;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.input:focus, .textarea:focus, .select:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-accent-glow); }
+.textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+.input::placeholder, .textarea::placeholder { color: var(--c-text-low); }
+
+/* Grid helpers */
+.grid { display: grid; gap: var(--s-5); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-5); }
+.section-title { font-size: 16px; font-weight: 700; color: var(--c-text-hi); letter-spacing: -0.3px; }
+.row { display: flex; gap: var(--s-3); align-items: center; }
+.muted { color: var(--c-text-low); }
+
+/* TK manager */
+.tk-board { display: grid; grid-template-columns: 320px 1fr; gap: var(--s-5); }
+.tk-list { display: flex; flex-direction: column; gap: var(--s-2); }
+.tk-item {
+  background: var(--c-bg-800); border: 1px solid var(--c-border-soft); border-radius: var(--r-md);
+  padding: var(--s-3); cursor: pointer; transition: all var(--dur-fast);
+  display: flex; align-items: flex-start; gap: var(--s-3);
+}
+.tk-item:hover { border-color: var(--c-border); transform: translateX(2px); }
+.tk-item.active { border-color: var(--c-accent); background: var(--c-bg-750); }
+.tk-marker {
+  font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: var(--c-amber);
+  background: rgba(245,177,76,0.12); padding: 2px 6px; border-radius: var(--r-sm);
+  flex-shrink: 0; margin-top: 1px;
+}
+.tk-marker.done { color: var(--c-mint); background: rgba(70,214,168,0.12); }
+.tk-content { flex: 1; min-width: 0; }
+.tk-text { font-size: 13px; color: var(--c-text); line-height: 1.4; }
+.tk-text.done { text-decoration: line-through; color: var(--c-text-low); }
+.tk-cat { font-size: 10.5px; color: var(--c-text-low); margin-top: 2px; }
+
+.empty {
+  text-align: center; padding: var(--s-12) var(--s-6); color: var(--c-text-low);
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-3);
+}
+.empty-icon { font-size: 36px; opacity: 0.4; }
+
+/* Lorem output */
+.lorem-out {
+  background: var(--c-bg-800); border: 1px solid var(--c-border-soft); border-radius: var(--r-lg);
+  padding: var(--s-6); font-family: var(--f-serif); font-size: 15px; line-height: 1.8;
+  color: var(--c-text); min-height: 200px;
+}
+.lorem-out p { margin-bottom: var(--s-4); }
+.lorem-out p:last-child { margin-bottom: 0; }
+
+/* Diagnostic */
+.diag-result {
+  margin-top: var(--s-5); padding: var(--s-5); border-radius: var(--r-lg);
+  background: var(--c-bg-800); border: 1px solid var(--c-border-soft);
+  white-space: pre-wrap; line-height: 1.7; font-size: 14px; color: var(--c-text);
+}
+.diag-result h4 { color: var(--c-accent-hi); margin: var(--s-3) 0 var(--s-2); font-size: 14px; }
+.diag-result strong { color: var(--c-text-hi); }
+
+/* Modal */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(5,6,9,0.7); backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  animation: fade var(--dur) var(--ease);
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--c-bg-800); border: 1px solid var(--c-border);
+  border-radius: var(--r-xl); width: min(560px, 92vw); max-height: 86vh; overflow-y: auto;
+  box-shadow: var(--sh-lg); animation: pop var(--dur) var(--ease);
+}
+.modal-hd { display: flex; align-items: center; justify-content: space-between; padding: var(--s-5) var(--s-6); border-bottom: 1px solid var(--c-border-soft); }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--c-text-hi); }
+.modal-body { padding: var(--s-6); }
+.modal-x { cursor: pointer; color: var(--c-text-mid); padding: 4px; border-radius: var(--r-sm); transition: all var(--dur-fast); }
+.modal-x:hover { background: var(--c-bg-700); color: var(--c-text-hi); }
+
+.key-card { background: var(--c-bg-750); border: 1px solid var(--c-border-soft); border-radius: var(--r-md); padding: var(--s-4); margin-bottom: var(--s-4); }
+.key-card-hd { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-3); }
+
+/* Toast */
+.toast-wrap { position: fixed; bottom: var(--s-6); right: var(--s-6); z-index: 200; display: flex; flex-direction: column; gap: var(--s-2); }
+.toast {
+  background: var(--c-bg-700); border: 1px solid var(--c-border); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4); font-size: 13px; color: var(--c-text-hi);
+  box-shadow: var(--sh-md); display: flex; align-items: center; gap: var(--s-3);
+  animation: slideIn var(--dur) var(--ease); min-width: 200px;
+}
+.toast.ok { border-left: 3px solid var(--c-mint); }
+.toast.err { border-left: 3px solid var(--c-rose); }
+.toast.info { border-left: 3px solid var(--c-accent); }
+
+/* Loading spinner */
+.spinner {
+  width: 16px; height: 16px; border: 2px solid var(--c-bg-500);
+  border-top-color: var(--c-accent); border-radius: 99px; animation: spin 0.7s linear infinite;
+}
+.loading-shimmer {
+  height: 14px; border-radius: var(--r-sm); margin: 8px 0;
+  background: linear-gradient(90deg, var(--c-bg-700) 25%, var(--c-bg-600) 50%, var(--c-bg-700) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite;
+}
+
+/* Page transitions */
+.page { display: none; animation: pageIn var(--dur-slow) var(--ease); }
+.page.active { display: block; }
+
+/* Stats */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-4); margin-bottom: var(--s-6); }
+.stat {
+  background: var(--c-bg-800); border: 1px solid var(--c-border-soft); border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+}
+.stat-val { font-size: 24px; font-weight: 700; color: var(--c-text-hi); letter-spacing: -0.5px; }
+.stat-label { font-size: 11.5px; color: var(--c-text-low); margin-top: 2px; }
+
+.divider { height: 1px; background: var(--c-border-soft); margin: var(--s-5) 0; }
+.fade-up { animation: pageIn var(--dur-slow) var(--ease); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.96) translateY(8px); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } }
+@keyframes pageIn { from { opacity: 0; transform: translateY(8px); } }
+@keyframes flip { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+.anim-flip { animation: flip var(--dur-slow) var(--ease); }
+
+/* Mobile */
+.menu-toggle { display: none; }
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 248px; z-index: 90;
+    transform: translateX(-100%); transition: transform var(--dur) var(--ease);
+    box-shadow: var(--sh-lg);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-toggle { display: grid; place-items: center; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .tk-board { grid-template-columns: 1fr; }
+  .content { padding: var(--s-4); }
+  .prompt-text { font-size: 21px; }
+}
+.sidebar-scrim {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 80;
+}
+.sidebar-scrim.open { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">✦</div>
+      <div>
+        <div class="brand-name">Inkbreaker</div>
+        <div class="brand-sub">Writer's Block Toolkit</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-group-label">Generate</div>
+      <div class="nav-item active" data-page="unblock">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+        Unblocker Prompts
+      </div>
+      <div class="nav-item" data-page="want">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        Character Wants
+      </div>
+      <div class="nav-item" data-page="worse">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.7 16.5-9-14a2 2 0 0 0-3.4 0l-9 14A2 2 0 0 0 2 19h18a2 2 0 0 0 1.7-2.5z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Make It Worse
+      </div>
+      <div class="nav-group-label">Diagnose</div>
+      <div class="nav-item" data-page="diagnostic">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2v2M5 2v2M3 7h18M5 22a1 1 0 0 1-1-1V7h16v14a1 1 0 0 1-1 1z"/><path d="M9 12l2 2 4-4"/></svg>
+        Scene Diagnostic
+      </div>
+      <div class="nav-group-label">Manage</div>
+      <div class="nav-item" data-page="tk">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Placeholder [TK]
+        <span class="nav-badge" id="tkBadge">0</span>
+      </div>
+      <div class="nav-item" data-page="lorem">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+        Writer's Lorem
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="api-status" id="apiStatusBtn">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-label">API Keys</span>
+        <span class="status-sub" id="statusSub">Not set</span>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-scrim" id="scrim"></div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon btn-subtle menu-toggle" id="menuToggle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div>
+        <div class="page-title" id="pageTitle">Unblocker Prompts</div>
+        <div class="page-desc" id="pageDesc">Random questions to get you unstuck</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="model-picker" title="Active model">
+        <span class="provider-pill none" id="modelProvider">none</span>
+        <select id="modelSelect"><option>No models loaded</option></select>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="refreshModels" title="Fetch available models">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+        Update Models
+      </button>
+    </header>
+
+    <div class="content">
+      <div class="content-inner">
+
+        <!-- ===== PAGE: UNBLOCKER ===== -->
+        <section class="page active" id="page-unblock">
+          <div class="prompt-stage">
+            <div class="prompt-text" id="unblockText">Click "New Prompt" to get a question about your story.</div>
+            <div class="prompt-meta" id="unblockMeta"></div>
+            <div class="prompt-controls">
+              <button class="btn btn-primary" id="newUnblock">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg>
+                New Prompt
+              </button>
+              <button class="btn btn-ghost" id="aiUnblock">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.8L20 10.7l-4.7 3.4 1.8 5.9L12 16.5 6.9 20l1.8-5.9L4 10.7l6.1-1.9z"/></svg>
+                AI Prompt
+              </button>
+              <button class="btn btn-subtle btn-icon" id="copyUnblock" title="Copy">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-hd" style="margin-top:var(--s-6)">
+            <div class="section-title">Filter by category</div>
+          </div>
+          <div class="tag-row" id="unblockTags"></div>
+          <div class="field" style="margin-top:var(--s-6)">
+            <label class="field-label">Optional context (for AI prompts) — paste a snippet or describe your story</label>
+            <textarea class="textarea" id="unblockContext" placeholder="e.g. A noir detective story set on a generation ship. My protagonist just found a body..."></textarea>
+          </div>
+        </section>
+
+        <!-- ===== PAGE: CHARACTER WANTS ===== -->
+        <section class="page" id="page-want">
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-icon" style="background:rgba(124,140,255,0.12);color:var(--c-accent-hi)">◎</div>
+                <div>
+                  <div class="card-title">What does my character want?</div>
+                  <div class="card-sub">Surface desire vs. deeper need</div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Character name</label>
+                <input class="input" id="wantName" placeholder="e.g. Mara">
+              </div>
+              <div class="field">
+                <label class="field-label">Where are they in the story right now?</label>
+                <textarea class="textarea" id="wantSituation" placeholder="Describe the scene or moment..."></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" id="wantGenerate">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.8L20 10.7l-4.7 3.4 1.8 5.9L12 16.5 6.9 20l1.8-5.9L4 10.7l6.1-1.9z"/></svg>
+                Reveal Their Wants
+              </button>
+              <div class="divider"></div>
+              <div class="card-sub" style="margin-bottom:var(--s-2)">Or roll quick offline prompts:</div>
+              <button class="btn btn-ghost btn-block" id="wantQuick">Quick Want Questions</button>
+            </div>
+            <div class="card" id="wantOutWrap">
+              <div class="card-hd">
+                <div class="card-icon" style="background:rgba(70,214,168,0.12);color:var(--c-mint)">✓</div>
+                <div class="card-title">Insights</div>
+              </div>
+              <div id="wantOut" class="empty">
+                <div class="empty-icon">◎</div>
+                <div>Fill in your character and hit reveal.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PAGE: MAKE IT WORSE ===== -->
+        <section class="page" id="page-worse">
+          <div class="prompt-stage" style="min-height:160px">
+            <div class="prompt-text" id="worseText" style="color:var(--c-rose)">Raise the stakes. Twist the knife.</div>
+            <div class="prompt-meta" id="worseMeta"></div>
+            <div class="prompt-controls">
+              <button class="btn btn-primary" id="newWorse" style="background:var(--c-rose);color:#1a0810">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.7 16.5-9-14a2 2 0 0 0-3.4 0l-9 14A2 2 0 0 0 2 19h18a2 2 0 0 0 1.7-2.5z"/></svg>
+                Make It Worse
+              </button>
+              <button class="btn btn-ghost" id="aiWorse">AI Escalation</button>
+            </div>
+          </div>
+          <div class="section-hd" style="margin-top:var(--s-6)">
+            <div class="section-title">Stake type</div>
+          </div>
+          <div class="tag-row" id="worseTags"></div>
+          <div class="field" style="margin-top:var(--s-6)">
+            <label class="field-label">Describe your current scene (for AI escalation)</label>
+            <textarea class="textarea" id="worseContext" placeholder="What's happening right now that's too comfortable?"></textarea>
+          </div>
+        </section>
+
+        <!-- ===== PAGE: DIAGNOSTIC ===== -->
+        <section class="page" id="page-diagnostic">
+          <div class="card">
+            <div class="card-hd">
+              <div class="card-icon" style="background:rgba(245,177,76,0.12);color:var(--c-amber)">⚕</div>
+              <div>
+                <div class="card-title">Scene Trouble Diagnostic</div>
+                <div class="card-sub">Tell me what's wrong, and let's find the cause</div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Paste the scene or describe it</label>
+              <textarea class="textarea" id="diagScene" style="min-height:140px" placeholder="Paste the troublesome scene, or describe what happens..."></textarea>
+            </div>
+            <div class="field">
+              <label class="field-label">What feels off? (optional)</label>
+              <input class="input" id="diagSymptom" placeholder="e.g. It feels flat / dialogue drags / I'm bored writing it">
+            </div>
+            <div class="row">
+              <button class="btn btn-primary" id="diagRun">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                Diagnose Scene
+              </button>
+              <button class="btn btn-ghost" id="diagChecklist">Offline Checklist</button>
+            </div>
+            <div id="diagOut"></div>
+          </div>
+        </section>
+
+        <!-- ===== PAGE: TK MANAGER ===== -->
+        <section class="page" id="page-tk">
+          <div class="stat-grid">
+            <div class="stat"><div class="stat-val" id="tkTotal">0</div><div class="stat-label">Total placeholders</div></div>
+            <div class="stat"><div class="stat-val" id="tkOpen">0</div><div class="stat-label">Open</div></div>
+            <div class="stat"><div class="stat-val" id="tkDone">0</div><div class="stat-label">Resolved</div></div>
+          </div>
+          <div class="card" style="margin-bottom:var(--s-5)">
+            <div class="card-hd">
+              <div class="card-icon" style="background:rgba(245,177,76,0.12);color:var(--c-amber)">[TK]</div>
+              <div>
+                <div class="card-title">Add a placeholder</div>
+                <div class="card-sub">"To Come" — track things you'll fill in later</div>
+              </div>
+            </div>
+            <div class="grid grid-2" style="gap:var(--s-3)">
+              <input class="input" id="tkInput" placeholder="e.g. TK find real name for the inn">
+              <div class="row" style="gap:var(--s-3)">
+                <select class="select" id="tkCat" style="flex:1">
+                  <option value="Fact">Fact</option>
+                  <option value="Name">Name</option>
+                  <option value="Research">Research</option>
+                  <option value="Description">Description</option>
+                  <option value="Continuity">Continuity</option>
+                  <option value="Other">Other</option>
+                </select>
+                <button class="btn btn-primary" id="tkAdd">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="section-hd">
+            <div class="section-title">Your placeholders</div>
+            <div class="row">
+              <button class="btn btn-subtle btn-sm" id="tkScanBtn">Scan text for [TK]</button>
+              <button class="btn btn-subtle btn-sm" id="tkExport">Export</button>
+            </div>
+          </div>
+          <div class="tk-board">
+            <div class="tk-list" id="tkList"></div>
+            <div class="card" id="tkDetail">
+              <div class="empty">
+                <div class="empty-icon">[TK]</div>
+                <div>Select a placeholder to add notes, or paste text below to scan.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PAGE: LOREM ===== -->
+        <section class="page" id="page-lorem">
+          <div class="card" style="margin-bottom:var(--s-5)">
+            <div class="card-hd">
+              <div class="card-icon" style="background:rgba(179,136,255,0.12);color:var(--c-violet)">¶</div>
+              <div>
+                <div class="card-title">Writer's Lorem Ipsum</div>
+                <div class="card-sub">Filler text styled like prose — won't distract or read as "real" content</div>
+              </div>
+            </div>
+            <div class="grid grid-3" style="gap:var(--s-3)">
+              <div class="field" style="margin:0">
+                <label class="field-label">Style</label>
+                <select class="select" id="loremStyle">
+                  <option value="classic">Classic Latin</option>
+                  <option value="prose">Neutral Prose</option>
+                  <option value="dialogue">Dialogue Filler</option>
+                  <option value="action">Action Beats</option>
+                </select>
+              </div>
+              <div class="field" style="margin:0">
+                <label class="field-label">Paragraphs</label>
+                <input class="input" id="loremCount" type="number" value="3" min="1" max="20">
+              </div>
+              <div class="field" style="margin:0">
+                <label class="field-label">Per paragraph</label>
+                <select class="select" id="loremLen">
+                  <option value="short">Short (3-5 sentences)</option>
+                  <option value="medium" selected>Medium (5-8)</option>
+                  <option value="long">Long (8-12)</option>
+                </select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:var(--s-4)">
+              <button class="btn btn-primary" id="loremGen">Generate Filler</button>
+              <button class="btn btn-ghost" id="loremCopy">Copy</button>
+            </div>
+          </div>
+          <div class="lorem-out" id="loremOut">
+            <p class="muted">Your filler text will appear here. Use it as a visual placeholder while drafting — it reads like prose but carries no real meaning.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ API SETTINGS MODAL ============ -->
+<div class="modal-backdrop" id="apiModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">API Keys & Models</div>
+      <div class="modal-x" id="apiModalX">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="card-sub" style="margin-bottom:var(--s-4)">Keys are stored only in this browser (localStorage). They never leave your device except to call the provider directly.</div>
+
+      <div class="key-card">
+        <div class="key-card-hd">
+          <span class="provider-pill groq">groq</span>
+          <span style="font-weight:600;color:var(--c-text-hi)">Groq</span>
+        </div>
+        <input class="input" id="keyGroq" type="password" placeholder="gsk_...">
+      </div>
+
+      <div class="key-card">
+        <div class="key-card-hd">
+          <span class="provider-pill gemini">gemini</span>
+          <span style="font-weight:600;color:var(--c-text-hi)">Google Gemini</span>
+        </div>
+        <input class="input" id="keyGemini" type="password" placeholder="AIza...">
+      </div>
+
+      <div class="key-card">
+        <div class="key-card-hd">
+          <span class="provider-pill openrouter">openrouter</span>
+          <span style="font-weight:600;color:var(--c-text-hi)">OpenRouter</span>
+        </div>
+        <input class="input" id="keyOpenrouter" type="password" placeholder="sk-or-...">
+      </div>
+
+      <div class="row" style="margin-top:var(--s-5)">
+        <button class="btn btn-primary" id="saveKeys">Save Keys</button>
+        <button class="btn btn-ghost" id="fetchModelsModal">Update Models</button>
+        <span class="muted" id="modelCount" style="margin-left:auto;font-size:12px"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   STATE MANAGEMENT
+   ============================================================ */
+const Store = {
+  state: {
+    keys: { groq: '', gemini: '', openrouter: '' },
+    models: [],            // [{id, provider, label}]
+    activeModel: null,     // {id, provider, label}
+    tks: [],               // [{id, text, cat, done, note, created}]
+    unblockFilter: 'all',
+    worseFilter: 'all'
+  },
+  load() {
+    try {
+      const raw = localStorage.getItem('inkbreaker_v1');
+      if (raw) Object.assign(this.state, JSON.parse(raw));
+    } catch(e){}
+  },
+  save() {
+    try { localStorage.setItem('inkbreaker_v1', JSON.stringify(this.state)); } catch(e){}
+  },
+  set(patch) { Object.assign(this.state, patch); this.save(); }
+};
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  $('#toastWrap').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all .3s'; }, 2600);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* ============================================================
+   PROMPT DATA BANKS
+   ============================================================ */
+const UNBLOCK_PROMPTS = {
+  character: [
+    "What is your protagonist most afraid someone will discover about them?",
+    "If your character could undo one decision, which would it be — and why won't they?",
+    "What does your character believe about themselves that's actually wrong?",
+    "Who does your character pretend to be, and who are they when alone?",
+    "What would break your character — not kill, but break?",
+    "What does your character do when no one is watching?",
+    "What promise has your character made that they're about to break?",
+    "Whose approval does your character secretly crave?"
+  ],
+  plot: [
+    "What's the worst possible time for the truth to come out? Make it happen then.",
+    "What if the thing your character is searching for has been with them all along — but it's not what they thought?",
+    "Who benefits if your protagonist fails? Bring them onstage.",
+    "What promise made in chapter one is about to be violently broken?",
+    "What would happen if your antagonist simply succeeded right now?",
+    "What's the lie the whole plot depends on? Who's about to discover it?",
+    "What event happened off-page that, if shown, would change everything?",
+    "What if your character gets exactly what they wanted — and it's a disaster?"
+  ],
+  world: [
+    "What's an ordinary, daily ritual in your world that an outsider would find horrifying?",
+    "What does your world smell like at dawn? At midnight?",
+    "What's forbidden in your world, and who breaks that rule?",
+    "What old technology or tradition is dying out as your story takes place?",
+    "Who holds power that nobody talks about openly?",
+    "What's the most beautiful place in your world, and what's hidden beneath it?",
+    "What do children in your world fear that adults pretend isn't real?"
+  ],
+  scene: [
+    "What's the unspoken thing both characters in this scene are avoiding?",
+    "What object in this room could change the entire conversation?",
+    "What if a character walked in right now? Who's the worst person it could be?",
+    "What does the setting want? Make the weather, the room, the noise an antagonist.",
+    "What's the line of dialogue your character would never say — now make them say it.",
+    "Start the scene later than you think you should. Where does it really begin?",
+    "What does each character want from this scene? Are those wants in conflict?"
+  ],
+  emotion: [
+    "When was the last time your character felt safe? Why can't they feel that now?",
+    "What small kindness would devastate your character right now?",
+    "What memory keeps interrupting your character's present?",
+    "What does grief look like for this specific person — not grief in general?",
+    "What does your character do with anger they're not allowed to express?"
+  ]
+};
+
+const WORSE_PROMPTS = {
+  physical: [
+    "Take away their escape route. Now.",
+    "Injure the one person who was going to help them.",
+    "The clock just got shorter. Cut the time in half.",
+    "Destroy the tool/weapon/resource they were counting on.",
+    "Add a second threat that contradicts how they'd handle the first."
+  ],
+  emotional: [
+    "Make them choose between two people they love.",
+    "Reveal that the person who helped them was lying the whole time.",
+    "Have them succeed — but at the cost of the thing they were trying to protect.",
+    "Force them to become the thing they swore they'd never be.",
+    "Make their greatest fear come true in the smallest, quietest way."
+  ],
+  social: [
+    "Expose their secret to the worst possible audience.",
+    "Turn an ally into a rival with a single misunderstanding.",
+    "Make their good intentions look like the worst kind of betrayal.",
+    "Strip away their reputation right when they need others to trust them."
+  ],
+  moral: [
+    "Make the right choice require an unforgivable act.",
+    "Put an innocent in the crossfire of their plan.",
+    "Make them realize the villain has a point.",
+    "Force them to keep a promise that now hurts someone."
+  ],
+  ironic: [
+    "Give them exactly what they asked for, in the cruelest way.",
+    "Let their greatest strength become the reason they fail.",
+    "Reward their honesty with disaster.",
+    "Have their old kindness come back as a present threat."
+  ]
+};
+
+const WANT_QUICK = [
+  "What does this character want in this exact moment (the surface want)?",
+  "What do they need that they don't yet realize (the deeper need)?",
+  "What are they willing to sacrifice to get it?",
+  "What are they NOT willing to do — and how will the story test that line?",
+  "Who or what stands directly between them and their want?",
+  "If they got it right now, would they actually be satisfied? Why not?"
+];
+
+const DIAG_CHECKLIST = [
+  ["Does someone in this scene WANT something?", "If no character has a clear, active desire here, the scene drifts. Give at least one person a goal — even a small one."],
+  ["Is there conflict or tension?", "Two people agreeing is not a scene. Find the friction: opposing wants, withheld information, or an external pressure."],
+  ["Does the scene change something?", "If the situation is identical at the end as the start, the scene is skippable. Something must shift — a relationship, a fact, a decision."],
+  ["Are you starting too early?", "Cut the throat-clearing. Enter the scene as late as possible — ideally mid-action or mid-tension."],
+  ["Is the dialogue doing double duty?", "Good dialogue advances plot AND reveals character. If it only does one (or neither), tighten it."],
+  ["Is the setting active or just décor?", "Use the environment as pressure, obstacle, or mood. A neutral room is a missed opportunity."],
+  ["Whose POV is this — and is it the most interesting one?", "Sometimes a flat scene comes alive simply by switching to the character with the most to lose."],
+  ["Are the stakes clear to the reader?", "We need to know what happens if the character fails. Make the cost felt, not just stated."]
+];
+
+/* ============================================================
+   LOREM ENGINE
+   ============================================================ */
+const LOREM = {
+  classic: "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum".split(" "),
+  prose: "the light fell across the quiet room as the morning settled into something almost like stillness she watched the water moving beneath the bridge and thought of nothing in particular a distant sound rose and faded the way such sounds always do leaving only the impression of having been heard there was a kind of patience in the air the slow turning of an ordinary hour toward whatever came next".split(" "),
+  dialogue: ["\"I told you it would happen.\"", "\"You always say that.\"", "\"Because it's always true.\"", "\"Not this time.\"", "\"We'll see.\"", "\"And what if you're wrong?\"", "\"Then we'll deal with it.\"", "\"You make it sound simple.\"", "\"It is simple. It just isn't easy.\"", "\"I never said I trusted you.\"", "\"You didn't have to.\""],
+  action: ["She moved first.", "The door gave way.", "He ducked low and ran.", "Glass scattered across the floor.", "The engine caught and roared.", "Footsteps echoed behind them.", "A hand closed around her wrist.", "The ground shifted underfoot.", "He didn't look back.", "The whole thing came down at once."]
+};
+
+function genLorem(style, paras, len) {
+  const sCount = { short:[3,5], medium:[5,8], long:[8,12] }[len];
+  const out = [];
+  if (style === 'dialogue' || style === 'action') {
+    const bank = LOREM[style];
+    for (let p=0;p<paras;p++){
+      const n = sCount[0] + Math.floor(Math.random()*(sCount[1]-sCount[0]+1));
+      let line=[];
+      for(let i=0;i<n;i++) line.push(rand(bank));
+      out.push(line.join(" "));
+    }
+    return out;
+  }
+  const words = LOREM[style];
+  for (let p=0;p<paras;p++){
+    const n = sCount[0] + Math.floor(Math.random()*(sCount[1]-sCount[0]+1));
+    let sentences=[];
+    for(let s=0;s<n;s++){
+      const wc = 6 + Math.floor(Math.random()*10);
+      let sent=[];
+      for(let w=0;w<wc;w++) sent.push(rand(words));
+      let str = sent.join(" ");
+      str = str.charAt(0).toUpperCase()+str.slice(1)+".";
+      sentences.push(str);
+    }
+    out.push(sentences.join(" "));
+  }
+  return out;
+}
+
+/* ============================================================
+   AI INTEGRATION (Groq / Gemini / OpenRouter)
+   ============================================================ */
+const DEFAULT_MODELS = {
+  groq: [
+    { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B' },
+    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant' },
+    { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' }
+  ],
+  gemini: [
+    { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' }
+  ],
+  openrouter: [
+    { id: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (free)' }
+  ]
+};
+
+async function fetchModels() {
+  const keys = Store.state.keys;
+  const collected = [];
+  let any = false;
+
+  // GROQ
+  if (keys.groq) {
+    any = true;
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { 'Authorization': `Bearer ${keys.groq}` }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        (d.data||[]).forEach(m => collected.push({ id: m.id, provider: 'groq', label: m.id }));
+      } else { throw 0; }
+    } catch(e) {
+      DEFAULT_MODELS.groq.forEach(m => collected.push({...m, provider:'groq'}));
+    }
+  }
+
+  // GEMINI
+  if (keys.gemini) {
+    any = true;
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${keys.gemini}`);
+      if (r.ok) {
+        const d = await r.json();
+        (d.models||[]).filter(m => (m.supportedGenerationMethods||[]).includes('generateContent'))
+          .forEach(m => {
+            const id = m.name.replace('models/','');
+            collected.push({ id, provider:'gemini', label: m.displayName || id });
+          });
+      } else { throw 0; }
+    } catch(e) {
+      DEFAULT_MODELS.gemini.forEach(m => collected.push({...m, provider:'gemini'}));
+    }
+  }
+
+  // OPENROUTER
+  if (keys.openrouter) {
+    any = true;
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: { 'Authorization': `Bearer ${keys.openrouter}` }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        (d.data||[]).slice(0, 150).forEach(m => collected.push({ id: m.id, provider:'openrouter', label: m.name || m.id }));
+      } else { throw 0; }
+    } catch(e) {
+      DEFAULT_MODELS.openrouter.forEach(m => collected.push({...m, provider:'openrouter'}));
+    }
+  }
+
+  if (!any) { toast('Add at least one API key first', 'err'); return; }
+
+  Store.set({ models: collected });
+  if (!Store.state.activeModel || !collected.find(m => m.id === Store.state.activeModel.id)) {
+    Store.set({ activeModel: collected[0] || null });
+  }
+  renderModels();
+  toast(`Loaded ${collected.length} models`, 'ok');
+}
+
+async function callAI(systemPrompt, userPrompt) {
+  const m = Store.state.activeModel;
+  if (!m) { toast('Select a model first (Update Models)', 'err'); throw new Error('no model'); }
+  const keys = Store.state.keys;
+
+  if (m.provider === 'groq') {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${keys.groq}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({ model:m.id, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature:0.9 })
+    });
+    if(!r.ok) throw new Error('Groq error '+r.status);
+    const d = await r.json();
+    return d.choices[0].message.content.trim();
+  }
+
+  if (m.provider === 'openrouter') {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${keys.openrouter}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({ model:m.id, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature:0.9 })
+    });
+    if(!r.ok) throw new Error('OpenRouter error '+r.status);
+    const d = await r.json();
+    return d.choices[0].message.content.trim();
+  }
+
+  if (m.provider === 'gemini') {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m.id}:generateContent?key=${keys.gemini}`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        systemInstruction:{ parts:[{ text: systemPrompt }] },
+        contents:[{ role:'user', parts:[{ text: userPrompt }] }],
+        generationConfig:{ temperature:0.9 }
+      })
+    });
+    if(!r.ok) throw new Error('Gemini error '+r.status);
+    const d = await r.json();
+    return d.candidates[0].content.parts[0].text.trim();
+  }
+  throw new Error('Unknown provider');
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function renderModels() {
+  const sel = $('#modelSelect');
+  const models = Store.state.models;
+  if (!models.length) {
+    sel.innerHTML = '<option>No models loaded</option>';
+    $('#modelProvider').className = 'provider-pill none';
+    $('#modelProvider').textContent = 'none';
+    $('#modelCount').textContent = '';
+    return;
+  }
+  sel.innerHTML = models.map((m,i) =>
+    `<option value="${i}" ${Store.state.activeModel && Store.state.activeModel.id===m.id?'selected':''}>${esc(m.label)}</option>`
+  ).join('');
+  const am = Store.state.activeModel;
+  if (am) {
+    $('#modelProvider').className = `provider-pill ${am.provider}`;
+    $('#modelProvider').textContent = am.provider;
+  }
+  $('#modelCount').textContent = `${models.length} models loaded`;
+}
+
+function renderStatus() {
+  const k = Store.state.keys;
+  const set = [k.groq, k.gemini, k.openrouter].filter(Boolean).length;
+  $('#statusDot').className = `status-dot ${set?'ok':''}`;
+  $('#statusSub').textContent = set ? `${set} active` : 'Not set';
+}
+
+/* ===== TK rendering ===== */
+let activeTk = null;
+function renderTk() {
+  const list = $('#tkList');
+  const tks = Store.state.tks;
+  $('#tkBadge').textContent = tks.filter(t=>!t.done).length;
+  $('#tkTotal').textContent = tks.length;
+  $('#tkOpen').textContent = tks.filter(t=>!t.done).length;
+  $('#tkDone').textContent = tks.filter(t=>t.done).length;
+
+  if (!tks.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">[TK]</div><div>No placeholders yet.</div></div>`;
+    return;
+  }
+  list.innerHTML = tks.slice().reverse().map(t => `
+    <div class="tk-item ${activeTk===t.id?'active':''}" data-id="${t.id}">
+      <span class="tk-marker ${t.done?'done':''}">${t.done?'✓':'TK'}</span>
+      <div class="tk-content">
+        <div class="tk-text ${t.done?'done':''}">${esc(t.text)}</div>
+        <div class="tk-cat">${esc(t.cat)} · ${new Date(t.created).toLocaleDateString()}</div>
+      </div>
+    </div>`).join('');
+
+  $$('.tk-item', list).forEach(el => el.onclick = () => { activeTk = el.dataset.id; renderTk(); renderTkDetail(); });
+}
+
+function renderTkDetail() {
+  const t = Store.state.tks.find(x => x.id===activeTk);
+  const wrap = $('#tkDetail');
+  if (!t) {
+    wrap.innerHTML = `<div class="empty"><div class="empty-icon">[TK]</div><div>Select a placeholder to add notes, or use "Scan text" to import.</div></div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="card-hd">
+      <span class="tk-marker ${t.done?'done':''}">${t.done?'✓':'TK'}</span>
+      <div class="card-title" style="flex:1">${esc(t.text)}</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Category</label>
+      <select class="select" id="dCat">
+        ${['Fact','Name','Research','Description','Continuity','Other'].map(c=>`<option ${c===t.cat?'selected':''}>${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Notes / resolution</label>
+      <textarea class="textarea" id="dNote" placeholder="What goes here? Add research, the real name, the fix...">${esc(t.note||'')}</textarea>
+    </div>
+    <div class="row">
+      <button class="btn ${t.done?'btn-ghost':'btn-primary'}" id="dDone">${t.done?'Mark Open':'Mark Resolved'}</button>
+      <button class="btn btn-subtle" id="dSave">Save Notes</button>
+      <button class="btn btn-subtle" id="dDel" style="margin-left:auto;color:var(--c-rose)">Delete</button>
+    </div>`;
+  $('#dDone').onclick = () => { t.done=!t.done; Store.save(); renderTk(); renderTkDetail(); toast(t.done?'Resolved':'Reopened','ok'); };
+  $('#dSave').onclick = () => { t.note=$('#dNote').value; t.cat=$('#dCat').value; Store.save(); renderTk(); toast('Saved','ok'); };
+  $('#dDel').onclick = () => { Store.set({tks: Store.state.tks.filter(x=>x.id!==t.id)}); activeTk=null; renderTk(); renderTkDetail(); toast('Deleted','info'); };
+}
+
+/* ============================================================
+   PAGE NAV
+   ============================================================ */
+const PAGE_META = {
+  unblock: ['Unblocker Prompts','Random questions to get you unstuck'],
+  want: ['Character Wants','Surface desire vs. deeper need'],
+  worse: ['Make It Worse','Raise the stakes, twist the knife'],
+  diagnostic: ['Scene Diagnostic','Find out why your scene isn\'t working'],
+  tk: ['Placeholder [TK] Manager','Track your "to come" notes'],
+  lorem: ['Writer\'s Lorem','Filler text that won\'t distract']
+};
+function go(page) {
+
+  $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page===page));
+
+  $$('.page').forEach(p => p.classList.toggle('active', p.id===`page-${page}`));
+  const [t,d] = PAGE_META[page];
+  $('#pageTitle').textContent = t;
+  $('#pageDesc').textContent = d;
+  $('#sidebar').classList.remove('open');
+  $('#scrim').classList.remove('open');
+}
+
+/* ============================================================
+   TAG BUILDERS
+   ============================================================ */
+function buildTags(container, cats, current, onPick) {
+  container.innerHTML = `<span class="tag ${current==='all'?'active':''}" data-c="all">All</span>` +
+    cats.map(c => `<span class="tag ${current===c?'active':''}" data-c="${c}">${c[0].toUpperCase()+c.slice(1)}</span>`).join('');
+
+  $$('.tag', container).forEach(t => t.onclick = () => onPick(t.dataset.c));
+}
+
+/* ============================================================
+   INIT & EVENTS
+   ============================================================ */
+function init() {
+  Store.load();
+  renderStatus();
+  renderModels();
+  renderTk();
+
+  // Nav
+
+  $$('.nav-item').forEach(n => n.onclick = () => go(n.dataset.page));
+  $('#menuToggle').onclick = () => { $('#sidebar').classList.toggle('open'); $('#scrim').classList.toggle('open'); };
+  $('#scrim').onclick = () => { $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('open'); };
+
+  // Model select change
+  $('#modelSelect').onchange = e => {
+    const m = Store.state.models[+e.target.value];
+    if (m) { Store.set({activeModel:m}); renderModels(); }
+  };
+
+  // API modal
+  const openModal = () => {
+    $('#keyGroq').value = Store.state.keys.groq;
+    $('#keyGemini').value = Store.state.keys.gemini;
+    $('#keyOpenrouter').value = Store.state.keys.openrouter;
+    $('#apiModal').classList.add('open');
+  };
+  $('#apiStatusBtn').onclick = openModal;
+  $('#apiModalX').onclick = () => $('#apiModal').classList.remove('open');
+  $('#apiModal').onclick = e => { if(e.target===$('#apiModal')) $('#apiModal').classList.remove('open'); };
+  $('#saveKeys').onclick = () => {
+    Store.set({ keys: { groq:$('#keyGroq').value.trim(), gemini:$('#keyGemini').value.trim(), openrouter:$('#keyOpenrouter').value.trim() } });
+    renderStatus(); toast('Keys saved','ok');
+  };
+  $('#fetchModelsModal').onclick = async () => {
+    Store.set({ keys: { groq:$('#keyGroq').value.trim(), gemini:$('#keyGemini').value.trim(), openrouter:$('#keyOpenrouter').value.trim() } });
+    renderStatus();
+    const btn = $('#fetchModelsModal'); btn.disabled=true; btn.textContent='Loading...';
+    await fetchModels(); btn.disabled=false; btn.textContent='Update Models';
+  };
+  $('#refreshModels').onclick = async () => {
+    const btn=$('#refreshModels'); btn.disabled=true;
+    await fetchModels(); btn.disabled=false;
+  };
+
+  initUnblock();
+  initWant();
+  initWorse();
+  initDiag();
+  initTk();
+  initLorem();
+}
+
+/* ===== UNBLOCK ===== */
+function initUnblock() {
+  const cats = Object.keys(UNBLOCK_PROMPTS);
+  const draw = () => buildTags($('#unblockTags'), cats, Store.state.unblockFilter, c => {
+    Store.set({unblockFilter:c}); draw();
+  });
+  draw();
+
+  $('#newUnblock').onclick = () => {
+    const f = Store.state.unblockFilter;
+    const pool = f==='all' ? Object.values(UNBLOCK_PROMPTS).flat() : UNBLOCK_PROMPTS[f];
+    const el = $('#unblockText');
+    el.classList.remove('ai-mode');
+    el.textContent = rand(pool);
+    el.classList.remove('anim-flip'); void el.offsetWidth; el.classList.add('anim-flip');
+    $('#unblockMeta').textContent = f==='all' ? 'Random · any category' : `Category · ${f}`;
+  };
+
+  $('#aiUnblock').onclick = async () => {
+    const ctx = $('#unblockContext').value.trim();
+    const el = $('#unblockText');
+    el.classList.add('ai-mode');
+    el.innerHTML = `<div class="loading-shimmer" style="width:80%"></div><div class="loading-shimmer" style="width:60%"></div>`;
+    try {
+      const out = await callAI(
+        "You are a creative writing coach. Generate ONE provocative, specific question that will help a stuck writer get unblocked. Be surprising and concrete. Output only the question, no preamble.",
+        ctx ? `Here is my story context:\n${ctx}\n\nGive me one unblocking question tailored to this.` : "Give me one unblocking question for a fiction writer who is stuck."
+      );
+      el.textContent = out;
+      el.classList.add('anim-flip');
+      $('#unblockMeta').textContent = `AI · ${Store.state.activeModel.label}`;
+    } catch(e) { el.classList.remove('ai-mode'); el.textContent='Could not reach AI. Check your keys & model.'; toast(e.message,'err'); }
+  };
+
+  $('#copyUnblock').onclick = () => {
+    navigator.clipboard.writeText($('#unblockText').textContent).then(()=>toast('Copied','ok'));
+  };
+}
+
+/* ===== CHARACTER WANTS ===== */
+function initWant() {
+  $('#wantQuick').onclick = () => {
+    const html = `<div class="fade-up"><div class="card-sub" style="margin-bottom:var(--s-3)">Quick reflection prompts:</div>` +
+      WANT_QUICK.map(q=>`<div style="padding:10px 0;border-bottom:1px solid var(--c-border-soft);font-size:14px">• ${esc(q)}</div>`).join('') + `</div>`;
+    $('#wantOut').className=''; $('#wantOut').innerHTML = html;
+  };
+  $('#wantGenerate').onclick = async () => {
+    const name = $('#wantName').value.trim() || 'this character';
+    const sit = $('#wantSituation').value.trim();
+    if (!sit) { toast('Describe the situation first','err'); return; }
+    const out = $('#wantOut'); out.className='';
+    out.innerHTML = `<div class="loading-shimmer"></div><div class="loading-shimmer" style="width:90%"></div><div class="loading-shimmer" style="width:70%"></div>`;
+    try {
+      const res = await callAI(
+        "You are a story development expert. Given a character and their situation, analyze what they WANT. Structure your answer with: 1) Surface Want (what they'd say out loud), 2) Deeper Need (what they don't realize), 3) The Conflict between them, 4) One sharp question to push the scene forward. Be specific and concrete. Use plain prose with short labeled sections.",
+        `Character: ${name}\nSituation: ${sit}\n\nWhat does ${name} want right now?`
+      );
+      out.innerHTML = `<div class="diag-result fade-up">${esc(res).replace(/\n/g,'<br>')}</div>`;
+    } catch(e){ out.className='empty'; out.innerHTML=`<div class="empty-icon">⚠</div><div>${esc(e.message)}</div>`; }
+  };
+}
+
+/* ===== MAKE IT WORSE ===== */
+function initWorse() {
+  const cats = Object.keys(WORSE_PROMPTS);
+  const draw = () => buildTags($('#worseTags'), cats, Store.state.worseFilter, c => { Store.set({worseFilter:c}); draw(); });
+  draw();
+  $('#newWorse').onclick = () => {
+    const f = Store.state.worseFilter;
+    const pool = f==='all' ? Object.values(WORSE_PROMPTS).flat() : WORSE_PROMPTS[f];
+    const el = $('#worseText');
+    el.textContent = rand(pool);
+    el.classList.remove('anim-flip'); void el.offsetWidth; el.classList.add('anim-flip');
+    $('#worseMeta').textContent = f==='all'?'Any escalation':`${f} stakes`;
+  };
+  $('#aiWorse').onclick = async () => {
+    const ctx = $('#worseContext').value.trim();
+    if(!ctx){ toast('Describe your scene first','err'); return; }
+    const el=$('#worseText'); el.innerHTML=`<div class="loading-shimmer" style="width:70%;margin:0 auto"></div>`;
+    try {
+      const out = await callAI(
+        "You are a ruthless story editor who specializes in raising stakes. Given a scene, suggest ONE specific, dramatic way to make it WORSE for the characters — escalate tension, deepen conflict, or twist the knife. Be concrete and vivid. Output only the escalation, 1-3 sentences.",
+        `My scene:\n${ctx}\n\nMake it worse.`
+      );
+      el.textContent=out; el.classList.add('anim-flip');
+      $('#worseMeta').textContent=`AI · ${Store.state.activeModel.label}`;
+    } catch(e){ el.textContent='Could not reach AI.'; toast(e.message,'err'); }
+  };
+}
+
+/* ===== DIAGNOSTIC ===== */
+function initDiag() {
+  $('#diagChecklist').onclick = () => {
+    const html = `<div class="diag-result fade-up"><strong>Scene Diagnostic Checklist</strong><br><br>` +
+      DIAG_CHECKLIST.map(([q,a])=>`<h4>${esc(q)}</h4>${esc(a)}`).join('') + `</div>`;
+    $('#diagOut').innerHTML = html;
+  };
+  $('#diagRun').onclick = async () => {
+    const scene = $('#diagScene').value.trim();
+    const sym = $('#diagSymptom').value.trim();
+    if(!scene){ toast('Paste or describe your scene','err'); return; }
+    const out=$('#diagOut');
+    out.innerHTML=`<div class="diag-result"><div class="loading-shimmer"></div><div class="loading-shimmer" style="width:85%"></div><div class="loading-shimmer" style="width:70%"></div></div>`;
+    try {
+      const res = await callAI(
+        "You are an expert fiction editor performing a scene diagnostic. Analyze why a scene isn't working. Identify: the likely ROOT PROBLEM, 2-3 specific issues, and concrete fixes the writer can try. Be honest but constructive. Use short labeled sections in plain prose.",
+        `Scene:\n${scene}\n\n${sym?`What feels off: ${sym}`:'Diagnose what might be holding this scene back.'}`
+      );
+      out.innerHTML = `<div class="diag-result fade-up">${esc(res).replace(/\n/g,'<br>')}</div>`;
+    } catch(e){ out.innerHTML=`<div class="diag-result">${esc(e.message)}</div>`; }
+  };
+}
+
+/* ===== TK MANAGER ===== */
+function initTk() {
+  const add = () => {
+    const v = $('#tkInput').value.trim();
+    if(!v) return;
+    const tks = Store.state.tks;
+    tks.push({ id:uid(), text:v, cat:$('#tkCat').value, done:false, note:'', created:Date.now() });
+    Store.set({tks}); $('#tkInput').value=''; renderTk(); toast('Placeholder added','ok');
+  };
+  $('#tkAdd').onclick = add;
+  $('#tkInput').onkeydown = e => { if(e.key==='Enter') add(); };
+
+  $('#tkScanBtn').onclick = () => {
+    const wrap=$('#tkDetail');
+    wrap.innerHTML = `
+      <div class="card-hd"><div class="card-title">Scan text for [TK] markers</div></div>
+      <div class="card-sub" style="margin-bottom:var(--s-3)">Paste your manuscript. We'll find [TK], TK words, and <code>[brackets]</code> and import them.</div>
+      <textarea class="textarea" id="scanText" style="min-height:160px" placeholder="Paste your draft here..."></textarea>
+      <div class="row" style="margin-top:var(--s-3)"><button class="btn btn-primary" id="scanGo">Scan & Import</button></div>`;
+    $('#scanGo').onclick = () => {
+      const txt = $('#scanText').value;
+      const found = new Set();
+      (txt.match(/\[TK[^\]]*\]/gi)||[]).forEach(m=>found.add(m));
+      (txt.match(/\bTK[a-z]*\b[^.\n]{0,60}/gi)||[]).forEach(m=>found.add(m.trim()));
+      (txt.match(/\[[^\]]{2,60}\]/g)||[]).forEach(m=>{ if(!/\[TK/i.test(m)) found.add(m); });
+      if(!found.size){ toast('No markers found','info'); return; }
+      const tks=Store.state.tks;
+      [...found].forEach(f=> tks.push({id:uid(),text:f,cat:'Other',done:false,note:'',created:Date.now()}));
+      Store.set({tks}); renderTk(); renderTkDetail(); toast(`Imported ${found.size} markers`,'ok');
+    };
+  };
+
+  $('#tkExport').onclick = () => {
+    const tks=Store.state.tks;
+    if(!tks.length){ toast('Nothing to export','info'); return; }
+    const txt = tks.map(t=>`${t.done?'[DONE]':'[OPEN]'} (${t.cat}) ${t.text}${t.note?'\n   → '+t.note:''}`).join('\n\n');
+    navigator.clipboard.writeText(txt).then(()=>toast('Exported to clipboard','ok'));
+  };
+}
+
+/* ===== LOREM ===== */
+function initLorem() {
+  const gen = () => {
+    const style=$('#loremStyle').value;
+    const count=Math.max(1,Math.min(20,+$('#loremCount').value||3));
+    const len=$('#loremLen').value;
+    const paras=genLorem(style,count,len);
+    $('#loremOut').innerHTML = paras.map(p=>`<p class="fade-up">${esc(p)}</p>`).join('');
+  };
+  $('#loremGen').onclick = gen;
+  $('#loremCopy').onclick = () => {
+    const txt = $$('#loremOut p').map(p=>p.textContent).join('\n\n');
+    if(!txt){ toast('Generate first','info'); return; }
+    navigator.clipboard.writeText(txt).then(()=>toast('Copied','ok'));
+  };
+  gen();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
