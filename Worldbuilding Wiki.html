@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aethercart — Worldbuilding Studio</title>
+<style>
+:root {
+  /* Design Tokens — Color */
+  --bg-0: #0a0b0f;
+  --bg-1: #0f1117;
+  --bg-2: #161922;
+  --bg-3: #1d212c;
+  --bg-4: #262b38;
+  --border: #2a2f3c;
+  --border-soft: #21252f;
+  --text-0: #f4f6fb;
+  --text-1: #c3c9d6;
+  --text-2: #8b93a5;
+  --text-3: #5b6273;
+  --accent: #7c5cff;
+  --accent-2: #5b8def;
+  --accent-glow: rgba(124,92,255,0.25);
+  --good: #3ecf8e;
+  --warn: #f2b760;
+  --danger: #f2566a;
+  --link: #6fa8ff;
+
+  /* Spacing */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  /* Radius */
+  --r1: 6px; --r2: 10px; --r3: 14px; --r-full: 999px;
+  /* Type */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, monospace;
+  /* Shadow */
+  --sh1: 0 1px 2px rgba(0,0,0,0.4);
+  --sh2: 0 4px 16px rgba(0,0,0,0.4);
+  --sh3: 0 12px 40px rgba(0,0,0,0.55);
+  --transition: 160ms cubic-bezier(.4,0,.2,1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: var(--r-full); border: 2px solid var(--bg-1); }
+::-webkit-scrollbar-thumb:hover { background: #333a4a; }
+
+/* ---------- Layout ---------- */
+.app { display: grid; grid-template-columns: 248px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
+.topbar {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: var(--s4);
+  padding: 0 var(--s4); background: var(--bg-1); border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+.brand { display: flex; align-items: center; gap: var(--s3); font-weight: 700; color: var(--text-0); letter-spacing: .3px; }
+.brand .logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center; box-shadow: 0 0 18px var(--accent-glow);
+}
+.brand .logo svg { width: 17px; height: 17px; }
+.brand small { font-weight: 500; color: var(--text-3); font-size: 11px; }
+
+.world-switch {
+  display: flex; align-items: center; gap: var(--s2); background: var(--bg-2);
+  border: 1px solid var(--border); border-radius: var(--r2); padding: var(--s1) var(--s2) var(--s1) var(--s3);
+  cursor: pointer; transition: var(--transition);
+}
+.world-switch:hover { border-color: var(--accent); }
+.world-switch select { background: transparent; border: none; color: var(--text-0); font: inherit; font-weight: 600; outline: none; cursor: pointer; }
+.world-switch select option { background: var(--bg-2); }
+
+.topbar .spacer { flex: 1; }
+.topbar .global-search {
+  position: relative; width: 280px;
+}
+.topbar .global-search input {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: var(--s2) var(--s3) var(--s2) 34px; color: var(--text-0); font: inherit; outline: none; transition: var(--transition);
+}
+.topbar .global-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.topbar .global-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-3); }
+.search-results {
+  position: absolute; top: 110%; left: 0; right: 0; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r2); box-shadow: var(--sh3); max-height: 360px; overflow: auto; z-index: 50; display: none;
+}
+.search-results.open { display: block; }
+.search-results .sr-item { padding: var(--s2) var(--s3); cursor: pointer; display: flex; align-items: center; gap: var(--s2); }
+.search-results .sr-item:hover { background: var(--bg-3); }
+.search-results .sr-item .sr-type { font-size: 10px; color: var(--text-3); text-transform: uppercase; margin-left: auto; }
+.search-results .sr-empty { padding: var(--s4); color: var(--text-3); text-align: center; }
+
+/* ---------- Sidebar ---------- */
+.sidebar { background: var(--bg-1); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.nav-section { padding: var(--s4) var(--s3) var(--s2); }
+.nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-3); padding: 0 var(--s2) var(--s2); font-weight: 700; }
+.nav-item {
+  display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border-radius: var(--r1);
+  cursor: pointer; color: var(--text-1); transition: var(--transition); position: relative; user-select: none;
+}
+.nav-item:hover { background: var(--bg-2); color: var(--text-0); }
+.nav-item.active { background: var(--bg-3); color: var(--text-0); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item .count { margin-left: auto; font-size: 11px; color: var(--text-3); background: var(--bg-2); padding: 1px 7px; border-radius: var(--r-full); }
+.nav-item.active .count { background: var(--bg-4); }
+
+.sidebar-divider { height: 1px; background: var(--border-soft); margin: var(--s3) var(--s4); }
+.sidebar .tree { flex: 1; overflow-y: auto; padding: 0 var(--s3) var(--s4); }
+.tree-group { margin-bottom: var(--s2); }
+.tree-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2); font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; cursor: pointer; border-radius: var(--r1); }
+.tree-head:hover { color: var(--text-0); }
+.tree-head .chev { width: 12px; height: 12px; transition: transform var(--transition); }
+.tree-head.collapsed .chev { transform: rotate(-90deg); }
+.tree-head .add-btn { margin-left: auto; opacity: 0; width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; }
+.tree-head:hover .add-btn { opacity: 1; }
+.tree-head .add-btn:hover { background: var(--bg-3); color: var(--accent); }
+.tree-items { overflow: hidden; transition: max-height var(--transition); }
+.tree-items.collapsed { max-height: 0 !important; }
+.tree-item {
+  display: flex; align-items: center; gap: var(--s2); padding: 5px var(--s2) 5px 26px; border-radius: var(--r1);
+  cursor: pointer; color: var(--text-2); font-size: 13px; transition: var(--transition);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tree-item:hover { background: var(--bg-2); color: var(--text-0); }
+.tree-item.active { background: var(--bg-3); color: var(--text-0); }
+.tree-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ---------- Main ---------- */
+.main { background: var(--bg-0); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+.view { flex: 1; overflow: auto; display: none; flex-direction: column; }
+.view.active { display: flex; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-radius: var(--r1);
+  background: var(--bg-3); border: 1px solid var(--border); color: var(--text-1); font: inherit; cursor: pointer;
+  transition: var(--transition); white-space: nowrap; font-weight: 500;
+}
+.btn:hover { background: var(--bg-4); color: var(--text-0); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn svg { width: 15px; height: 15px; }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; box-shadow: 0 2px 10px var(--accent-glow); }
+.btn.primary:hover { box-shadow: 0 4px 18px var(--accent-glow); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--bg-3); }
+.btn.danger:hover { background: rgba(242,86,106,0.15); color: var(--danger); border-color: var(--danger); }
+.btn.sm { padding: var(--s1) var(--s2); font-size: 12px; }
+.btn.icon { padding: var(--s2); }
+
+/* ---------- Wiki View ---------- */
+.wiki-layout { display: grid; grid-template-columns: 1fr; height: 100%; }
+.doc-header { padding: var(--s5) var(--s7) var(--s4); border-bottom: 1px solid var(--border-soft); }
+.doc-breadcrumb { display: flex; align-items: center; gap: var(--s2); font-size: 12px; color: var(--text-3); margin-bottom: var(--s3); }
+.doc-breadcrumb .crumb { cursor: pointer; } .doc-breadcrumb .crumb:hover { color: var(--text-1); }
+.doc-title-row { display: flex; align-items: flex-start; gap: var(--s3); }
+.doc-emoji { font-size: 38px; line-height: 1; cursor: pointer; user-select: none; }
+.doc-title {
+  flex: 1; font-size: 32px; font-weight: 800; color: var(--text-0); background: transparent; border: none;
+  outline: none; font-family: var(--font); letter-spacing: -.5px;
+}
+.doc-meta { display: flex; gap: var(--s4); margin-top: var(--s3); flex-wrap: wrap; }
+.doc-meta .mi { display: flex; align-items: center; gap: var(--s2); font-size: 12px; color: var(--text-2); }
+.doc-meta .mi select, .doc-meta .mi input { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r1); color: var(--text-1); padding: 2px var(--s2); font: inherit; font-size: 12px; outline: none; }
+.tag-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: var(--r-full); font-size: 11px; background: var(--bg-3); border: 1px solid var(--border); }
+.tag-chip .x { cursor: pointer; opacity: .5; } .tag-chip .x:hover { opacity: 1; color: var(--danger); }
+
+.doc-body { padding: var(--s4) var(--s7) var(--s7); max-width: 880px; }
+.doc-editor {
+  width: 100%; min-height: 400px; background: transparent; border: none; outline: none; resize: none;
+  color: var(--text-1); font: inherit; font-size: 15px; line-height: 1.7; font-family: var(--font);
+}
+.doc-rendered { font-size: 15px; line-height: 1.75; }
+.doc-rendered h1 { font-size: 26px; color: var(--text-0); margin: var(--s5) 0 var(--s3); font-weight: 700; }
+.doc-rendered h2 { font-size: 21px; color: var(--text-0); margin: var(--s5) 0 var(--s3); font-weight: 700; border-bottom: 1px solid var(--border-soft); padding-bottom: var(--s2); }
+.doc-rendered h3 { font-size: 17px; color: var(--text-0); margin: var(--s4) 0 var(--s2); font-weight: 600; }
+.doc-rendered p { margin: var(--s3) 0; color: var(--text-1); }
+.doc-rendered ul, .doc-rendered ol { margin: var(--s3) 0; padding-left: var(--s5); }
+.doc-rendered li { margin: var(--s1) 0; }
+.doc-rendered blockquote { border-left: 3px solid var(--accent); padding: var(--s1) var(--s4); margin: var(--s4) 0; color: var(--text-2); background: var(--bg-1); border-radius: 0 var(--r1) var(--r1) 0; }
+.doc-rendered code { background: var(--bg-2); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 13px; color: var(--accent-2); }
+.doc-rendered hr { border: none; border-top: 1px solid var(--border); margin: var(--s5) 0; }
+.doc-rendered strong { color: var(--text-0); }
+.wikilink { color: var(--link); cursor: pointer; border-bottom: 1px dashed var(--link); padding-bottom: 1px; }
+.wikilink:hover { background: rgba(111,168,255,0.12); }
+.wikilink.broken { color: var(--warn); border-color: var(--warn); }
+
+.toolbar {
+  display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s7);
+  border-bottom: 1px solid var(--border-soft); background: var(--bg-1); position: sticky; top: 0; z-index: 5;
+}
+.toolbar .spacer { flex: 1; }
+.toolbar .save-state { font-size: 11px; color: var(--good); display: flex; align-items: center; gap: 5px; }
+.toolbar .save-state .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
+
+.backlinks { margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--border-soft); }
+.backlinks h4 { font-size: 12px; text-transform: uppercase; color: var(--text-3); letter-spacing: .5px; margin-bottom: var(--s3); }
+.backlink-item { display: flex; align-items: center; gap: var(--s2); padding: var(--s2); border-radius: var(--r1); cursor: pointer; color: var(--text-2); }
+.backlink-item:hover { background: var(--bg-1); color: var(--text-0); }
+
+/* ---------- Empty States ---------- */
+.empty-state { flex: 1; display: grid; place-items: center; text-align: center; color: var(--text-3); padding: var(--s7); }
+.empty-state .es-icon { font-size: 48px; margin-bottom: var(--s4); opacity: .5; }
+.empty-state h3 { color: var(--text-1); margin-bottom: var(--s2); font-size: 18px; }
+.empty-state p { max-width: 360px; margin-bottom: var(--s4); }
+
+/* ---------- Map View ---------- */
+.map-wrap { display: grid; grid-template-columns: 64px 1fr 240px; height: 100%; }
+.map-tools { background: var(--bg-1); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: var(--s2); padding: var(--s3) 0; }
+.tool-btn {
+  width: 42px; height: 42px; border-radius: var(--r2); display: grid; place-items: center; cursor: pointer;
+  color: var(--text-2); transition: var(--transition); position: relative;
+}
+.tool-btn:hover { background: var(--bg-3); color: var(--text-0); }
+.tool-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 14px var(--accent-glow); }
+.tool-btn svg { width: 20px; height: 20px; }
+.tool-btn .tip { position: absolute; left: 110%; top: 50%; transform: translateY(-50%); background: var(--bg-4); color: var(--text-0); padding: 4px 8px; border-radius: var(--r1); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: var(--transition); z-index: 40; box-shadow: var(--sh2); }
+.tool-btn:hover .tip { opacity: 1; }
+.tool-sep { width: 28px; height: 1px; background: var(--border); margin: var(--s1) 0; }
+
+.canvas-stage { position: relative; overflow: hidden; background: var(--bg-0); }
+.canvas-stage canvas { position: absolute; top: 0; left: 0; }
+#mapCanvas { cursor: crosshair; }
+.canvas-hud { position: absolute; bottom: var(--s4); left: var(--s4); display: flex; gap: var(--s2); z-index: 10; }
+.canvas-hud .hud-chip { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r1); padding: var(--s1) var(--s3); font-size: 12px; font-family: var(--mono); color: var(--text-2); display: flex; align-items: center; gap: var(--s2); }
+.zoom-ctl { position: absolute; bottom: var(--s4); right: var(--s4); display: flex; flex-direction: column; gap: var(--s1); z-index: 10; }
+.zoom-ctl .btn { padding: var(--s2); }
+
+.map-panel { background: var(--bg-1); border-left: 1px solid var(--border); overflow-y: auto; padding: var(--s4); }
+.panel-section { margin-bottom: var(--s5); }
+.panel-section h4 { font-size: 11px; text-transform: uppercase; color: var(--text-3); letter-spacing: .6px; margin-bottom: var(--s3); font-weight: 700; }
+.field { margin-bottom: var(--s3); }
+.field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: var(--s1); }
+.field input[type=text], .field input[type=number], .field select, .field textarea {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r1);
+  padding: var(--s2); color: var(--text-0); font: inherit; outline: none; transition: var(--transition);
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.field textarea { resize: vertical; min-height: 60px; }
+.swatch-row { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.swatch { width: 26px; height: 26px; border-radius: var(--r1); cursor: pointer; border: 2px solid transparent; transition: var(--transition); }
+.swatch:hover { transform: scale(1.1); }
+.swatch.active { border-color: var(--text-0); box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent); }
+.range-row { display: flex; align-items: center; gap: var(--s3); }
+.range-row input[type=range] { flex: 1; accent-color: var(--accent); }
+.range-row .val { font-size: 12px; color: var(--text-2); font-family: var(--mono); min-width: 28px; text-align: right; }
+
+.marker-list { display: flex; flex-direction: column; gap: var(--s1); }
+.marker-row { display: flex; align-items: center; gap: var(--s2); padding: var(--s2); border-radius: var(--r1); cursor: pointer; }
+.marker-row:hover { background: var(--bg-2); }
+.marker-row .mk-ico { font-size: 16px; }
+.marker-row .mk-name { flex: 1; font-size: 13px; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.marker-row .mk-del { opacity: 0; color: var(--text-3); } .marker-row:hover .mk-del { opacity: 1; } .marker-row .mk-del:hover { color: var(--danger); }
+
+/* ---------- Location Profile ---------- */
+.loc-grid { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+.loc-list-panel { background: var(--bg-1); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.loc-list-head { padding: var(--s4); border-bottom: 1px solid var(--border-soft); display: flex; gap: var(--s2); }
+.loc-list-head input { flex: 1; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r1); padding: var(--s2); color: var(--text-0); font: inherit; outline: none; }
+.loc-list { flex: 1; overflow-y: auto; padding: var(--s2); }
+.loc-card {
+  padding: var(--s3); border-radius: var(--r2); cursor: pointer; transition: var(--transition);
+  border: 1px solid transparent; margin-bottom: var(--s2);
+}
+.loc-card:hover { background: var(--bg-2); }
+.loc-card.active { background: var(--bg-2); border-color: var(--accent); }
+.loc-card .lc-top { display: flex; align-items: center; gap: var(--s2); }
+.loc-card .lc-emoji { font-size: 22px; }
+.loc-card .lc-name { font-weight: 600; color: var(--text-0); flex: 1; }
+.loc-card .lc-type { font-size: 11px; color: var(--text-3); }
+.loc-card .lc-desc { font-size: 12px; color: var(--text-2); margin-top: var(--s1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.loc-detail { overflow-y: auto; }
+.loc-hero { padding: var(--s6) var(--s7) var(--s5); border-bottom: 1px solid var(--border-soft); position: relative; overflow: hidden; }
+.loc-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top right, var(--accent-glow), transparent 60%); opacity: .4; }
+.loc-hero-content { position: relative; }
+.loc-hero-emoji { font-size: 56px; }
+.loc-hero h1 { font-size: 30px; color: var(--text-0); border: none; background: transparent; outline: none; font-weight: 800; width: 100%; font-family: var(--font); }
+.loc-stat-strip { display: flex; gap: var(--s5); margin-top: var(--s4); flex-wrap: wrap; }
+.loc-stat { }
+.loc-stat .ls-label { font-size: 11px; text-transform: uppercase; color: var(--text-3); letter-spacing: .5px; }
+.loc-stat .ls-val { font-size: 18px; color: var(--text-0); font-weight: 600; }
+
+.profile-sections { padding: var(--s5) var(--s7); display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4); }
+.profile-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--r3); padding: var(--s4); }
+.profile-card.wide { grid-column: 1 / -1; }
+.profile-card .pc-head { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
+.profile-card .pc-head svg { width: 16px; height: 16px; color: var(--accent); }
+.profile-card .pc-head h3 { font-size: 14px; color: var(--text-0); font-weight: 600; }
+.profile-card textarea, .profile-card input, .profile-card select {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: var(--r1);
+  padding: var(--s2); color: var(--text-1); font: inherit; outline: none; transition: var(--transition); resize: vertical;
+}
+.profile-card textarea { min-height: 80px; line-height: 1.6; }
+.profile-card textarea:focus, .profile-card input:focus, .profile-card select:focus { border-color: var(--accent); }
+.pc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.pc-field { margin-bottom: var(--s3); }
+.pc-field:last-child { margin-bottom: 0; }
+.pc-field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+
+/* ---------- Modal ---------- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 100; display: none; place-items: center; }
+.modal-overlay.open { display: grid; animation: fadeIn .15s ease; }
+.modal { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r3); box-shadow: var(--sh3); width: 440px; max-width: 90vw; animation: slideUp .2s ease; }
+.modal-head { padding: var(--s4); border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; }
+.modal-head h3 { font-size: 16px; color: var(--text-0); }
+.modal-head .close { margin-left: auto; cursor: pointer; color: var(--text-3); } .modal-head .close:hover { color: var(--text-0); }
+.modal-body { padding: var(--s4); }
+.modal-foot { padding: var(--s4); border-top: 1px solid var(--border-soft); display: flex; justify-content: flex-end; gap: var(--s2); }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: var(--s1); }
+.emoji-grid span { font-size: 22px; text-align: center; padding: var(--s1); border-radius: var(--r1); cursor: pointer; }
+.emoji-grid span:hover { background: var(--bg-3); }
+
+/* ---------- Toast ---------- */
+.toast-wrap { position: fixed; bottom: var(--s5); left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: var(--s2); align-items: center; }
+.toast { background: var(--bg-4); border: 1px solid var(--border); border-radius: var(--r2); padding: var(--s2) var(--s4); color: var(--text-0); box-shadow: var(--sh3); display: flex; align-items: center; gap: var(--s2); animation: slideUp .2s ease; font-size: 13px; }
+.toast .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 60px 1fr; }
+  .sidebar .nav-item span:not(.count), .nav-label, .tree, .sidebar-divider { display: none; }
+  .nav-item { justify-content: center; }
+  .loc-grid { grid-template-columns: 260px 1fr; }
+  .map-wrap { grid-template-columns: 56px 1fr 200px; }
+  .profile-sections { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .doc-header, .doc-body, .loc-hero, .profile-sections, .toolbar { padding-left: var(--s4); padding-right: var(--s4); }
+  .topbar .global-search { width: 160px; }
+  .map-wrap, .loc-grid { grid-template-columns: 1fr; }
+  .map-panel, .map-tools { display: none; }
+  .loc-grid { grid-template-rows: auto 1fr; }
+  .loc-list-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 38vh; }
+  .loc-hero { padding-top: var(--s4); padding-bottom: var(--s4); }
+  .loc-hero h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>Aethercart <small>worldbuilding studio</small></div>
+    </div>
+    <div class="world-switch">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20z"/></svg>
+      <select id="worldSelect"></select>
+    </div>
+    <button class="btn sm" id="newWorldBtn">+ World</button>
+    <div class="spacer"></div>
+    <div class="global-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4-4"/></svg>
+      <input type="text" id="globalSearch" placeholder="Search world… (⌘K)" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <button class="btn sm" id="exportBtn" title="Export world JSON">↓ Export</button>
+    <button class="btn sm" id="importBtn" title="Import world JSON">↑ Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav class="nav-section">
+      <div class="nav-item active" data-view="wiki">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        <span>Wiki</span><span class="count" id="wikiCount">0</span>
+      </div>
+      <div class="nav-item" data-view="map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6v16l7-3 8 3 7-3V3l-7 3-8-3-7 3z"/><path d="M8 3v15M16 6v15"/></svg>
+        <span>Atlas</span>
+      </div>
+      <div class="nav-item" data-view="locations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Locations</span><span class="count" id="locCount">0</span>
+      </div>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <div class="tree" id="wikiTree"></div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- WIKI VIEW -->
+    <section class="view active" id="view-wiki">
+      <div class="toolbar">
+        <button class="btn sm" id="newPageBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> New Page</button>
+        <button class="btn sm ghost" id="toggleEditBtn">Preview</button>
+        <div class="spacer"></div>
+        <div class="save-state"><span class="pulse"></span> Saved</div>
+        <button class="btn sm danger ghost" id="deletePageBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+      </div>
+      <div id="wikiContent" style="flex:1; overflow:auto;"></div>
+    </section>
+
+    <!-- MAP VIEW -->
+    <section class="view" id="view-map">
+      <div class="map-wrap">
+        <div class="map-tools" id="mapTools">
+          <div class="tool-btn active" data-tool="pan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 00-4 0v5M14 10V4a2 2 0 00-4 0v6M10 10.5V6a2 2 0 00-4 0v8M18 8a2 2 0 014 0v6a8 8 0 01-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 012.83-2.82L7 15"/></svg><span class="tip">Pan / Move</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-btn" data-tool="brush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 114.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 00-3-3.02z"/></svg><span class="tip">Land Brush</span></div>
+          <div class="tool-btn" data-tool="water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg><span class="tip">Water/Erase</span></div>
+          <div class="tool-btn" data-tool="terrain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3l4 8 5-5 5 15H2L8 3z"/></svg><span class="tip">Terrain Icon</span></div>
+          <div class="tool-btn" data-tool="marker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="tip">Place Marker</span></div>
+          <div class="tool-btn" data-tool="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg><span class="tip">Text Label</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-btn" data-tool="erase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16a2 2 0 010-3l9-9a2 2 0 013 0l5 5a2 2 0 010 3l-7 7"/></svg><span class="tip">Eraser</span></div>
+          <div class="tool-btn" data-tool="clear" id="clearMapBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span class="tip">Clear Map</span></div>
+        </div>
+        <div class="canvas-stage" id="canvasStage">
+          <canvas id="mapCanvas"></canvas>
+          <div class="canvas-hud">
+            <div class="hud-chip" id="coordChip">0, 0</div>
+            <div class="hud-chip" id="zoomChip">100%</div>
+          </div>
+          <div class="zoom-ctl">
+            <button class="btn icon" id="zoomIn">+</button>
+            <button class="btn icon" id="zoomOut">−</button>
+            <button class="btn icon" id="zoomReset" title="Reset view">⌂</button>
+          </div>
+        </div>
+        <div class="map-panel">
+          <div class="panel-section">
+            <h4>Map Name</h4>
+            <div class="field"><input type="text" id="mapName" placeholder="Untitled Realm"></div>
+          </div>
+          <div class="panel-section">
+            <h4>Brush</h4>
+            <div class="field">
+              <label>Color</label>
+              <div class="swatch-row" id="brushSwatches"></div>
+            </div>
+            <div class="field">
+              <label>Size</label>
+              <div class="range-row"><input type="range" id="brushSize" min="2" max="80" value="24"><span class="val" id="brushSizeVal">24</span></div>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h4>Terrain Stamp</h4>
+            <div class="swatch-row" id="terrainStamps"></div>
+          </div>
+          <div class="panel-section">
+            <h4>Markers <span style="float:right;color:var(--text-3)" id="markerCount">0</span></h4>
+            <div class="marker-list" id="markerList"></div>
+          </div>
+          <div class="panel-section">
+            <button class="btn primary" style="width:100%" id="exportMapBtn">↓ Export PNG</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOCATIONS VIEW -->
+    <section class="view" id="view-locations">
+      <div class="loc-grid">
+        <div class="loc-list-panel">
+          <div class="loc-list-head">
+            <input type="text" id="locSearch" placeholder="Filter locations…">
+            <button class="btn primary sm" id="newLocBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+          </div>
+          <div class="loc-list" id="locList"></div>
+        </div>
+        <div class="loc-detail" id="locDetail"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   AETHERCART — Worldbuilding Studio
+   State management, persistence, wiki, atlas, locations
+   ============================================================ */
+
+// ---------- Utilities ----------
+const $ = (s, p=document) => p.querySelector(s);
+const $$ = (s, p=document) => [...p.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2, 9);
+const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const debounce = (fn, ms=400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+const slug = s => (s||'').toLowerCase().trim();
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span class="dot"></span> ${esc(msg)}`;
+  $('#toastWrap').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateY(10px)'; setTimeout(()=>el.remove(),200); }, 2200);
+}
+
+// ---------- State ----------
+const STORAGE_KEY = 'aethercart_v1';
+const PAGE_CATEGORIES = ['Locations','Cultures','History','Magic','Technology','Characters','Religion','Misc'];
+const CAT_COLORS = { Locations:'#5b8def', Cultures:'#f2b760', History:'#f2566a', Magic:'#7c5cff', Technology:'#3ecf8e', Characters:'#e06fff', Religion:'#ff9f6f', Misc:'#8b93a5' };
+
+let DB = { worlds: {}, current: null };
+let activePageId = null;
+let activeLocId = null;
+let editMode = false;
+
+function blankWorld(name) {
+  const wid = uid();
+  return {
+    id: wid, name,
+    pages: {}, locations: {},
+    map: { name: 'Untitled Realm', strokes: [], terrains: [], markers: [], labels: [] }
+  };
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { DB = JSON.parse(raw); return; }
+  } catch(e){}
+  seed();
+}
+
+function seed() {
+  const w = blankWorld('Aethermoor');
+  const p1 = uid(), p2 = uid(), p3 = uid(), p4 = uid();
+  w.pages[p1] = { id:p1, title:'Aethermoor', category:'Locations', emoji:'🌍', tags:['overview'],
+    content:'# The Realm of Aethermoor\n\nA shattered continent where floating isles drift above the [[Sundered Sea]]. The great city of [[Veloria]] anchors the central archipelago, its towers powered by [[Aether Crystals]].\n\n## Geography\nThree major isles dominate the skies, connected by ancient [[Skybridges]]. Below lies the mist-choked surface, rarely traveled.\n\n## Notable Powers\n- The [[Crystal Conclave]] governs aether use\n- The [[Veloria]] merchant houses control trade\n\n> "The sky belongs to those bold enough to claim it." — Velorian proverb', updated: Date.now() };
+  w.pages[p2] = { id:p2, title:'Veloria', category:'Locations', emoji:'🏙️', tags:['city','capital'],
+    content:'# Veloria\n\nThe jewel of [[Aethermoor]], a vertical city of spires and hanging gardens. Home to the [[Crystal Conclave]].\n\n## Districts\n- **The Spire** — seat of government\n- **Lowmarket** — trade and crafts\n- **The Drift** — docks for skyships', updated: Date.now() };
+  w.pages[p3] = { id:p3, title:'Aether Crystals', category:'Magic', emoji:'💎', tags:['magic','resource'],
+    content:'# Aether Crystals\n\nThe lifeblood of [[Aethermoor]]. These glowing crystals defy gravity and power everything from lanterns to the [[Skybridges]].\n\n## Properties\nWhen resonated at the correct frequency, aether crystals lift surrounding matter. The [[Crystal Conclave]] guards the resonance secrets jealously.', updated: Date.now() };
+  w.pages[p4] = { id:p4, title:'Crystal Conclave', category:'Cultures', emoji:'🔮', tags:['faction'],
+    content:'# The Crystal Conclave\n\nThe magocratic order that controls [[Aether Crystals]] across [[Aethermoor]]. Based in [[Veloria]].', updated: Date.now() };
+
+  const l1 = uid(), l2 = uid();
+  w.locations[l1] = { id:l1, name:'Veloria', emoji:'🏙️', type:'City', geography:'Built across three floating isles connected by skybridges, with the central spire reaching above the cloud layer.', climate:'Temperate, with cool mists rising from the surface below. Frequent aurora-like aether storms.', population:'~340,000', popNum:340000, culture:'A cosmopolitan blend of sky-traders, crystal scholars, and artisan guilds. Strongly meritocratic.', economy:'Trade hub and aether-crystal refining. Currency: the Velorian Sol.', history:'Founded 800 years ago when the first resonance engine stabilized the central isle.', government:'Magocracy under the Crystal Conclave', founded:'Year 12 of the Drift', notes:'Seat of the Conclave. See [[Veloria]] wiki page.' };
+  w.locations[l2] = { id:l2, name:'Sundered Sea', emoji:'🌊', type:'Region', geography:'The mist-shrouded surface world, dotted with crumbling ruins of the age before the Sundering.', climate:'Perpetual fog, storms, and toxic aether-blooms.', population:'Unknown — scattered surface-dwellers', popNum:5000, culture:'Insular surface clans, distrustful of sky-folk.', economy:'Salvage and forbidden artifacts.', history:'Once the heart of the old empire, now drowned in mist after the Sundering.', government:'None — fractured clans', founded:'Pre-Sundering', notes:'Rarely traveled by sky-folk.' };
+
+  // a couple map strokes
+  DB.worlds[w.id] = w;
+  DB.current = w.id;
+  save();
+}
+
+const save = debounce(() => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch(e){ console.warn('save failed', e); }
+}, 250);
+function saveNow(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch(e){} }
+
+const world = () => DB.worlds[DB.current];
+
+// ---------- World Switcher ----------
+function renderWorldSelect() {
+  const sel = $('#worldSelect');
+  sel.innerHTML = Object.values(DB.worlds).map(w => `<option value="${w.id}" ${w.id===DB.current?'selected':''}>${esc(w.name)}</option>`).join('');
+}
+$('#worldSelect').addEventListener('change', e => {
+  DB.current = e.target.value; activePageId = null; activeLocId = null;
+  saveNow(); renderAll();
+});
+$('#newWorldBtn').addEventListener('click', () => {
+  openModal('Create New World', `<div class="field"><label>World name</label><input type="text" id="mWorldName" placeholder="e.g. The Iron Reaches"></div>`,
+    [{label:'Cancel', cls:'', fn: closeModal}, {label:'Create', cls:'primary', fn: () => {
+      const n = $('#mWorldName').value.trim() || 'New World';
+      const w = blankWorld(n); DB.worlds[w.id] = w; DB.current = w.id; activePageId=null; activeLocId=null;
+      saveNow(); closeModal(); renderAll(); toast('World created');
+    }}]);
+  setTimeout(()=>$('#mWorldName')?.focus(), 50);
+});
+
+// ---------- Navigation ----------
+
+$$('.nav-item').forEach(n => n.addEventListener('click', () => switchView(n.dataset.view)));
+function switchView(v) {
+
+  $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === v));
+
+  $$('.view').forEach(s => s.classList.toggle('active', s.id === 'view-'+v));
+  if (v === 'map') initMapView();
+  if (v === 'locations') renderLocList();
+}
+
+// ============================================================
+//  WIKI
+// ============================================================
+function renderWikiTree() {
+  const tree = $('#wikiTree');
+  const pages = Object.values(world().pages);
+  $('#wikiCount').textContent = pages.length;
+  $('#locCount').textContent = Object.keys(world().locations).length;
+
+  const byCat = {};
+  PAGE_CATEGORIES.forEach(c => byCat[c] = []);
+  pages.forEach(p => { (byCat[p.category] || (byCat[p.category]=[])).push(p); });
+
+  tree.innerHTML = PAGE_CATEGORIES.filter(c => byCat[c] && byCat[c].length).map(cat => {
+    const items = byCat[cat].sort((a,b)=>a.title.localeCompare(b.title)).map(p => `
+      <div class="tree-item ${p.id===activePageId?'active':''}" data-page="${p.id}">
+        <span class="dot" style="background:${CAT_COLORS[cat]||'#888'}"></span>
+        <span>${esc(p.title)}</span>
+      </div>`).join('');
+    return `<div class="tree-group">
+      <div class="tree-head" data-cat="${cat}">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        ${cat}
+        <span class="add-btn" data-addcat="${cat}">+</span>
+      </div>
+      <div class="tree-items">${items}</div>
+    </div>`;
+  }).join('') || '<div style="padding:var(--s4);color:var(--text-3);font-size:13px;">No pages yet.</div>';
+
+
+  $$('.tree-head').forEach(h => h.addEventListener('click', e => {
+    if (e.target.dataset.addcat !== undefined) { e.stopPropagation(); createPage(e.target.dataset.addcat); return; }
+    h.classList.toggle('collapsed');
+    h.nextElementSibling.classList.toggle('collapsed');
+  }));
+
+  $$('.tree-item').forEach(t => t.addEventListener('click', () => openPage(t.dataset.page)));
+}
+
+function createPage(category='Misc', title='Untitled Page') {
+  const id = uid();
+  world().pages[id] = { id, title, category, emoji:'📄', tags:[], content:'# '+title+'\n\nStart writing…', updated: Date.now() };
+  save(); renderWikiTree(); openPage(id);
+  editMode = true; renderWikiPage();
+  toast('Page created');
+}
+
+$('#newPageBtn').addEventListener('click', () => createPage('Misc'));
+
+function openPage(id) {
+  activePageId = id; editMode = false;
+  switchView('wiki'); renderWikiTree(); renderWikiPage();
+}
+
+function renderWikiPage() {
+  const c = $('#wikiContent');
+  const p = world().pages[activePageId];
+  if (!p) {
+    c.innerHTML = `<div class="empty-state"><div class="es-icon">📖</div><h3>No page selected</h3><p>Choose a page from the sidebar or create a new one to begin documenting your world.</p><button class="btn primary" onclick="createPage('Misc')">+ New Page</button></div>`;
+    $('#toggleEditBtn').textContent = 'Preview';
+    return;
+  }
+  $('#toggleEditBtn').textContent = editMode ? 'Preview' : 'Edit';
+
+  const tagsHtml = (p.tags||[]).map(t => `<span class="tag-chip">${esc(t)}<span class="x" data-tag="${esc(t)}">×</span></span>`).join('');
+  const catOpts = PAGE_CATEGORIES.map(cat => `<option ${cat===p.category?'selected':''}>${cat}</option>`).join('');
+
+  c.innerHTML = `
+    <div class="doc-header">
+      <div class="doc-breadcrumb">
+        <span class="crumb">${esc(world().name)}</span> / <span>${esc(p.category)}</span>
+      </div>
+      <div class="doc-title-row">
+        <span class="doc-emoji" id="docEmoji">${p.emoji||'📄'}</span>
+        <input class="doc-title" id="docTitle" value="${esc(p.title)}">
+      </div>
+      <div class="doc-meta">
+        <div class="mi">📁 <select id="docCat">${catOpts}</select></div>
+        <div class="mi">🏷️ ${tagsHtml} <input id="docTagInput" placeholder="+ tag" style="width:70px"></div>
+        <div class="mi">🕓 ${new Date(p.updated).toLocaleDateString()}</div>
+      </div>
+    </div>
+    <div class="doc-body">
+      ${editMode
+        ? `<textarea class="doc-editor" id="docEditor" placeholder="Write with Markdown. Use [[Page Name]] to link pages.">${esc(p.content)}</textarea>`
+        : `<div class="doc-rendered" id="docRendered">${renderMarkdown(p.content)}</div>${renderBacklinks(p)}`}
+    </div>`;
+
+  // emoji
+  $('#docEmoji').addEventListener('click', () => pickEmoji(em => { p.emoji = em; p.updated=Date.now(); save(); renderWikiPage(); renderWikiTree(); }));
+  // title
+  $('#docTitle').addEventListener('input', e => { p.title = e.target.value; p.updated=Date.now(); save(); renderWikiTree(); markSaved(); });
+  // category
+  $('#docCat').addEventListener('change', e => { p.category = e.target.value; p.updated=Date.now(); save(); renderWikiTree(); });
+  // tags
+  $('#docTagInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.value.trim()) { p.tags = p.tags||[]; if(!p.tags.includes(e.target.value.trim())) p.tags.push(e.target.value.trim()); save(); renderWikiPage(); }
+  });
+
+  $$('.tag-chip .x').forEach(x => x.addEventListener('click', () => { p.tags = p.tags.filter(t=>t!==x.dataset.tag); save(); renderWikiPage(); }));
+
+  if (editMode) {
+    const ed = $('#docEditor');
+    ed.addEventListener('input', () => { p.content = ed.value; p.updated=Date.now(); save(); markSaved(); });
+    ed.focus();
+  } else {
+
+    $$('.wikilink').forEach(w => w.addEventListener('click', () => {
+      const target = w.dataset.target;
+      const found = Object.values(world().pages).find(pg => slug(pg.title) === slug(target));
+      if (found) openPage(found.id);
+      else createPage('Misc', target);
+    }));
+
+    $$('.backlink-item').forEach(b => b.addEventListener('click', ()=> openPage(b.dataset.page)));
+  }
+}
+
+function markSaved() {
+  const s = $('.save-state'); if(!s) return;
+  s.innerHTML = '<span class="pulse" style="background:var(--warn)"></span> Saving…';
+  clearTimeout(markSaved._t);
+  markSaved._t = setTimeout(()=> s.innerHTML = '<span class="pulse"></span> Saved', 600);
+}
+
+$('#toggleEditBtn').addEventListener('click', () => { editMode = !editMode; renderWikiPage(); });
+$('#deletePageBtn').addEventListener('click', () => {
+  if (!activePageId) return;
+  const p = world().pages[activePageId];
+  openModal('Delete Page?', `<p>Are you sure you want to delete <strong>${esc(p.title)}</strong>? This cannot be undone.</p>`,
+    [{label:'Cancel', fn: closeModal}, {label:'Delete', cls:'danger', fn: () => {
+      delete world().pages[activePageId]; activePageId=null; saveNow(); closeModal(); renderWikiTree(); renderWikiPage(); toast('Page deleted');
+    }}]);
+});
+
+// Markdown renderer with [[wikilinks]]
+function renderMarkdown(src) {
+  if (!src) return '<p style="color:var(--text-3)">Empty page.</p>';
+  const titles = Object.values(world().pages).map(p=>slug(p.title));
+  let html = esc(src);
+  // wikilinks
+  html = html.replace(/\[\[([^\]]+)\]\]/g, (m, name) => {
+    const broken = !titles.includes(slug(name));
+    return `<span class="wikilink ${broken?'broken':''}" data-target="${esc(name)}">${esc(name)}</span>`;
+  });
+  // blocks
+  const lines = html.split('\n');
+  let out = '', inList=null;
+  const flush = () => { if(inList){ out += `</${inList}>`; inList=null; } };
+  for (let raw of lines) {
+    let line = raw;
+    if (/^### /.test(line)) { flush(); out += `<h3>${inline(line.slice(4))}</h3>`; continue; }
+    if (/^## /.test(line)) { flush(); out += `<h2>${inline(line.slice(3))}</h2>`; continue; }
+    if (/^# /.test(line)) { flush(); out += `<h1>${inline(line.slice(2))}</h1>`; continue; }
+    if (/^> /.test(line)) { flush(); out += `<blockquote>${inline(line.slice(2))}</blockquote>`; continue; }
+    if (/^---+$/.test(line)) { flush(); out += '<hr>'; continue; }
+    if (/^[-*] /.test(line)) { if(inList!=='ul'){flush();out+='<ul>';inList='ul';} out += `<li>${inline(line.slice(2))}</li>`; continue; }
+    if (/^\d+\. /.test(line)) { if(inList!=='ol'){flush();out+='<ol>';inList='ol';} out += `<li>${inline(line.replace(/^\d+\. /,''))}</li>`; continue; }
+    if (line.trim()==='') { flush(); continue; }
+    flush(); out += `<p>${inline(line)}</p>`;
+  }
+  flush();
+  return out;
+}
+function inline(s) {
+  return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+          .replace(/(^|[^*])\*([^*]+)\*/g,'$1<em>$2</em>')
+          .replace(/`([^`]+)`/g,'<code>$1</code>');
+}
+function renderBacklinks(page) {
+  const refs = Object.values(world().pages).filter(p => p.id!==page.id && (p.content||'').toLowerCase().includes('[['+slug(page.title)));
+  // more robust check
+  const back = Object.values(world().pages).filter(p => {
+    if (p.id===page.id) return false;
+    const links = [...(p.content||'').matchAll(/\[\[([^\]]+)\]\]/g)].map(m=>slug(m[1]));
+    return links.includes(slug(page.title));
+  });
+  if (!back.length) return '';
+  return `<div class="backlinks"><h4>Linked from ${back.length} page${back.length>1?'s':''}</h4>
+    ${back.map(b=>`<div class="backlink-item" data-page="${b.id}">${b.emoji||'📄'} ${esc(b.title)}</div>`).join('')}</div>`;
+}
+
+// ============================================================
+//  LOCATIONS
+// ============================================================
+function renderLocList(filter='') {
+  const list = $('#locList');
+  let locs = Object.values(world().locations);
+  if (filter) locs = locs.filter(l => l.name.toLowerCase().includes(filter.toLowerCase()) || (l.type||'').toLowerCase().includes(filter.toLowerCase()));
+  locs.sort((a,b)=>a.name.localeCompare(b.name));
+  if (!locs.length) { list.innerHTML = `<div style="padding:var(--s4);color:var(--text-3);text-align:center">No locations</div>`; }
+  else list.innerHTML = locs.map(l => `
+    <div class="loc-card ${l.id===activeLocId?'active':''}" data-loc="${l.id}">
+      <div class="lc-top"><span class="lc-emoji">${l.emoji||'📍'}</span>
+        <div style="flex:1"><div class="lc-name">${esc(l.name)}</div><div class="lc-type">${esc(l.type||'Location')} · ${esc(l.population||'—')}</div></div>
+      </div>
+      <div class="lc-desc">${esc((l.geography||'').slice(0,120))||'No description'}</div>
+    </div>`).join('');
+
+  $$('.loc-card').forEach(c => c.addEventListener('click', ()=>openLoc(c.dataset.loc)));
+  const activeVisible = locs.some(l => l.id === activeLocId);
+  if (locs.length && (!activeLocId || (filter && !activeVisible))) openLoc(locs[0].id);
+  else renderLocDetail();
+}
+$('#locSearch').addEventListener('input', e => renderLocList(e.target.value));
+$('#newLocBtn').addEventListener('click', () => {
+  const id = uid();
+  world().locations[id] = { id, name:'New Location', emoji:'📍', type:'City', geography:'', climate:'', population:'', popNum:0, culture:'', economy:'', history:'', government:'', founded:'', notes:'' };
+  save(); activeLocId = id; renderLocList(); toast('Location created');
+});
+
+function openLoc(id){ activeLocId = id; renderLocList._skip=true; $$('.loc-card').forEach(c=>c.classList.toggle('active',c.dataset.loc===id)); renderLocDetail(); }
+
+function renderLocDetail() {
+  const d = $('#locDetail');
+  const l = world().locations[activeLocId];
+  if (!l) { d.innerHTML = `<div class="empty-state"><div class="es-icon">🗺️</div><h3>No location selected</h3><p>Create a location profile to track geography, culture, economy and history.</p></div>`; return; }
+  const types = ['City','Town','Village','Region','Kingdom','Wilderness','Ruin','Landmark','Dungeon','Other'];
+  d.innerHTML = `
+    <div class="loc-hero"><div class="loc-hero-content">
+      <span class="loc-hero-emoji" id="locEmoji" style="cursor:pointer">${l.emoji||'📍'}</span>
+      <input id="locName" value="${esc(l.name)}">
+      <div class="loc-stat-strip">
+        <div class="loc-stat"><div class="ls-label">Type</div><div class="ls-val">${esc(l.type||'—')}</div></div>
+        <div class="loc-stat"><div class="ls-label">Population</div><div class="ls-val">${esc(l.population||'—')}</div></div>
+        <div class="loc-stat"><div class="ls-label">Government</div><div class="ls-val">${esc(l.government||'—')}</div></div>
+        <div class="loc-stat"><div class="ls-label">Founded</div><div class="ls-val">${esc(l.founded||'—')}</div></div>
+      </div>
+    </div></div>
+    <div class="profile-sections">
+      <div class="profile-card">
+        <div class="pc-head">${ico('M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z')}<h3>Classification</h3></div>
+        <div class="pc-field"><label>Type</label><select data-f="type">${types.map(t=>`<option ${t===l.type?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="pc-grid2">
+          <div class="pc-field"><label>Population</label><input data-f="population" value="${esc(l.population||'')}" placeholder="e.g. 12,000"></div>
+          <div class="pc-field"><label>Founded</label><input data-f="founded" value="${esc(l.founded||'')}" placeholder="Year / Era"></div>
+        </div>
+        <div class="pc-field"><label>Government</label><input data-f="government" value="${esc(l.government||'')}" placeholder="e.g. Monarchy"></div>
+      </div>
+      <div class="profile-card">
+        <div class="pc-head">${ico('M8 3l4 8 5-5 5 15H2L8 3z')}<h3>Geography</h3></div>
+        <div class="pc-field"><textarea data-f="geography" placeholder="Terrain, landmarks, surroundings…">${esc(l.geography||'')}</textarea></div>
+      </div>
+      <div class="profile-card">
+        <div class="pc-head">${ico('M12 2.69l5.66 5.66a8 8 0 11-11.31 0z')}<h3>Climate</h3></div>
+        <div class="pc-field"><textarea data-f="climate" placeholder="Weather, seasons, hazards…">${esc(l.climate||'')}</textarea></div>
+      </div>
+      <div class="profile-card">
+        <div class="pc-head">${ico('M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z')}<h3>Culture</h3></div>
+        <div class="pc-field"><textarea data-f="culture" placeholder="People, customs, language, beliefs…">${esc(l.culture||'')}</textarea></div>
+      </div>
+      <div class="profile-card">
+        <div class="pc-head">${ico('M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6')}<h3>Economy</h3></div>
+        <div class="pc-field"><textarea data-f="economy" placeholder="Trade, resources, currency…">${esc(l.economy||'')}</textarea></div>
+      </div>
+      <div class="profile-card">
+        <div class="pc-head">${ico('M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z')}<h3>History</h3></div>
+        <div class="pc-field"><textarea data-f="history" placeholder="Origins, key events, conflicts…">${esc(l.history||'')}</textarea></div>
+      </div>
+      <div class="profile-card wide">
+        <div class="pc-head">${ico('M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6')}<h3>Notes &amp; Connections</h3></div>
+        <div class="pc-field"><textarea data-f="notes" placeholder="Free notes. Reference wiki pages with [[Page Name]].">${esc(l.notes||'')}</textarea></div>
+      </div>
+    </div>`;
+
+  $('#locEmoji').addEventListener('click', ()=> pickEmoji(em => { l.emoji=em; save(); renderLocDetail(); renderLocList(); }));
+  $('#locName').addEventListener('input', e => { l.name = e.target.value; save(); markCardName(l); });
+
+  $$('[data-f]', d).forEach(inp => inp.addEventListener('input', e => {
+    l[inp.dataset.f] = e.target.value;
+    if (inp.dataset.f==='type' || inp.dataset.f==='population' || inp.dataset.f==='government' || inp.dataset.f==='founded') { save(); refreshHeroStats(l); }
+    else save();
+  }));
+}
+function ico(path){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${path}"/></svg>`; }
+function markCardName(l){ const c=$(`.loc-card[data-loc="${l.id}"] .lc-name`); if(c) c.textContent=l.name; }
+function refreshHeroStats(l){ const vals=$$('.loc-stat .ls-val'); if(vals.length>=4){ vals[0].textContent=l.type||'—'; vals[1].textContent=l.population||'—'; vals[2].textContent=l.government||'—'; vals[3].textContent=l.founded||'—'; } }
+
+// ============================================================
+//  MAP / ATLAS
+// ============================================================
+const BRUSH_COLORS = ['#3b5e3b','#4a7c4a','#6b8e4e','#8a7a4a','#9c6b4a','#7a5a3a','#5a4a3a','#d4c896','#e8dcc0'];
+const TERRAIN_STAMPS = ['🏔️','⛰️','🌲','🌳','🏜️','🌋','🏝️','🏕️','🌊','💧','🏰','🏘️','🗿','⚓'];
+const MARKER_ICONS = ['📍','🏙️','🏰','⚔️','💀','⭐','🔥','💎','🛖','⚓','🗺️','👑'];
+
+let mapState = { tool:'pan', color:BRUSH_COLORS[1], size:24, terrain:'🏔️', zoom:1, panX:0, panY:0 };
+let mapCanvas, mapCtx, isDrawing=false, lastPt=null, mapInited=false;
+const MAP_W = 2000, MAP_H = 1400;
+
+function initMapView() {
+  if (!mapInited) { setupMap(); mapInited = true; }
+  $('#mapName').value = world().map.name || '';
+  buildSwatches();
+  renderMarkerList();
+  redrawMap();
+}
+
+function setupMap() {
+  mapCanvas = $('#mapCanvas');
+  mapCtx = mapCanvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', () => { if($('#view-map').classList.contains('active')){ resizeCanvas(); redrawMap(); } });
+
+  // tools
+
+  $$('#mapTools .tool-btn').forEach(b => {
+    if (b.id==='clearMapBtn') return;
+    b.addEventListener('click', () => {
+      mapState.tool = b.dataset.tool;
+
+      $$('#mapTools .tool-btn').forEach(x=>x.classList.toggle('active', x===b));
+      mapCanvas.style.cursor = b.dataset.tool==='pan' ? 'grab' : 'crosshair';
+    });
+  });
+  $('#clearMapBtn').addEventListener('click', () => {
+    openModal('Clear Map?', '<p>This will erase all strokes, terrain, markers and labels on this map.</p>',
+      [{label:'Cancel',fn:closeModal},{label:'Clear',cls:'danger',fn:()=>{ const m=world().map; m.strokes=[];m.terrains=[];m.markers=[];m.labels=[]; saveNow(); closeModal(); redrawMap(); renderMarkerList(); toast('Map cleared'); }}]);
+  });
+
+  $('#mapName').addEventListener('input', e => { world().map.name = e.target.value; save(); });
+  $('#brushSize').addEventListener('input', e => { mapState.size = +e.target.value; $('#brushSizeVal').textContent = e.target.value; });
+
+  // zoom
+  $('#zoomIn').addEventListener('click', ()=>setZoom(mapState.zoom*1.2));
+  $('#zoomOut').addEventListener('click', ()=>setZoom(mapState.zoom/1.2));
+  $('#zoomReset').addEventListener('click', ()=>{ mapState.zoom=1; mapState.panX=0; mapState.panY=0; updateZoomChip(); redrawMap(); });
+  $('#exportMapBtn').addEventListener('click', exportMapPNG);
+
+  // pointer events
+  mapCanvas.addEventListener('pointerdown', onMapDown);
+  window.addEventListener('pointermove', onMapMove);
+  window.addEventListener('pointerup', onMapUp);
+  mapCanvas.addEventListener('wheel', e => { e.preventDefault(); setZoom(mapState.zoom * (e.deltaY<0?1.1:0.9)); }, {passive:false});
+}
+
+function resizeCanvas() {
+  const stage = $('#canvasStage');
+  mapCanvas.width = stage.clientWidth;
+  mapCanvas.height = stage.clientHeight;
+}
+function setZoom(z){ mapState.zoom = Math.max(0.3, Math.min(4, z)); updateZoomChip(); redrawMap(); }
+function updateZoomChip(){ $('#zoomChip').textContent = Math.round(mapState.zoom*100)+'%'; }
+
+function screenToWorld(sx, sy) {
+  return { x: (sx - mapState.panX) / mapState.zoom, y: (sy - mapState.panY) / mapState.zoom };
+}
+
+function onMapDown(e) {
+  const rect = mapCanvas.getBoundingClientRect();
+  const sx = e.clientX-rect.left, sy = e.clientY-rect.top;
+  const w = screenToWorld(sx, sy);
+  const m = world().map;
+  const t = mapState.tool;
+
+  if (t==='pan') { isDrawing='pan'; lastPt={x:e.clientX,y:e.clientY}; mapCanvas.style.cursor='grabbing'; return; }
+  if (t==='brush' || t==='water' || t==='erase') {
+    isDrawing='draw';
+    const color = t==='water' ? '#1a2942' : t==='erase' ? null : mapState.color;
+    m.strokes.push({ color, size:mapState.size, erase:t==='erase', points:[[w.x,w.y]] });
+    redrawMap();
+  } else if (t==='terrain') {
+    m.terrains.push({ id:uid(), x:w.x, y:w.y, icon:mapState.terrain, size:mapState.size });
+    save(); redrawMap();
+  } else if (t==='marker') {
+    const name = prompt('Marker name:', 'New Place'); if(name===null) return;
+    m.markers.push({ id:uid(), x:w.x, y:w.y, icon:mapState.terrain && MARKER_ICONS.includes(mapState.terrain)?mapState.terrain:'📍', name:name||'Place' });
+    save(); redrawMap(); renderMarkerList();
+  } else if (t==='label') {
+    const text = prompt('Label text:'); if(!text) return;
+    m.labels.push({ id:uid(), x:w.x, y:w.y, text });
+    save(); redrawMap();
+  }
+}
+function onMapMove(e) {
+  if (!mapInited || (!isDrawing && !$('#view-map').classList.contains('active'))) return;
+  const rect = mapCanvas.getBoundingClientRect();
+  const sx = e.clientX-rect.left, sy = e.clientY-rect.top;
+  const w = screenToWorld(sx, sy);
+  $('#coordChip').textContent = `${Math.round(w.x)}, ${Math.round(w.y)}`;
+  if (!isDrawing) return;
+  if (isDrawing==='pan') {
+    mapState.panX += e.clientX-lastPt.x; mapState.panY += e.clientY-lastPt.y;
+    lastPt = {x:e.clientX,y:e.clientY}; scheduleRedraw(); return;
+  }
+  if (isDrawing==='draw') {
+    const m = world().map; const last = m.strokes[m.strokes.length-1];
+    last.points.push([w.x,w.y]); scheduleRedraw();
+  }
+}
+function onMapUp() {
+  if (isDrawing==='draw') save();
+  if (isDrawing==='pan') mapCanvas.style.cursor = mapState.tool==='pan'?'grab':'crosshair';
+  isDrawing=false; lastPt=null;
+}
+
+// rAF-throttled redraw: collapses multiple pointermove redraws into
+// at most one paint per animation frame for smoother drawing/panning.
+let _redrawQueued = false;
+function scheduleRedraw() {
+  if (_redrawQueued) return;
+  _redrawQueued = true;
+  requestAnimationFrame(() => { _redrawQueued = false; redrawMap(); });
+}
+function redrawMap() {
+  if (!mapCtx) return;
+  const ctx = mapCtx;
+  ctx.clearRect(0,0,mapCanvas.width,mapCanvas.height);
+  ctx.save();
+  ctx.translate(mapState.panX, mapState.panY);
+  ctx.scale(mapState.zoom, mapState.zoom);
+
+  // ocean background
+  ctx.fillStyle = '#13243d';
+  ctx.fillRect(-2000,-2000, MAP_W+8000, MAP_H+8000);
+  // map bounds + grid
+  ctx.fillStyle = '#0e1b2e';
+  ctx.fillRect(0,0,MAP_W,MAP_H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1/mapState.zoom;
+  for (let x=0;x<=MAP_W;x+=100){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,MAP_H); ctx.stroke(); }
+  for (let y=0;y<=MAP_H;y+=100){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(MAP_W,y); ctx.stroke(); }
+  // border
+  ctx.strokeStyle = 'rgba(124,92,255,0.4)'; ctx.lineWidth=2/mapState.zoom;
+  ctx.strokeRect(0,0,MAP_W,MAP_H);
+
+  const m = world().map;
+  // strokes
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  m.strokes.forEach(s => {
+    if (s.erase) ctx.globalCompositeOperation='destination-out';
+    else ctx.globalCompositeOperation='source-over';
+    ctx.strokeStyle = s.color || '#000';
+    ctx.lineWidth = s.size;
+    ctx.beginPath();
+    s.points.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+    if (s.points.length===1){ ctx.arc(s.points[0][0],s.points[0][1],s.size/2,0,Math.PI*2); ctx.fillStyle=s.color||'#000'; if(!s.erase)ctx.fill(); }
+    ctx.stroke();
+  });
+  ctx.globalCompositeOperation='source-over';
+  // terrain
+  m.terrains.forEach(t => { ctx.font = `${t.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t.icon, t.x, t.y); });
+  // labels
+  m.labels.forEach(l => {
+    ctx.font = `italic ${18}px Georgia, serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillText(l.text, l.x+1, l.y+1);
+    ctx.fillStyle='#f4f6fb'; ctx.fillText(l.text, l.x, l.y);
+  });
+  // markers
+  m.markers.forEach(mk => {
+    ctx.font='24px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(mk.icon||'📍', mk.x, mk.y);
+    ctx.font='12px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle='#c3c9d6';
+    ctx.fillText(mk.name, mk.x, mk.y+20);
+  });
+  ctx.restore();
+}
+
+function buildSwatches() {
+  const sw = $('#brushSwatches');
+  sw.innerHTML = BRUSH_COLORS.map(c=>`<div class="swatch ${c===mapState.color?'active':''}" style="background:${c}" data-c="${c}"></div>`).join('');
+
+  $$('#brushSwatches .swatch').forEach(s => s.addEventListener('click', ()=>{ mapState.color=s.dataset.c; buildSwatches(); }));
+  const ts = $('#terrainStamps');
+  ts.innerHTML = TERRAIN_STAMPS.map(t=>`<div class="swatch ${t===mapState.terrain?'active':''}" style="display:grid;place-items:center;font-size:16px;background:var(--bg-2)" data-t="${t}">${t}</div>`).join('');
+
+  $$('#terrainStamps .swatch').forEach(s => s.addEventListener('click', ()=>{ mapState.terrain=s.dataset.t; buildSwatches(); }));
+}
+
+function renderMarkerList() {
+  const list = $('#markerList'); const m = world().map;
+  $('#markerCount').textContent = m.markers.length;
+  list.innerHTML = m.markers.map(mk => `<div class="marker-row" data-mk="${mk.id}">
+    <span class="mk-ico">${mk.icon}</span><span class="mk-name">${esc(mk.name)}</span>
+    <span class="mk-del" data-del="${mk.id}">✕</span></div>`).join('') || '<div style="color:var(--text-3);font-size:12px">No markers placed</div>';
+
+  $$('.marker-row').forEach(r => r.addEventListener('click', e => {
+    if (e.target.dataset.del){ m.markers=m.markers.filter(x=>x.id!==e.target.dataset.del); save(); redrawMap(); renderMarkerList(); return; }
+    const mk = m.markers.find(x=>x.id===r.dataset.mk);
+    mapState.panX = mapCanvas.width/2 - mk.x*mapState.zoom; mapState.panY = mapCanvas.height/2 - mk.y*mapState.zoom; redrawMap();
+  }));
+}
+
+function exportMapPNG() {
+  const c = document.createElement('canvas'); c.width=MAP_W; c.height=MAP_H;
+  const x = c.getContext('2d');
+  x.fillStyle='#0e1b2e'; x.fillRect(0,0,MAP_W,MAP_H);
+  const m = world().map;
+  x.lineCap='round'; x.lineJoin='round';
+  m.strokes.forEach(s => { if(s.erase)x.globalCompositeOperation='destination-out';else x.globalCompositeOperation='source-over'; x.strokeStyle=s.color||'#000'; x.lineWidth=s.size; x.beginPath(); s.points.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.stroke(); });
+  x.globalCompositeOperation='source-over';
+  m.terrains.forEach(t=>{x.font=`${t.size}px serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(t.icon,t.x,t.y);});
+  m.labels.forEach(l=>{x.font='italic 18px Georgia';x.textAlign='center';x.fillStyle='#fff';x.fillText(l.text,l.x,l.y);});
+  m.markers.forEach(mk=>{x.font='24px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(mk.icon,mk.x,mk.y);x.font='12px sans-serif';x.fillStyle='#ccc';x.fillText(mk.name,mk.x,mk.y+20);});
+  const a=document.createElement('a'); a.download=(m.name||'map')+'.png'; a.href=c.toDataURL('image/png'); a.click();
+  toast('Map exported');
+}
+
+// ============================================================
+//  GLOBAL SEARCH
+// ============================================================
+const gs = $('#globalSearch'), sr = $('#searchResults');
+gs.addEventListener('input', () => {
+  const q = gs.value.trim().toLowerCase();
+  if (!q) { sr.classList.remove('open'); return; }
+  const results = [];
+  Object.values(world().pages).forEach(p => { if (p.title.toLowerCase().includes(q) || (p.content||'').toLowerCase().includes(q)) results.push({type:'Wiki', id:p.id, label:p.title, emoji:p.emoji, kind:'page'}); });
+  Object.values(world().locations).forEach(l => { if (l.name.toLowerCase().includes(q)) results.push({type:'Location', id:l.id, label:l.name, emoji:l.emoji, kind:'loc'}); });
+  sr.innerHTML = results.length ? results.slice(0,12).map(r=>`<div class="sr-item" data-kind="${r.kind}" data-id="${r.id}"><span>${r.emoji||'📄'}</span><span>${esc(r.label)}</span><span class="sr-type">${r.type}</span></div>`).join('') : '<div class="sr-empty">No results</div>';
+  sr.classList.add('open');
+
+  $$('.sr-item').forEach(it => it.addEventListener('click', () => {
+    sr.classList.remove('open'); gs.value='';
+    if (it.dataset.kind==='page') openPage(it.dataset.id);
+    else { switchView('locations'); openLoc(it.dataset.id); }
+  }));
+});
+document.addEventListener('click', e => { if (!e.target.closest('.global-search')) sr.classList.remove('open'); });
+document.addEventListener('keydown', e => {
+  if ((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k') { e.preventDefault(); gs.focus(); gs.select(); }
+  if (e.key === 'Escape') { if (sr.classList.contains('open')) { sr.classList.remove('open'); gs.blur(); } else if ($('#modalOverlay').classList.contains('open')) { closeModal(); } }
+});
+
+// ============================================================
+//  MODAL & EMOJI PICKER
+// ============================================================
+function openModal(title, body, buttons=[]) {
+  const m = $('#modal');
+  m.innerHTML = `<div class="modal-head"><h3>${esc(title)}</h3><span class="close">✕</span></div>
+    <div class="modal-body">${body}</div>
+    <div class="modal-foot">${buttons.map((b,i)=>`<button class="btn ${b.cls||''}" data-mb="${i}">${esc(b.label)}</button>`).join('')}</div>`;
+  $('#modalOverlay').classList.add('open');
+  $('.modal-head .close').addEventListener('click', closeModal);
+  buttons.forEach((b,i)=> $(`[data-mb="${i}"]`).addEventListener('click', b.fn));
+}
+function closeModal(){ $('#modalOverlay').classList.remove('open'); }
+$('#modalOverlay').addEventListener('click', e=>{ if(e.target.id==='modalOverlay') closeModal(); });
+
+const EMOJIS = ['📄','🌍','🌎','🏙️','🏰','🏯','🗼','⛩️','🏔️','⛰️','🌋','🏜️','🏝️','🏖️','🌲','🌳','🏕️','🗺️','🧭','⚔️','🛡️','👑','💎','🔮','📜','🏛️','⚓','🚢','🐉','🦅','🐺','🌊','💧','🔥','⚡','❄️','🌙','☀️','⭐','💀','🗿','🛖','🏘️','🏞️','🌅','🎭','📖','🔱','⚜️','🏹']; 
+function pickEmoji(cb) {
+  openModal('Choose an icon', `<div class="emoji-grid">${EMOJIS.map(e=>`<span data-e="${e}">${e}</span>`).join('')}</div>`, [{label:'Cancel',fn:closeModal}]);
+
+  $$('.emoji-grid span').forEach(s => s.addEventListener('click', ()=>{ cb(s.dataset.e); closeModal(); }));
+}
+
+// ============================================================
+//  EXPORT / IMPORT
+// ============================================================
+// Flush any pending debounced save before the page is closed/reloaded,
+// so the last edits made within the debounce window are never lost.
+window.addEventListener('beforeunload', () => { try { saveNow(); } catch(e){} });
+
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(world(), null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(world().name||'world')+'.json'; a.click();
+  toast('World exported');
+});
+$('#importBtn').addEventListener('click', ()=> $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const w = JSON.parse(r.result);
+      if (!w.pages || !w.locations) throw 'bad';
+      w.id = w.id || uid(); w.map = w.map || {name:'',strokes:[],terrains:[],markers:[],labels:[]};
+      DB.worlds[w.id] = w; DB.current = w.id; activePageId=null; activeLocId=null;
+      saveNow(); renderAll(); toast('World imported');
+    } catch(err){ toast('Invalid world file'); }
+  };
+  r.readAsText(f); e.target.value='';
+});
+
+// ============================================================
+//  INIT
+// ============================================================
+function renderAll() {
+  renderWorldSelect();
+  renderWikiTree();
+  if (!activePageId) { const first = Object.values(world().pages)[0]; if(first) activePageId=first.id; }
+  renderWikiPage();
+  renderLocList();
+  mapInited=false;
+  if ($('#view-map').classList.contains('active')) initMapView();
+}
+
+load();
+renderAll();
+</script>
+</body>
+</html>
