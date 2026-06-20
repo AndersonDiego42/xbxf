@@ -1,0 +1,3448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie Parser Pro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍪%3C/text%3E%3C/svg%3E">
+<style>
+  :root, :root[data-theme="dark"] {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1e293b;
+    --bg-card: #162032;
+    --bg-input: #0f172a;
+    --border: #1e3a5f;
+    --border-hover: #3b82f6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --purple: #8b5cf6;
+    --pink: #ec4899;
+    --cyan: #06b6d4;
+    --orange: #f97316;
+    --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    --gradient-2: linear-gradient(135deg, #06b6d4, #3b82f6);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+  }
+
+  :root[data-theme="light"] {
+    --bg-primary: #f4f6fb;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eef2f7;
+    --bg-card: #ffffff;
+    --bg-input: #f7f9fc;
+    --border: #d8e0ec;
+    --border-hover: #2563eb;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-glow: rgba(37, 99, 235, 0.12);
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.06);
+    --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+    --shadow-lg: 0 8px 32px rgba(15,23,42,0.12);
+    --gradient-1: linear-gradient(135deg, #2563eb, #7c3aed);
+    --gradient-2: linear-gradient(135deg, #0891b2, #2563eb);
+  }
+
+  :root[data-theme="light"] .bg-effect {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(37,99,235,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.05) 0%, transparent 50%);
+  }
+
+  :root[data-theme="light"] .json-key { color: #0369a1; }
+  :root[data-theme="light"] .json-string { color: #047857; }
+  :root[data-theme="light"] .json-number { color: #b45309; }
+  :root[data-theme="light"] .json-boolean { color: #7c3aed; }
+  :root[data-theme="light"] .json-null { color: #b91c1c; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Background effect */
+  .bg-effect {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-1);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--accent-glow);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+
+  .btn:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-card);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  }
+
+  .btn-danger {
+    color: var(--danger);
+    border-color: rgba(239,68,68,0.3);
+  }
+
+  .btn-danger:hover {
+    background: rgba(239,68,68,0.1);
+    border-color: var(--danger);
+  }
+
+  .btn-success {
+    color: var(--success);
+    border-color: rgba(16,185,129,0.3);
+  }
+
+  .btn-success:hover {
+    background: rgba(16,185,129,0.1);
+    border-color: var(--success);
+  }
+
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .btn-icon {
+    padding: 8px;
+    min-width: 36px;
+    justify-content: center;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .stat-icon.blue { background: rgba(59,130,246,0.15); }
+  .stat-icon.green { background: rgba(16,185,129,0.15); }
+  .stat-icon.purple { background: rgba(139,92,246,0.15); }
+  .stat-icon.orange { background: rgba(249,115,22,0.15); }
+  .stat-icon.pink { background: rgba(236,72,153,0.15); }
+  .stat-icon.cyan { background: rgba(6,182,212,0.15); }
+
+  .stat-info { display: flex; flex-direction: column; }
+  .stat-value { font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Main layout */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .stats-bar { flex-direction: column; }
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .panel-title-icon {
+    font-size: 16px;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .panel-body {
+    padding: 16px 18px;
+    flex: 1;
+  }
+
+  /* Input area */
+  .input-area {
+    width: 100%;
+    min-height: 200px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  .input-area:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .input-area::placeholder {
+    color: var(--text-muted);
+  }
+
+  .input-area.dragging {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: var(--accent-glow);
+  }
+
+  /* Format selector */
+  .format-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .format-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-weight: 500;
+  }
+
+  .format-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+  .format-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    font-family: inherit;
+  }
+
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Cookie cards */
+  .cookies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .cookie-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .cookie-card:hover {
+    border-color: var(--border-hover);
+    background: var(--accent-glow);
+    transform: translateX(2px);
+  }
+
+  .cookie-card-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .cookie-card:hover .cookie-card-actions,
+  .cookie-card.selected .cookie-card-actions { opacity: 1; }
+
+  .icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { color: var(--accent); background: var(--bg-tertiary); border-color: var(--border); }
+
+  /* Focus-visible rings (accessibility) */
+  .btn:focus-visible,
+  .icon-btn:focus-visible,
+  .format-btn:focus-visible,
+  .tab:focus-visible,
+  .form-input:focus-visible,
+  .form-select:focus-visible,
+  .search-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .cookie-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .cookie-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .cookie-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent);
+    word-break: break-all;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cookie-index {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .cookie-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cookie-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .cookie-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .tag-encoded { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .tag-json { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .tag-base64 { background: rgba(236,72,153,0.15); color: var(--pink); }
+  .tag-jwt { background: rgba(6,182,212,0.15); color: var(--cyan); }
+  .tag-secure { background: rgba(16,185,129,0.15); color: var(--success); }
+  .tag-httponly { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .tag-samesite { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .tag-empty { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .tag-long { background: rgba(245,158,11,0.15); color: var(--warning); }
+  .tag-partitioned { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .tag-tracking { background: rgba(245,158,11,0.18); color: var(--warning); }
+  .cookie-tag[class*="__Host-"], .cookie-tag[class*="__Secure-"] {
+    background: rgba(16,185,129,0.15); color: var(--success);
+  }
+
+  /* Detail panel */
+  .detail-section {
+    margin-bottom: 16px;
+  }
+
+  .detail-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .detail-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px;
+    align-items: start;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+  }
+
+  .detail-row:hover {
+    border-color: var(--border);
+  }
+
+  .detail-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding-top: 1px;
+  }
+
+  .detail-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    word-break: break-all;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+  }
+
+  .detail-value.decoded {
+    color: var(--success);
+  }
+
+  .detail-value.json-formatted {
+    white-space: pre-wrap;
+    font-size: 12px;
+    background: var(--bg-primary);
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* Search */
+  .search-container {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  /* Export modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-title { font-size: 16px; font-weight: 600; }
+
+  .modal-body { padding: 20px; }
+
+  .modal-code {
+    width: 100%;
+    min-height: 300px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    justify-content: flex-end;
+  }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    padding: 12px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease;
+    min-width: 250px;
+  }
+
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+  .toast.info { border-color: var(--accent); }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Bottom panels */
+  .bottom-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 900px) {
+    .bottom-layout { grid-template-columns: 1fr; }
+  }
+
+  /* Table */
+  .table-container {
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(30,58,95,0.5);
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tr:hover td {
+    background: rgba(59,130,246,0.05);
+  }
+
+  /* Security analysis */
+  .security-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .security-item {
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    display: flex;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .security-item.high { border-color: var(--danger); }
+  .security-item.medium { border-color: var(--warning); }
+  .security-item.low { border-color: var(--accent); }
+  .security-item.info { border-color: var(--success); }
+
+  .security-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .security-content { flex: 1; }
+  .security-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .security-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); }
+  .empty-desc { font-size: 13px; }
+
+  /* Tooltip */
+  .tooltip {
+    position: relative;
+  }
+
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+
+  .tooltip:hover::after { opacity: 1; }
+
+  /* JSON syntax highlighting */
+  .json-key { color: #7dd3fc; }
+  .json-string { color: #86efac; }
+  .json-number { color: #fbbf24; }
+  .json-boolean { color: #c084fc; }
+  .json-null { color: #f87171; }
+
+  /* Comparison/diff view */
+  .diff-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .diff-panel {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .diff-panel-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+  }
+
+  /* Cookie builder */
+  .builder-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .form-group {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .form-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .form-input {
+    padding: 7px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .detail-edit {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .form-select {
+    padding: 7px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .checkbox-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    accent-color: var(--accent);
+  }
+
+  .builder-output {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--success);
+    word-break: break-all;
+    line-height: 1.6;
+  }
+
+  .builder-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .builder-warn {
+    font-size: 11px;
+    padding: 6px 10px;
+    background: rgba(245,158,11,0.10);
+    border: 1px solid rgba(245,158,11,0.35);
+    border-radius: var(--radius-sm);
+    color: var(--warning);
+    line-height: 1.4;
+  }
+
+  /* History */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .history-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .history-item-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .history-item-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 20px;
+  }
+
+  /* Sort indicator */
+  .sort-btn {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sort-btn:hover {
+    color: var(--text-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .stat-item { min-width: 0; flex: 1 1 calc(33.33% - 12px); }
+  }
+
+  @media (max-width: 900px) {
+    .panel-header { flex-wrap: wrap; gap: 8px; }
+    .panel-header .panel-actions { width: 100%; }
+    .panel-header .panel-actions .search-container { flex: 1; min-width: 0; }
+    .stat-item { flex: 1 1 calc(50% - 6px); }
+    .detail-row { grid-template-columns: 100px 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .app-container { padding: 0 12px; }
+    .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .header-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+    .stat-item { flex: 1 1 calc(50% - 6px); padding: 8px 10px; }
+    .stat-icon { width: 30px; height: 30px; font-size: 14px; }
+    .stat-value { font-size: 15px; }
+    .stat-label { font-size: 10px; }
+    .form-group { grid-template-columns: 1fr; gap: 4px; }
+    .detail-row { grid-template-columns: 1fr; gap: 4px; }
+    .diff-container { grid-template-columns: 1fr; }
+    .logo-badge { display: none; }
+    .panel-body { padding: 12px; }
+    td { max-width: 180px; }
+    .modal { max-height: 90vh; }
+    .modal-actions { flex-direction: column-reverse; }
+    .modal-actions .btn { width: 100%; justify-content: center; }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .count-badge {
+    font-size: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="bg-effect"></div>
+<div class="app-container" id="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">🍪</div>
+      <span class="logo-text">Cookie Parser</span>
+      <span class="logo-badge">Pro</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" onclick="loadBrowserCookies()" data-tip="Load current page cookies" aria-label="Load browser cookies">🌐 Browser</button>
+      <button class="btn btn-sm" onclick="loadSample()" data-tip="Load sample cookies">📋 Sample</button>
+      <button class="btn btn-sm tooltip" onclick="openShortcutsModal()" data-tip="Keyboard shortcuts (?)" aria-label="Show keyboard shortcuts">⌨️</button>
+      <button class="btn btn-sm" onclick="openCompareModal()" data-tip="Diff two cookie sets" aria-label="Compare cookies">🔀 Compare</button>
+      <button class="btn btn-sm" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle theme">☀️ Light</button>
+      <button class="btn btn-sm btn-primary" onclick="openExportModal()" data-tip="Export cookies (Ctrl+E)" aria-label="Export cookies">📤 Export</button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item">
+      <div class="stat-icon blue">🍪</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Cookies</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon green">✅</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statValid">0</div>
+        <div class="stat-label">Valid</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon purple">📦</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statEncoded">0</div>
+        <div class="stat-label">Encoded</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon orange">📊</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statSize">0B</div>
+        <div class="stat-label">Total Size</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon pink">🔐</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statJWT">0</div>
+        <div class="stat-label">JWT Tokens</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon cyan">⚠️</div>
+      <div class="stat-info">
+        <div class="stat-value" id="statWarnings">0</div>
+        <div class="stat-label">Warnings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Input Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">📝</span>
+          Input
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-sm" onclick="pasteFromClipboard()" data-tip="Paste from clipboard">📋 Paste</button>
+          <button class="btn btn-sm" onclick="document.getElementById('fileInput').click()" data-tip="Import file (cookies.txt, .json, .txt)">📁 File</button>
+          <input type="file" id="fileInput" accept=".txt,.json,.cookies,.har,text/plain,application/json" style="display:none" onchange="handleFileImport(event)">
+          <button class="btn btn-sm" onclick="urlDecodeInput()" data-tip="URL-decode the input text">🔓 Decode</button>
+          <button class="btn btn-sm" onclick="urlEncodeInput()" data-tip="URL-encode the input text">🔒 Encode</button>
+          <button class="btn btn-sm" onclick="shareInput()" data-tip="Copy a shareable URL with the input embedded">🔗 Share</button>
+          <button class="btn btn-sm btn-danger" onclick="clearInput()">✕ Clear</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="format-bar" role="tablist" aria-label="Input format">
+          <button class="format-btn active" data-format="header" onclick="setFormat('header', this)">Cookie Header</button>
+          <button class="format-btn" data-format="setcookie" onclick="setFormat('setcookie', this)">Set-Cookie</button>
+          <button class="format-btn" data-format="json" onclick="setFormat('json', this)">JSON</button>
+          <button class="format-btn" data-format="netscape" onclick="setFormat('netscape', this)">Netscape</button>
+          <button class="format-btn" data-format="keyvalue" onclick="setFormat('keyvalue', this)">Key=Value</button>
+        </div>
+        <textarea class="input-area" id="cookieInput" placeholder="Paste your cookies here...&#10;&#10;Supported formats:&#10;• Cookie header: name1=value1; name2=value2&#10;• Set-Cookie: name=value; Path=/; HttpOnly&#10;• JSON: [{&quot;name&quot;:&quot;...&quot;,&quot;value&quot;:&quot;...&quot;}]&#10;• Netscape format (cookies.txt)&#10;• Key=Value (one per line)" oninput="debounceParse()"></textarea>
+        
+        <!-- History -->
+        <div style="margin-top:12px">
+          <div class="detail-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>⏱ History</span>
+            <button class="btn btn-sm" onclick="clearHistory()" style="padding:2px 8px;font-size:10px">Clear</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <div class="empty-state" style="padding:15px;">
+              <div style="font-size:12px;color:var(--text-muted)">No parsing history yet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parsed Output Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🔍</span>
+          Parsed Cookies
+          <span class="count-badge" id="cookieCount">0</span>
+        </div>
+        <div class="panel-actions">
+          <div class="search-container" style="margin-bottom:0;width:220px;max-width:100%;position:relative;">
+            <span class="search-icon" aria-hidden="true">🔎</span>
+            <input class="search-input" id="searchInput"
+                   placeholder="Filter… e.g. tag:jwt size:>1024"
+                   title="Filters: tag:jwt name:auth domain:.example.com size:>1024 is:secure"
+                   oninput="filterCookies()"
+                   style="padding-left:32px;padding-right:28px;" aria-label="Filter cookies">
+            <button id="searchClear" onclick="clearSearch()"
+                    aria-label="Clear filter"
+                    style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);
+                           background:transparent;border:none;color:var(--text-muted);
+                           cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;line-height:1;">✕</button>
+          </div>
+          <select class="form-select" id="sortSelect" onchange="sortCookies()" style="padding:5px 8px;font-size:11px;" aria-label="Sort cookies">
+            <option value="index">Original Order</option>
+            <option value="name">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="size">Size ↑</option>
+            <option value="size-desc">Size ↓</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="tabs">
+          <button class="tab active" onclick="setView('cards', this)">🃏 Cards</button>
+          <button class="tab" onclick="setView('detail', this)">📋 Detail</button>
+          <button class="tab" onclick="setView('table', this)">📊 Table</button>
+          <button class="tab" onclick="setView('raw', this)">{ } Raw</button>
+        </div>
+
+        <!-- Cards View -->
+        <div id="cardsView" class="cookies-list"></div>
+
+        <!-- Detail View -->
+        <div id="detailView" style="display:none;"></div>
+
+        <!-- Table View -->
+        <div id="tableView" style="display:none;"></div>
+
+        <!-- Raw View -->
+        <div id="rawView" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Layout -->
+  <div class="bottom-layout">
+    <!-- Security Analysis -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🛡️</span>
+          Security Analysis
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="security-list" id="securityList">
+          <div class="empty-state" style="padding:30px;">
+            <div class="empty-icon">🔒</div>
+            <div class="empty-title">No cookies to analyze</div>
+            <div class="empty-desc">Parse some cookies to see security recommendations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cookie Builder -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🔨</span>
+          Cookie Builder
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-success" onclick="copyBuilderOutput()">📋 Copy</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="builder-form">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input class="form-input" id="builderName" placeholder="cookie_name" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Value</label>
+            <input class="form-input" id="builderValue" placeholder="cookie_value" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Domain</label>
+            <input class="form-input" id="builderDomain" placeholder=".example.com" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Path</label>
+            <input class="form-input" id="builderPath" placeholder="/" value="/" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max-Age (seconds)</label>
+            <input class="form-input" id="builderMaxAge" placeholder="3600" type="number" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expires</label>
+            <input class="form-input" id="builderExpires" type="datetime-local" oninput="updateBuilder()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">SameSite</label>
+            <select class="form-select" id="builderSameSite" onchange="updateBuilder()">
+              <option value="">(unset)</option>
+              <option value="Strict">Strict</option>
+              <option value="Lax" selected>Lax</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label class="form-label">Flags</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" id="builderSecure" onchange="updateBuilder()" checked> Secure</label>
+              <label class="checkbox-label"><input type="checkbox" id="builderHttpOnly" onchange="updateBuilder()" checked> HttpOnly</label>
+              <label class="checkbox-label"><input type="checkbox" id="builderPartitioned" onchange="updateBuilder()"> Partitioned</label>
+              <label class="checkbox-label"><input type="checkbox" id="builderUrlEncode" onchange="updateBuilder()"> URL-encode value</label>
+            </div>
+          </div>
+        </div>
+        <div class="builder-warnings" id="builderWarnings" style="margin-top:10px;display:none;"></div>
+        <div class="builder-output" id="builderOutput">Set-Cookie: cookie_name=cookie_value; Path=/; SameSite=Lax; Secure; HttpOnly</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Cookie Parser Pro — Parse, decode, analyze & build cookies with ease. All processing is done locally in your browser.
+  </footer>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal" onclick="if(event.target===this)closeExportModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📤 Export Cookies</div>
+      <button class="btn btn-sm btn-icon" onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="format-bar" style="margin-bottom:12px;">
+        <button class="format-btn active" onclick="setExportFormat('json', this)">JSON</button>
+        <button class="format-btn" onclick="setExportFormat('header', this)">Header</button>
+        <button class="format-btn" onclick="setExportFormat('setcookie', this)">Set-Cookie</button>
+        <button class="format-btn" onclick="setExportFormat('env', this)">ENV</button>
+        <button class="format-btn" onclick="setExportFormat('curl', this)">cURL</button>
+        <button class="format-btn" onclick="setExportFormat('netscape', this)">Netscape</button>
+        <button class="format-btn" onclick="setExportFormat('javascript', this)">JS</button>
+        <button class="format-btn" onclick="setExportFormat('python', this)">Python</button>
+        <button class="format-btn" onclick="setExportFormat('playwright', this)">Playwright</button>
+        <button class="format-btn" onclick="setExportFormat('puppeteer', this)">Puppeteer</button>
+        <button class="format-btn" onclick="setExportFormat('postman', this)">Postman</button>
+        <button class="format-btn" onclick="setExportFormat('har', this)">HAR</button>
+      </div>
+      <textarea class="modal-code" id="exportOutput" readonly></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeExportModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="copyExport()">📋 Copy to Clipboard</button>
+        <button class="btn btn-success" onclick="downloadExport()">💾 Download</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shortcuts Modal -->
+<div class="modal-overlay" id="shortcutsModal" onclick="if(event.target===this)closeShortcutsModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">⌨️ Keyboard Shortcuts</div>
+      <button class="btn btn-sm btn-icon" onclick="closeShortcutsModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-row"><span class="detail-label">Ctrl/⌘ + Enter</span><span class="detail-value">Force parse cookies</span></div>
+        <div class="detail-row"><span class="detail-label">Ctrl/⌘ + F</span><span class="detail-value">Focus filter / search</span></div>
+        <div class="detail-row"><span class="detail-label">Ctrl/⌘ + E</span><span class="detail-value">Open export dialog</span></div>
+        <div class="detail-row"><span class="detail-label">?</span><span class="detail-value">Show this help</span></div>
+        <div class="detail-row"><span class="detail-label">Esc</span><span class="detail-value">Close any modal</span></div>
+        <div class="detail-row"><span class="detail-label">Double-click card</span><span class="detail-value">Copy cookie value</span></div>
+        <div class="detail-row"><span class="detail-label">Drop file</span><span class="detail-value">Import cookies from file</span></div>
+      </div>
+      <div class="detail-section-title" style="margin-top:16px;">🔎 Filter syntax</div>
+      <div class="detail-grid">
+        <div class="detail-row"><span class="detail-label">name:auth</span><span class="detail-value">Match cookie name</span></div>
+        <div class="detail-row"><span class="detail-label">value:abc123</span><span class="detail-value">Match value (raw or decoded)</span></div>
+        <div class="detail-row"><span class="detail-label">tag:jwt</span><span class="detail-value">Match by detected tag</span></div>
+        <div class="detail-row"><span class="detail-label">is:secure</span><span class="detail-value">Shorthand for tag:secure</span></div>
+        <div class="detail-row"><span class="detail-label">domain:.example.com</span><span class="detail-value">Match domain attribute</span></div>
+        <div class="detail-row"><span class="detail-label">size:&gt;1024</span><span class="detail-value">Byte-size compare (=, &gt;, &lt;, &gt;=, &lt;=)</span></div>
+        <div class="detail-row"><span class="detail-label">"two words"</span><span class="detail-value">Quoted phrase</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Compare Modal -->
+<div class="modal-overlay" id="compareModal" onclick="if(event.target===this)closeCompareModal()">
+  <div class="modal" style="max-width:960px;width:95%;">
+    <div class="modal-header">
+      <div class="modal-title">🔀 Compare Cookie Sets</div>
+      <button class="btn btn-sm btn-icon" onclick="closeCompareModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label class="form-label">Set A (left)</label>
+          <textarea class="input-area" id="compareInputA" style="min-height:140px;" placeholder="Paste cookies for set A..."></textarea>
+        </div>
+        <div>
+          <label class="form-label">Set B (right)</label>
+          <textarea class="input-area" id="compareInputB" style="min-height:140px;" placeholder="Paste cookies for set B..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="useCurrentAsCompare('A')">⬆️ Use current as A</button>
+        <button class="btn btn-sm" onclick="useCurrentAsCompare('B')">⬆️ Use current as B</button>
+        <button class="btn btn-sm btn-primary" onclick="runCompare()">🔍 Compare</button>
+        <button class="btn btn-sm" onclick="swapCompare()">🔄 Swap</button>
+      </div>
+      <div id="compareResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+<script>
+// State Management
+const state = {
+  cookies: [],
+  filteredCookies: [],
+  selectedCookie: null,
+  inputFormat: 'header',
+  currentView: 'cards',
+  exportFormat: 'json',
+  searchTerm: '',
+  sortBy: 'index',
+  history: JSON.parse(localStorage.getItem('cookieParserHistory') || '[]'),
+  parseTimeout: null,
+  isDark: true
+};
+
+// Debounced parse
+function debounceParse() {
+  clearTimeout(state.parseTimeout);
+  state.parseTimeout = setTimeout(() => parseCookies(), 200);
+}
+
+// Parse cookies based on format
+function parseCookies() {
+  const input = document.getElementById('cookieInput').value.trim();
+  if (!input) {
+    state.cookies = [];
+    updateAll();
+    return;
+  }
+
+  let cookies = [];
+  let parseError = null;
+
+  try {
+    switch(state.inputFormat) {
+      case 'header':
+        cookies = parseHeaderFormat(input);
+        break;
+      case 'setcookie':
+        cookies = parseSetCookieFormat(input);
+        break;
+      case 'json':
+        cookies = parseJSONFormat(input);
+        break;
+      case 'netscape':
+        cookies = parseNetscapeFormat(input);
+        break;
+      case 'keyvalue':
+        cookies = parseKeyValueFormat(input);
+        break;
+      default:
+        cookies = autoDetectAndParse(input);
+    }
+  } catch(e) {
+    parseError = e;
+    // Fall back to auto-detect but remember the error for user feedback.
+    try { cookies = autoDetectAndParse(input); } catch(e2) { cookies = []; }
+  }
+
+  // Surface parse errors only when the user explicitly chose a format
+  // and we found nothing useful (so we don't spam toasts during typing).
+  if (parseError && cookies.length === 0 && state._lastErrorMsg !== parseError.message) {
+    state._lastErrorMsg = parseError.message;
+    showToast(`Parse error (${state.inputFormat}): ${parseError.message}`, 'error');
+  } else if (!parseError) {
+    state._lastErrorMsg = null;
+  }
+
+  state.cookies = cookies.map((c, i) => {
+    const size = new Blob([`${c.name}=${c.value}`]).size;
+    return {
+      ...c,
+      index: i,
+      size,
+      analysis: analyzeCookie(c, size)
+    };
+  });
+
+  // Save to history
+  if (state.cookies.length > 0) {
+    addToHistory(input);
+  }
+
+  updateAll();
+}
+
+function parseHeaderFormat(input) {
+  const cookies = [];
+  // Handle multiple lines
+  const lines = input.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  for (const line of lines) {
+    // Remove "Cookie:" prefix if present
+    const cleaned = line.replace(/^Cookie:\s*/i, '');
+    const pairs = splitCookiePairs(cleaned);
+    
+    for (const pair of pairs) {
+      const eqIndex = pair.indexOf('=');
+      if (eqIndex > 0) {
+        const name = pair.substring(0, eqIndex).trim();
+        const value = pair.substring(eqIndex + 1).trim();
+        cookies.push({ name, value, attributes: {} });
+      }
+    }
+  }
+  return cookies;
+}
+
+function splitCookiePairs(str) {
+  const pairs = [];
+  let current = '';
+  let depth = 0;
+  
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch === '{' || ch === '[') depth++;
+    if (ch === '}' || ch === ']') depth--;
+    if (ch === ';' && depth === 0) {
+      if (current.trim()) pairs.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) pairs.push(current.trim());
+  return pairs;
+}
+
+function parseSetCookieFormat(input) {
+  const cookies = [];
+  const lines = input.split('\n').filter(l => l.trim());
+  
+  for (const line of lines) {
+    const cleaned = line.replace(/^Set-Cookie:\s*/i, '').trim();
+    const parts = cleaned.split(';').map(p => p.trim());
+    
+    if (parts.length > 0) {
+      const firstPart = parts[0];
+      const eqIndex = firstPart.indexOf('=');
+      if (eqIndex > 0) {
+        const name = firstPart.substring(0, eqIndex).trim();
+        const value = firstPart.substring(eqIndex + 1).trim();
+        const attributes = {};
+        
+        for (let i = 1; i < parts.length; i++) {
+          const attrEq = parts[i].indexOf('=');
+          if (attrEq > 0) {
+            const key = parts[i].substring(0, attrEq).trim().toLowerCase();
+            const val = parts[i].substring(attrEq + 1).trim();
+            attributes[key] = val;
+          } else {
+            attributes[parts[i].toLowerCase()] = true;
+          }
+        }
+        
+        cookies.push({ name, value, attributes });
+      }
+    }
+  }
+  return cookies;
+}
+
+function parseJSONFormat(input) {
+  const data = JSON.parse(input);
+
+  // Plain object map: { "name1": "value1", "name2": "value2" }
+  // (no recognized cookie keys present) -> treat each entry as a cookie.
+  if (!Array.isArray(data) && typeof data === 'object' && data !== null) {
+    const recognized = ['name', 'key', 'Name', 'value', 'val', 'Value', 'domain', 'path'];
+    const hasRecognized = recognized.some(k => k in data);
+    if (!hasRecognized) {
+      return Object.entries(data).map(([name, value]) => ({
+        name,
+        value: typeof value === 'string' ? value : JSON.stringify(value),
+        attributes: {}
+      }));
+    }
+  }
+
+  const arr = Array.isArray(data) ? data : [data];
+
+  return arr.map(item => {
+    if (typeof item !== 'object' || item === null) {
+      return { name: String(item), value: '', attributes: {} };
+    }
+    const name = item.name ?? item.key ?? item.Name ?? '';
+    const rawValue = item.value ?? item.val ?? item.Value ?? '';
+    return {
+      name: String(name),
+      value: typeof rawValue === 'string' ? rawValue : JSON.stringify(rawValue),
+      attributes: {
+        ...(item.domain && { domain: item.domain }),
+        ...(item.path && { path: item.path }),
+        ...(item.expires && { expires: item.expires }),
+        ...(item.maxAge != null && { 'max-age': String(item.maxAge) }),
+        ...(item.httpOnly && { httponly: true }),
+        ...(item.secure && { secure: true }),
+        ...(item.sameSite && { samesite: item.sameSite }),
+      }
+    };
+  }).filter(c => c.name);
+}
+
+function parseNetscapeFormat(input) {
+  const cookies = [];
+  const lines = input.split('\n').filter(l => l.trim() && !l.startsWith('#'));
+  
+  for (const line of lines) {
+    const parts = line.split('\t');
+    if (parts.length >= 7) {
+      cookies.push({
+        name: parts[5].trim(),
+        value: parts[6].trim(),
+        attributes: {
+          domain: parts[0].trim(),
+          path: parts[2].trim(),
+          secure: parts[3].trim().toUpperCase() === 'TRUE',
+          expires: parts[4].trim() !== '0' ? new Date(parseInt(parts[4]) * 1000).toUTCString() : undefined
+        }
+      });
+    }
+  }
+  return cookies;
+}
+
+function parseKeyValueFormat(input) {
+  const cookies = [];
+  const lines = input.split('\n').filter(l => l.trim());
+  
+  for (const line of lines) {
+    const eqIndex = line.indexOf('=');
+    if (eqIndex > 0) {
+      const name = line.substring(0, eqIndex).trim();
+      const value = line.substring(eqIndex + 1).trim();
+      cookies.push({ name, value, attributes: {} });
+    }
+  }
+  return cookies;
+}
+
+function autoDetectAndParse(input) {
+  // Try JSON first
+  if (input.startsWith('[') || input.startsWith('{')) {
+    try { return parseJSONFormat(input); } catch(e) {}
+  }
+  
+  // Try Set-Cookie
+  if (/^Set-Cookie:/im.test(input)) {
+    return parseSetCookieFormat(input);
+  }
+  
+  // Try Netscape
+  if (input.split('\n').some(l => l.split('\t').length >= 7)) {
+    return parseNetscapeFormat(input);
+  }
+  
+  // Try Cookie header
+  if (/^Cookie:/im.test(input) || input.includes(';')) {
+    return parseHeaderFormat(input);
+  }
+  
+  // Try key=value per line
+  return parseKeyValueFormat(input);
+}
+
+// Helper: decode base64 or base64url with proper padding.
+// Returns the decoded string, or null on failure.
+function decodeBase64Safe(str) {
+  if (!str || typeof str !== 'string') return null;
+  // Normalize urlsafe alphabet -> standard
+  let s = str.replace(/-/g, '+').replace(/_/g, '/');
+  // Pad to multiple of 4
+  const pad = s.length % 4;
+  if (pad === 2) s += '==';
+  else if (pad === 3) s += '=';
+  else if (pad === 1) return null; // invalid length
+  try { return atob(s); } catch(e) { return null; }
+}
+
+// Helper: utf-8 safe decode from base64
+function utf8FromBase64(str) {
+  const raw = decodeBase64Safe(str);
+  if (raw == null) return null;
+  try {
+    return decodeURIComponent(escape(raw));
+  } catch(e) {
+    return raw;
+  }
+}
+
+// Cookie Analysis
+function analyzeCookie(cookie, size) {
+  const analysis = {
+    isEncoded: false,
+    isJSON: false,
+    isBase64: false,
+    isJWT: false,
+    isEmpty: false,
+    isLong: false,
+    decodedValue: cookie.value,
+    jsonParsed: null,
+    jwtDecoded: null,
+    tags: [],
+    warnings: []
+  };
+
+  // Empty check
+  if (!cookie.value || cookie.value === '') {
+    analysis.isEmpty = true;
+    analysis.tags.push('empty');
+  }
+
+  // URL encoded
+  if (/%[0-9A-Fa-f]{2}/.test(cookie.value)) {
+    analysis.isEncoded = true;
+    try {
+      analysis.decodedValue = decodeURIComponent(cookie.value);
+    } catch(e) {
+      analysis.decodedValue = cookie.value;
+    }
+    analysis.tags.push('encoded');
+  }
+
+  // Double encoded
+  if (analysis.isEncoded && /%[0-9A-Fa-f]{2}/.test(analysis.decodedValue)) {
+    try {
+      analysis.decodedValue = decodeURIComponent(analysis.decodedValue);
+    } catch(e) {}
+  }
+
+  // JSON detection
+  const testVal = analysis.decodedValue;
+  if ((testVal.startsWith('{') && testVal.endsWith('}')) || 
+      (testVal.startsWith('[') && testVal.endsWith(']'))) {
+    try {
+      analysis.jsonParsed = JSON.parse(testVal);
+      analysis.isJSON = true;
+      analysis.tags.push('json');
+    } catch(e) {}
+  }
+
+  // Base64 detection (accepts urlsafe + missing padding)
+  // Heuristic: at least 8 chars, only base64 / base64url alphabet, decodes to mostly printable ASCII.
+  if (/^[A-Za-z0-9+/_=-]{8,}$/.test(cookie.value)) {
+    const decoded = utf8FromBase64(cookie.value);
+    if (decoded != null && decoded.length > 0) {
+      // Avoid trivial "looks-like-text-already" false positives.
+      const printableRatio =
+        (decoded.match(/[\x20-\x7E\n\r\t]/g) || []).length / decoded.length;
+      // Require either: looks like JSON, OR mostly printable AND original isn't already plain text.
+      const looksJSON = /^[\s]*[{\[]/.test(decoded);
+      const originalLooksB64 = /^[A-Za-z0-9+/_-]+=*$/.test(cookie.value) && cookie.value.length >= 16;
+      if (looksJSON || (printableRatio > 0.9 && originalLooksB64)) {
+        analysis.isBase64 = true;
+        analysis.base64Decoded = decoded;
+        analysis.tags.push('base64');
+
+        // Try JSON inside base64
+        try {
+          analysis.jsonParsed = JSON.parse(decoded);
+          analysis.isJSON = true;
+          if (!analysis.tags.includes('json')) analysis.tags.push('json');
+        } catch(e) {}
+      }
+    }
+  }
+
+  // JWT detection (urlsafe base64, three segments)
+  const jwtRegex = /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+  if (jwtRegex.test(cookie.value)) {
+    const parts = cookie.value.split('.');
+    const headerStr = utf8FromBase64(parts[0]);
+    const payloadStr = utf8FromBase64(parts[1]);
+    if (headerStr && payloadStr) {
+      try {
+        const header = JSON.parse(headerStr);
+        const payload = JSON.parse(payloadStr);
+        analysis.isJWT = true;
+        analysis.tags.push('jwt');
+        analysis.jwtDecoded = { header, payload, signature: parts[2] || '' };
+
+        // Detect dangerous 'none' algorithm
+        if ((header.alg || '').toLowerCase() === 'none' || !parts[2]) {
+          analysis.warnings.push('JWT uses alg="none" — signature not verified');
+        }
+      } catch(e) {
+        // Header/payload aren't JSON — not a real JWT
+      }
+    }
+  }
+
+  // Size check (RFC 6265 recommends max 4KB)
+  if (size > 4096) {
+    analysis.isLong = true;
+    analysis.tags.push('long');
+    analysis.warnings.push('Cookie exceeds 4KB limit');
+  }
+
+  // Attribute-based tags
+  if (cookie.attributes.secure) analysis.tags.push('secure');
+  if (cookie.attributes.httponly) analysis.tags.push('httponly');
+  if (cookie.attributes.samesite) analysis.tags.push('samesite');
+  if (cookie.attributes.partitioned) analysis.tags.push('partitioned');
+
+  // Cookie name prefix detection (__Host- / __Secure-)
+  if (cookie.name.startsWith('__Host-')) analysis.tags.push('__Host-');
+  else if (cookie.name.startsWith('__Secure-')) analysis.tags.push('__Secure-');
+
+  // Tracking cookie heuristic
+  const trackingPrefixes = ['_ga', '_gid', '_gat', '_fbp', '_fbc', '__utm', '_clck', '_clsk'];
+  if (trackingPrefixes.some(p => cookie.name.startsWith(p))) {
+    analysis.tags.push('tracking');
+  }
+
+  return analysis;
+}
+
+// Security Analysis
+function generateSecurityAnalysis() {
+  const findings = [];
+  
+  if (state.cookies.length === 0) return findings;
+
+  // Attribute-based checks only meaningful when input carries attributes
+  // (Cookie header format never includes them, so flagging them is noise).
+  const hasAttrInfo = state.cookies.some(c => Object.keys(c.attributes).length > 0)
+    || ['setcookie', 'json', 'netscape'].includes(state.inputFormat);
+
+  const largeCookies = state.cookies.filter(c => c.size > 4096);
+  const jwtCookies = state.cookies.filter(c => c.analysis.isJWT);
+
+  if (hasAttrInfo) {
+    const noSecure = state.cookies.filter(c => !c.attributes.secure);
+    const noHttpOnly = state.cookies.filter(c => !c.attributes.httponly);
+    const noSameSite = state.cookies.filter(c => !c.attributes.samesite);
+
+    if (noSecure.length > 0) {
+      findings.push({
+        level: 'high',
+        icon: '🔴',
+        title: `${noSecure.length} cookie(s) missing Secure flag`,
+        desc: `Cookies without the Secure flag can be transmitted over unencrypted HTTP: ${noSecure.map(c => c.name).join(', ')}`
+      });
+    }
+
+    if (noHttpOnly.length > 0) {
+      findings.push({
+        level: 'high',
+        icon: '🔴',
+        title: `${noHttpOnly.length} cookie(s) missing HttpOnly flag`,
+        desc: `Cookies without HttpOnly are accessible via JavaScript and vulnerable to XSS: ${noHttpOnly.map(c => c.name).join(', ')}`
+      });
+    }
+
+    if (noSameSite.length > 0) {
+      findings.push({
+        level: 'medium',
+        icon: '🟡',
+        title: `${noSameSite.length} cookie(s) missing SameSite attribute`,
+        desc: `Without SameSite, cookies may be sent in cross-site requests (CSRF risk): ${noSameSite.map(c => c.name).join(', ')}`
+      });
+    }
+  } else {
+    findings.push({
+      level: 'info',
+      icon: 'ℹ️',
+      title: 'Cookie header format — attributes not available',
+      desc: 'Switch to Set-Cookie format to analyze Secure / HttpOnly / SameSite flags. Header format only transmits name=value pairs.'
+    });
+  }
+
+  if (largeCookies.length > 0) {
+    findings.push({
+      level: 'medium',
+      icon: '🟡',
+      title: `${largeCookies.length} cookie(s) exceed 4KB`,
+      desc: `Large cookies increase bandwidth usage and may be rejected by some servers: ${largeCookies.map(c => c.name).join(', ')}`
+    });
+  }
+
+  if (jwtCookies.length > 0) {
+    for (const c of jwtCookies) {
+      if (c.analysis.jwtDecoded) {
+        const payload = c.analysis.jwtDecoded.payload;
+        if (payload.exp) {
+          const expDate = new Date(payload.exp * 1000);
+          if (expDate < new Date()) {
+            findings.push({
+              level: 'high',
+              icon: '⏰',
+              title: `JWT token "${c.name}" is expired`,
+              desc: `Expired: ${expDate.toISOString()}`
+            });
+          }
+        }
+        if (!c.attributes.httponly) {
+          findings.push({
+            level: 'high',
+            icon: '🔴',
+            title: `JWT token "${c.name}" accessible to JavaScript`,
+            desc: 'JWT tokens should always have HttpOnly flag to prevent XSS token theft'
+          });
+        }
+      }
+    }
+  }
+
+  // Check for common sensitive cookie names (only when attributes are available)
+  if (hasAttrInfo) {
+    const sensitiveNames = ['session', 'token', 'auth', 'csrf', 'jwt', 'access_token', 'refresh_token', 'api_key', 'sid', 'ssid'];
+    for (const c of state.cookies) {
+      const lower = c.name.toLowerCase();
+      for (const s of sensitiveNames) {
+        if (lower.includes(s)) {
+          const missing = [];
+          if (!c.attributes.secure) missing.push('Secure');
+          if (!c.attributes.httponly) missing.push('HttpOnly');
+          if (missing.length > 0) {
+            findings.push({
+              level: 'high',
+              icon: '🚨',
+              title: `Sensitive cookie "${c.name}" lacks protection`,
+              desc: `Cookie appears sensitive (matches "${s}") but is missing: ${missing.join(', ')}`
+            });
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  // Check for tracking cookies
+  const trackingPrefixes = ['_ga', '_gid', '_gat', '_fbp', '_fbc', '__utm', '_clck', '_clsk'];
+  const trackingCookies = state.cookies.filter(c => trackingPrefixes.some(p => c.name.startsWith(p)));
+  if (trackingCookies.length > 0) {
+    findings.push({
+      level: 'info',
+      icon: '📊',
+      title: `${trackingCookies.length} tracking/analytics cookie(s) detected`,
+      desc: `Found: ${trackingCookies.map(c => c.name).join(', ')}`
+    });
+  }
+
+  // Duplicate cookie names
+  const nameCounts = {};
+  for (const c of state.cookies) nameCounts[c.name] = (nameCounts[c.name] || 0) + 1;
+  const dupes = Object.entries(nameCounts).filter(([_, n]) => n > 1);
+  if (dupes.length > 0) {
+    findings.push({
+      level: 'medium',
+      icon: '🟡',
+      title: `${dupes.length} duplicate cookie name(s)`,
+      desc: `Same name appears more than once; the last one usually wins: ${dupes.map(([n, c]) => `${n}×${c}`).join(', ')}`
+    });
+  }
+
+  // __Host- / __Secure- prefix validation (only when attributes are known)
+  if (hasAttrInfo) {
+    for (const c of state.cookies) {
+      if (c.name.startsWith('__Host-')) {
+        const issues = [];
+        if (!c.attributes.secure) issues.push('missing Secure');
+        if ((c.attributes.path || '/') !== '/') issues.push(`Path must be "/", got "${c.attributes.path}"`);
+        if (c.attributes.domain) issues.push('Domain attribute must NOT be set');
+        if (issues.length > 0) {
+          findings.push({
+            level: 'high',
+            icon: '🚨',
+            title: `__Host- prefix violation on "${c.name}"`,
+            desc: issues.join('; ')
+          });
+        }
+      } else if (c.name.startsWith('__Secure-') && !c.attributes.secure) {
+        findings.push({
+          level: 'high',
+          icon: '🚨',
+          title: `__Secure- prefix on "${c.name}" missing Secure flag`,
+          desc: 'The __Secure- name prefix requires the Secure attribute to be set.'
+        });
+      }
+    }
+
+    // SameSite=None without Secure
+    for (const c of state.cookies) {
+      const ss = String(c.attributes.samesite || '').toLowerCase();
+      if (ss === 'none' && !c.attributes.secure) {
+        findings.push({
+          level: 'high',
+          icon: '🚨',
+          title: `"${c.name}" uses SameSite=None without Secure`,
+          desc: 'Modern browsers reject SameSite=None cookies that are not also Secure.'
+        });
+      }
+    }
+
+    // Partitioned without Secure
+    const badPartitioned = state.cookies.filter(c => c.attributes.partitioned && !c.attributes.secure);
+    if (badPartitioned.length > 0) {
+      findings.push({
+        level: 'high',
+        icon: '🚨',
+        title: `${badPartitioned.length} Partitioned cookie(s) without Secure`,
+        desc: `CHIPS requires Secure: ${badPartitioned.map(c => c.name).join(', ')}`
+      });
+    }
+  }
+
+  if (findings.length === 0) {
+    findings.push({
+      level: 'info',
+      icon: '✅',
+      title: 'No obvious security issues found',
+      desc: 'Note: This analysis is based on available cookie attributes. A full audit requires server-side analysis.'
+    });
+  }
+
+  return findings;
+}
+
+// Update all views
+function updateAll() {
+  updateStats();
+  applyFiltersAndSort();
+  renderCurrentView();
+  renderSecurityAnalysis();
+}
+
+function updateStats() {
+  const cookies = state.cookies;
+  document.getElementById('statTotal').textContent = cookies.length;
+  document.getElementById('statValid').textContent = cookies.filter(c => c.name && c.value).length;
+  document.getElementById('statEncoded').textContent = cookies.filter(c => c.analysis.isEncoded).length;
+  document.getElementById('statJWT').textContent = cookies.filter(c => c.analysis.isJWT).length;
+  
+  const totalSize = cookies.reduce((sum, c) => sum + c.size, 0);
+  document.getElementById('statSize').textContent = formatBytes(totalSize);
+  
+  const warnings = cookies.reduce((sum, c) => sum + c.analysis.warnings.length, 0);
+  document.getElementById('statWarnings').textContent = warnings;
+  
+  document.getElementById('cookieCount').textContent = cookies.length;
+}
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + sizes[i];
+}
+
+function applyFiltersAndSort() {
+  let filtered = [...state.cookies];
+
+  // Smart filter:
+  //   "session"           -> substring match on name/value/decoded
+  //   "tag:jwt"           -> only cookies tagged jwt
+  //   "domain:example"    -> domain attribute contains 'example'
+  //   "size:>1024"        -> size > 1024 bytes (>= <= < > ==)
+  //   "is:secure"         -> shorthand for tag:secure
+  //   "name:auth"         -> name contains 'auth'
+  // Multiple tokens are AND-ed; quoted phrases are kept as one.
+  if (state.searchTerm && state.searchTerm.trim()) {
+    const tokens = tokenizeSearch(state.searchTerm);
+    filtered = filtered.filter(c => tokens.every(t => matchToken(c, t)));
+  }
+  
+  // Sort
+  switch(state.sortBy) {
+    case 'name':
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case 'name-desc':
+      filtered.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case 'size':
+      filtered.sort((a, b) => a.size - b.size);
+      break;
+    case 'size-desc':
+      filtered.sort((a, b) => b.size - a.size);
+      break;
+    default:
+      filtered.sort((a, b) => a.index - b.index);
+  }
+  
+  state.filteredCookies = filtered;
+  // Update filter result count badge
+  const countEl = document.getElementById('cookieCount');
+  if (countEl) {
+    if (state.searchTerm && filtered.length !== state.cookies.length) {
+      countEl.textContent = `${filtered.length}/${state.cookies.length}`;
+    } else {
+      countEl.textContent = state.cookies.length;
+    }
+  }
+}
+
+// Tokenize search input, supporting "quoted phrases".
+function tokenizeSearch(input) {
+  const tokens = [];
+  const re = /"([^"]+)"|(\S+)/g;
+  let m;
+  while ((m = re.exec(input)) !== null) {
+    tokens.push((m[1] || m[2]).toLowerCase());
+  }
+  return tokens;
+}
+
+// Match a single search token against a cookie.
+function matchToken(c, token) {
+  // is:foo  -> shorthand for tag:foo
+  if (token.startsWith('is:')) token = 'tag:' + token.slice(3);
+
+  if (token.startsWith('tag:')) {
+    const t = token.slice(4);
+    return c.analysis.tags.some(x => x.toLowerCase().includes(t));
+  }
+  if (token.startsWith('name:')) {
+    return c.name.toLowerCase().includes(token.slice(5));
+  }
+  if (token.startsWith('value:')) {
+    const v = token.slice(6);
+    return c.value.toLowerCase().includes(v) ||
+           (c.analysis.decodedValue || '').toLowerCase().includes(v);
+  }
+  if (token.startsWith('domain:')) {
+    return (c.attributes.domain || '').toLowerCase().includes(token.slice(7));
+  }
+  if (token.startsWith('path:')) {
+    return (c.attributes.path || '').toLowerCase().includes(token.slice(5));
+  }
+  if (token.startsWith('size:')) {
+    const m = token.slice(5).match(/^(>=|<=|>|<|=|==)?\s*(\d+)$/);
+    if (!m) return true;
+    const op = m[1] || '==';
+    const n = parseInt(m[2], 10);
+    switch (op) {
+      case '>': return c.size > n;
+      case '>=': return c.size >= n;
+      case '<': return c.size < n;
+      case '<=': return c.size <= n;
+      default: return c.size === n;
+    }
+  }
+  // Default: substring match on name / value / decoded
+  return c.name.toLowerCase().includes(token) ||
+         c.value.toLowerCase().includes(token) ||
+         (c.analysis.decodedValue || '').toLowerCase().includes(token);
+}
+
+function renderCurrentView() {
+  document.getElementById('cardsView').style.display = state.currentView === 'cards' ? '' : 'none';
+  document.getElementById('detailView').style.display = state.currentView === 'detail' ? '' : 'none';
+  document.getElementById('tableView').style.display = state.currentView === 'table' ? '' : 'none';
+  document.getElementById('rawView').style.display = state.currentView === 'raw' ? '' : 'none';
+
+  switch(state.currentView) {
+    case 'cards': renderCardsView(); break;
+    case 'detail': renderDetailView(); break;
+    case 'table': renderTableView(); break;
+    case 'raw': renderRawView(); break;
+  }
+}
+
+function renderCardsView() {
+  const container = document.getElementById('cardsView');
+  
+  if (state.filteredCookies.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🍪</div>
+        <div class="empty-title">${state.cookies.length === 0 ? 'No cookies parsed yet' : 'No cookies match filter'}</div>
+        <div class="empty-desc">${state.cookies.length === 0 ? 'Paste cookie data in the input panel to get started' : 'Try adjusting your search term'}</div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          ${state.cookies.length === 0
+            ? `<button class="btn btn-sm btn-primary" onclick="loadSample()">📋 Try Sample</button>
+               <button class="btn btn-sm" onclick="loadBrowserCookies()">🌐 Use Browser Cookies</button>
+               <button class="btn btn-sm" onclick="pasteFromClipboard()">📌 Paste from Clipboard</button>`
+            : `<button class="btn btn-sm" onclick="clearSearch()">✕ Clear filter</button>`}
+        </div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = state.filteredCookies.map(c => `
+    <div class="cookie-card ${state.selectedCookie === c.index ? 'selected' : ''}"
+         onclick="selectCookie(${c.index})" ondblclick="copyValue(${c.index})"
+         title="Click to select · Double-click to copy value">
+      <div class="cookie-card-header">
+        <span class="cookie-name">${escapeHtml(c.name)}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="cookie-card-actions" onclick="event.stopPropagation();">
+            <button class="icon-btn" onclick="copyValue(${c.index})" data-tip="Copy value" aria-label="Copy value">📋</button>
+            <button class="icon-btn" onclick="copyAsHeader(${c.index})" data-tip="Copy as name=value" aria-label="Copy as header">🔗</button>
+            <button class="icon-btn" onclick="deleteCookie(${c.index})" data-tip="Remove" aria-label="Remove cookie">🗑️</button>
+          </div>
+          <span class="cookie-index">#${c.index + 1} · ${formatBytes(c.size)}</span>
+        </div>
+      </div>
+      <div class="cookie-value">${escapeHtml(c.analysis.decodedValue || c.value)}</div>
+      ${c.analysis.tags.length > 0 ? `
+      <div class="cookie-tags">
+        ${c.analysis.tags.map(t => `<span class="cookie-tag tag-${t}">${t}</span>`).join('')}
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+function copyAsHeader(index) {
+  const c = state.cookies[index];
+  if (!c) return;
+  navigator.clipboard.writeText(`${c.name}=${c.value}`).then(() => {
+    showToast(`Copied "${c.name}=..."`, 'success');
+  });
+}
+
+function deleteCookie(index) {
+  state.cookies = state.cookies.filter(c => c.index !== index);
+  // re-index
+  state.cookies = state.cookies.map((c, i) => ({ ...c, index: i }));
+  if (state.selectedCookie === index) state.selectedCookie = null;
+  updateAll();
+  showToast('Cookie removed', 'info');
+}
+
+function renderDetailView() {
+  const container = document.getElementById('detailView');
+  
+  if (state.selectedCookie === null || !state.cookies[state.selectedCookie]) {
+    if (state.filteredCookies.length > 0) {
+      selectCookie(state.filteredCookies[0].index);
+      return;
+    }
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">👆</div>
+        <div class="empty-title">Select a cookie</div>
+        <div class="empty-desc">Click on a cookie in cards view to see details</div>
+      </div>`;
+    return;
+  }
+
+  const c = state.cookies[state.selectedCookie];
+  let html = `
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      ${state.filteredCookies.map(fc => `
+        <button class="format-btn ${fc.index === state.selectedCookie ? 'active' : ''}" 
+                onclick="selectCookie(${fc.index})" style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+          ${escapeHtml(fc.name)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="copyValue(${c.index})">📋 Copy value</button>
+      <button class="btn btn-sm" onclick="copyAsHeader(${c.index})">🔗 Copy as name=value</button>
+      <button class="btn btn-sm" onclick="sendToBuilder(${c.index})">🔨 Send to Builder</button>
+      <button class="btn btn-sm" onclick="toggleEditMode(${c.index})" id="editToggleBtn">✏️ Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteCookie(${c.index})">🗑️ Remove</button>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Basic Information</div>
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Name</span>
+          ${state._editing === c.index
+            ? `<input class="form-input detail-edit" id="editName" value="${escapeHtml(c.name)}">`
+            : `<span class="detail-value">${escapeHtml(c.name)}</span>`}
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Raw Value</span>
+          ${state._editing === c.index
+            ? `<textarea class="form-input detail-edit" id="editValue" rows="3" style="font-family:'JetBrains Mono',monospace;">${escapeHtml(c.value)}</textarea>`
+            : `<span class="detail-value">${escapeHtml(c.value)}</span>`}
+        </div>`;
+
+  if (c.analysis.isEncoded) {
+    html += `
+        <div class="detail-row">
+          <span class="detail-label">Decoded</span>
+          <span class="detail-value decoded">${escapeHtml(c.analysis.decodedValue)}</span>
+        </div>`;
+  }
+
+  if (c.analysis.isBase64) {
+    html += `
+        <div class="detail-row">
+          <span class="detail-label">Base64 Dec.</span>
+          <span class="detail-value decoded">${escapeHtml(c.analysis.base64Decoded)}</span>
+        </div>`;
+  }
+
+  html += `
+        <div class="detail-row">
+          <span class="detail-label">Size</span>
+          <span class="detail-value">${c.size} bytes (${formatBytes(c.size)})</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Characters</span>
+          <span class="detail-value">${c.value.length}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Attributes
+  if (Object.keys(c.attributes).length > 0) {
+    html += `
+    <div class="detail-section">
+      <div class="detail-section-title">Attributes</div>
+      <div class="detail-grid">`;
+    
+    for (const [key, val] of Object.entries(c.attributes)) {
+      if (val !== undefined && val !== false) {
+        html += `
+        <div class="detail-row">
+          <span class="detail-label">${escapeHtml(key)}</span>
+          <span class="detail-value">${val === true ? '✅ Yes' : escapeHtml(String(val))}</span>
+        </div>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+
+  // JSON parsed
+  if (c.analysis.isJSON && c.analysis.jsonParsed) {
+    html += `
+    <div class="detail-section">
+      <div class="detail-section-title">JSON Content</div>
+      <div class="detail-value json-formatted">${syntaxHighlightJSON(JSON.stringify(c.analysis.jsonParsed, null, 2))}</div>
+    </div>`;
+  }
+
+  // JWT decoded
+  if (c.analysis.isJWT && c.analysis.jwtDecoded) {
+    const jwt = c.analysis.jwtDecoded;
+    html += `
+    <div class="detail-section">
+      <div class="detail-section-title">JWT Header</div>
+      <div class="detail-value json-formatted">${syntaxHighlightJSON(JSON.stringify(jwt.header, null, 2))}</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">JWT Payload</div>
+      <div class="detail-value json-formatted">${syntaxHighlightJSON(JSON.stringify(jwt.payload, null, 2))}</div>
+    </div>`;
+    
+    if (jwt.payload.exp) {
+      const expDate = new Date(jwt.payload.exp * 1000);
+      const isExpired = expDate < new Date();
+      html += `
+      <div class="detail-row" style="margin-top:8px;">
+        <span class="detail-label">Expires</span>
+        <span class="detail-value" style="color:${isExpired ? 'var(--danger)' : 'var(--success)'}">
+          ${expDate.toISOString()} ${isExpired ? '(EXPIRED)' : '(Valid)'}
+        </span>
+      </div>`;
+    }
+    if (jwt.payload.iat) {
+      html += `
+      <div class="detail-row">
+        <span class="detail-label">Issued At</span>
+        <span class="detail-value">${new Date(jwt.payload.iat * 1000).toISOString()}</span>
+      </div>`;
+    }
+  }
+
+  if (state._editing === c.index) {
+    html += `
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-sm btn-primary" onclick="saveEdit(${c.index})">💾 Save</button>
+        <button class="btn btn-sm" onclick="cancelEdit()">Cancel</button>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function toggleEditMode(index) {
+  state._editing = state._editing === index ? null : index;
+  renderCurrentView();
+}
+
+function cancelEdit() {
+  state._editing = null;
+  renderCurrentView();
+}
+
+function saveEdit(index) {
+  const nameEl = document.getElementById('editName');
+  const valueEl = document.getElementById('editValue');
+  if (!nameEl || !valueEl) return;
+  const newName = nameEl.value.trim();
+  const newValue = valueEl.value;
+  if (!newName) { showToast('Name cannot be empty', 'error'); return; }
+  const c = state.cookies[index];
+  if (!c) return;
+  c.name = newName;
+  c.value = newValue;
+  c.size = new Blob([`${newName}=${newValue}`]).size;
+  c.analysis = analyzeCookie(c, c.size);
+  state._editing = null;
+  updateAll();
+  showToast(`Updated "${newName}"`, 'success');
+}
+
+function renderTableView() {
+  const container = document.getElementById('tableView');
+  
+  if (state.filteredCookies.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data</div></div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Decoded</th>
+            <th>Size</th>
+            <th>Type</th>
+            <th>Domain</th>
+            <th>Path</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.filteredCookies.map(c => `
+            <tr onclick="selectCookie(${c.index})" style="cursor:pointer;">
+              <td>${c.index + 1}</td>
+              <td style="color:var(--accent);font-weight:600;">${escapeHtml(c.name)}</td>
+              <td title="${escapeHtml(c.value)}">${escapeHtml(truncate(c.value, 40))}</td>
+              <td style="color:var(--success);" title="${escapeHtml(c.analysis.decodedValue)}">${c.analysis.isEncoded ? escapeHtml(truncate(c.analysis.decodedValue, 40)) : '—'}</td>
+              <td>${formatBytes(c.size)}</td>
+              <td>${c.analysis.tags.filter(t => ['json','jwt','base64','encoded'].includes(t)).join(', ') || 'string'}</td>
+              <td>${escapeHtml(c.attributes.domain || '—')}</td>
+              <td>${escapeHtml(c.attributes.path || '—')}</td>
+              <td>${[c.attributes.secure && '🔒', c.attributes.httponly && '🛡️', c.attributes.samesite && '🔗'].filter(Boolean).join(' ') || '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderRawView() {
+  const container = document.getElementById('rawView');
+  
+  if (state.filteredCookies.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">{ }</div><div class="empty-title">No data</div></div>';
+    return;
+  }
+
+  const jsonData = state.filteredCookies.map(c => ({
+    name: c.name,
+    value: c.value,
+    decodedValue: c.analysis.decodedValue !== c.value ? c.analysis.decodedValue : undefined,
+    size: c.size,
+    attributes: Object.keys(c.attributes).length > 0 ? c.attributes : undefined,
+    analysis: {
+      type: c.analysis.tags.filter(t => ['json','jwt','base64','encoded'].includes(t)),
+      ...(c.analysis.jsonParsed && { jsonContent: c.analysis.jsonParsed }),
+      ...(c.analysis.jwtDecoded && { jwtContent: c.analysis.jwtDecoded })
+    }
+  }));
+
+  container.innerHTML = `
+    <div style="position:relative;">
+      <button class="btn btn-sm" onclick="copyRawJSON()" style="position:absolute;top:8px;right:8px;z-index:1;">📋 Copy</button>
+      <pre class="detail-value json-formatted" style="max-height:500px;margin:0;">${syntaxHighlightJSON(JSON.stringify(jsonData, null, 2))}</pre>
+    </div>`;
+}
+
+function renderSecurityAnalysis() {
+  const container = document.getElementById('securityList');
+  const findings = generateSecurityAnalysis();
+  
+  if (state.cookies.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding:30px;">
+        <div class="empty-icon">🔒</div>
+        <div class="empty-title">No cookies to analyze</div>
+        <div class="empty-desc">Parse some cookies to see security recommendations</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = findings.map(f => `
+    <div class="security-item ${f.level}">
+      <span class="security-icon">${f.icon}</span>
+      <div class="security-content">
+        <div class="security-title">${escapeHtml(f.title)}</div>
+        <div class="security-desc">${escapeHtml(f.desc)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Event handlers
+function setFormat(format, btn) {
+  state.inputFormat = format;
+  // Only touch the INPUT panel's format bar, not the export modal's.
+  btn.parentElement.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  persistPrefs();
+  parseCookies();
+}
+
+function setView(view, btn) {
+  state.currentView = view;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  persistPrefs();
+  renderCurrentView();
+}
+
+function selectCookie(index) {
+  state.selectedCookie = index;
+  renderCurrentView();
+}
+
+function filterCookies() {
+  const val = document.getElementById('searchInput').value;
+  state.searchTerm = val;
+  const clearBtn = document.getElementById('searchClear');
+  if (clearBtn) clearBtn.style.display = val ? '' : 'none';
+  applyFiltersAndSort();
+  renderCurrentView();
+}
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  filterCookies();
+  input.focus();
+}
+
+function sortCookies() {
+  state.sortBy = document.getElementById('sortSelect').value;
+  persistPrefs();
+  applyFiltersAndSort();
+  renderCurrentView();
+}
+
+function clearInput() {
+  document.getElementById('cookieInput').value = '';
+  state.cookies = [];
+  state.filteredCookies = [];
+  state.selectedCookie = null;
+  updateAll();
+  showToast('Input cleared', 'info');
+}
+
+function urlDecodeInput() {
+  const ta = document.getElementById('cookieInput');
+  if (!ta.value) { showToast('Nothing to decode', 'info'); return; }
+  try {
+    let next = decodeURIComponent(ta.value);
+    // Run twice if still encoded
+    if (/%[0-9A-Fa-f]{2}/.test(next)) {
+      try { next = decodeURIComponent(next); } catch(e) {}
+    }
+    ta.value = next;
+    parseCookies();
+    showToast('Input URL-decoded', 'success');
+  } catch(e) {
+    showToast('Decode failed: ' + e.message, 'error');
+  }
+}
+
+function urlEncodeInput() {
+  const ta = document.getElementById('cookieInput');
+  if (!ta.value) { showToast('Nothing to encode', 'info'); return; }
+  ta.value = encodeURIComponent(ta.value);
+  parseCookies();
+  showToast('Input URL-encoded', 'success');
+}
+
+function shareInput() {
+  const text = document.getElementById('cookieInput').value;
+  if (!text) { showToast('Nothing to share', 'info'); return; }
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(text)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const url = location.origin + location.pathname + '#data=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Shareable URL copied (' + url.length + ' chars)', 'success');
+    });
+  } catch(e) {
+    showToast('Share failed: ' + e.message, 'error');
+  }
+}
+
+function copyValue(index) {
+  const c = state.cookies[index];
+  if (c) {
+    navigator.clipboard.writeText(c.value).then(() => {
+      showToast(`Copied "${c.name}" value`, 'success');
+    });
+  }
+}
+
+function copyRawJSON() {
+  const jsonData = state.filteredCookies.map(c => ({
+    name: c.name,
+    value: c.value,
+    decodedValue: c.analysis.decodedValue !== c.value ? c.analysis.decodedValue : undefined,
+    attributes: Object.keys(c.attributes).length > 0 ? c.attributes : undefined,
+  }));
+  navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2)).then(() => {
+    showToast('JSON copied to clipboard', 'success');
+  });
+}
+
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('cookieInput').value = text;
+    autoDetectFormat(text);
+    parseCookies();
+    showToast('Pasted from clipboard', 'success');
+  } catch(e) {
+    showToast('Unable to read clipboard', 'error');
+  }
+}
+
+function handleFileImport(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File too large (max 5MB)', 'error');
+    event.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = String(e.target.result || '');
+    document.getElementById('cookieInput').value = text;
+    autoDetectFormat(text, file.name);
+    parseCookies();
+    showToast(`Imported "${file.name}"`, 'success');
+  };
+  reader.onerror = () => showToast('Failed to read file', 'error');
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function autoDetectFormat(text, filename = '') {
+  const lower = filename.toLowerCase();
+  let format = null;
+  if (lower.endsWith('.json')) format = 'json';
+  else if (/^Set-Cookie:/im.test(text)) format = 'setcookie';
+  else if (text.trim().startsWith('[') || text.trim().startsWith('{')) format = 'json';
+  else if (text.split('\n').some(l => l.split('\t').length >= 7 && !l.startsWith('#'))) format = 'netscape';
+  else if (/Cookie:/i.test(text) || text.includes(';')) format = 'header';
+  else if (text.split('\n').filter(l => l.trim()).every(l => /^[^=]+=/.test(l.trim()))) format = 'keyvalue';
+
+  if (format) {
+    state.inputFormat = format;
+    document.querySelectorAll('.format-bar .format-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.format === format);
+    });
+  }
+}
+
+function loadBrowserCookies() {
+  const cookies = document.cookie;
+  if (cookies) {
+    document.getElementById('cookieInput').value = cookies;
+    autoDetectFormat(cookies);
+    parseCookies();
+    showToast(`Loaded ${cookies.split(';').length} browser cookie(s)`, 'success');
+  } else {
+    showToast('No browser cookies found for this page', 'info');
+  }
+}
+
+function loadSample() {
+  const sample = `session_id=abc123def456; user_pref=%7B%22theme%22%3A%22dark%22%2C%22lang%22%3A%22en%22%2C%22notifications%22%3Atrue%7D; _ga=GA1.2.1234567890.1609459200; auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE3MzUwODk2MDB9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c; tracking=%7B%22source%22%3A%22google%22%2C%22campaign%22%3A%22summer2024%22%2C%22medium%22%3A%22cpc%22%7D; csrf_token=a1b2c3d4e5f6g7h8i9j0; remember_me=dXNlcjEyMzphY3RpdmU=; theme=dark; _fbp=fb.1.1609459200.1234567890; locale=en-US; cart_items=3; last_visit=2024-01-15T10%3A30%3A00Z`;
+
+  document.getElementById('cookieInput').value = sample;
+  autoDetectFormat(sample);
+  parseCookies();
+  showToast('Sample cookies loaded', 'success');
+}
+
+// Export functionality
+function openExportModal() {
+  if (state.cookies.length === 0) {
+    showToast('No cookies to export', 'error');
+    return;
+  }
+  document.getElementById('exportModal').classList.add('active');
+  generateExport();
+}
+
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('active');
+}
+
+function setExportFormat(format, btn) {
+  state.exportFormat = format;
+  document.querySelectorAll('#exportModal .format-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  generateExport();
+}
+
+function generateExport() {
+  const cookies = state.cookies;
+  let output = '';
+  
+  switch(state.exportFormat) {
+    case 'json':
+      output = JSON.stringify(cookies.map(c => ({
+        name: c.name,
+        value: c.value,
+        ...(c.attributes.domain && { domain: c.attributes.domain }),
+        ...(c.attributes.path && { path: c.attributes.path }),
+        ...(c.attributes.expires && { expires: c.attributes.expires }),
+        ...(c.attributes.secure && { secure: true }),
+        ...(c.attributes.httponly && { httpOnly: true }),
+        ...(c.attributes.samesite && { sameSite: c.attributes.samesite }),
+      })), null, 2);
+      break;
+    
+    case 'header':
+      output = 'Cookie: ' + cookies.map(c => `${c.name}=${c.value}`).join('; ');
+      break;
+    
+    case 'setcookie':
+      output = cookies.map(c => {
+        let line = `Set-Cookie: ${c.name}=${c.value}`;
+        if (c.attributes.domain) line += `; Domain=${c.attributes.domain}`;
+        if (c.attributes.path) line += `; Path=${c.attributes.path}`;
+        if (c.attributes.expires) line += `; Expires=${c.attributes.expires}`;
+        if (c.attributes['max-age']) line += `; Max-Age=${c.attributes['max-age']}`;
+        if (c.attributes.samesite) {
+          // Normalize casing: lax -> Lax, strict -> Strict, none -> None
+          const v = String(c.attributes.samesite);
+          const cased = v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+          line += `; SameSite=${cased}`;
+        }
+        if (c.attributes.secure) line += '; Secure';
+        if (c.attributes.httponly) line += '; HttpOnly';
+        if (c.attributes.partitioned) line += '; Partitioned';
+        return line;
+      }).join('\n');
+      break;
+    
+    case 'env':
+      output = cookies.map(c => `COOKIE_${c.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}="${c.value}"`).join('\n');
+      break;
+    
+    case 'curl':
+      output = `curl -b "${cookies.map(c => `${c.name}=${c.value}`).join('; ')}" \\
+  https://example.com`;
+      break;
+    
+    case 'netscape':
+      output = `# Netscape HTTP Cookie File\n# https://curl.se/docs/http-cookies.html\n\n`;
+      output += cookies.map(c => {
+        const domain = c.attributes.domain || '.example.com';
+        const includeSubdomains = domain.startsWith('.') ? 'TRUE' : 'FALSE';
+        const path = c.attributes.path || '/';
+        const secure = c.attributes.secure ? 'TRUE' : 'FALSE';
+        const expires = '0';
+        return `${domain}\t${includeSubdomains}\t${path}\t${secure}\t${expires}\t${c.name}\t${c.value}`;
+      }).join('\n');
+      break;
+    
+    case 'javascript':
+      output = cookies.map(c => {
+        let line = `document.cookie = "${c.name}=${c.value}`;
+        if (c.attributes.path) line += `; path=${c.attributes.path}`;
+        if (c.attributes.domain) line += `; domain=${c.attributes.domain}`;
+        if (c.attributes.samesite) line += `; samesite=${c.attributes.samesite}`;
+        if (c.attributes.secure) line += `; secure`;
+        line += '";';
+        return line;
+      }).join('\n');
+      break;
+
+    case 'python': {
+      // Python requests: cookies dict + example call
+      const dict = cookies.map(c => `    ${JSON.stringify(c.name)}: ${JSON.stringify(c.value)}`).join(',\n');
+      output = `import requests\n\ncookies = {\n${dict}\n}\n\nresp = requests.get("https://example.com", cookies=cookies)\nprint(resp.status_code)`;
+      break;
+    }
+
+    case 'playwright': {
+      const arr = cookies.map(c => ({
+        name: c.name,
+        value: c.value,
+        domain: c.attributes.domain || 'example.com',
+        path: c.attributes.path || '/',
+        ...(c.attributes.expires && { expires: Math.floor(new Date(c.attributes.expires).getTime()/1000) }),
+        ...(c.attributes.httponly && { httpOnly: true }),
+        ...(c.attributes.secure && { secure: true }),
+        ...(c.attributes.samesite && { sameSite: capitalize(String(c.attributes.samesite)) }),
+      }));
+      output = `// Playwright — add cookies to the browser context\nawait context.addCookies(${JSON.stringify(arr, null, 2)});`;
+      break;
+    }
+
+    case 'puppeteer': {
+      output = `// Puppeteer — set cookies on a page\nawait page.setCookie(\n${cookies.map(c => {
+        const obj = {
+          name: c.name,
+          value: c.value,
+          domain: c.attributes.domain || 'example.com',
+          path: c.attributes.path || '/',
+          ...(c.attributes.httponly && { httpOnly: true }),
+          ...(c.attributes.secure && { secure: true }),
+          ...(c.attributes.samesite && { sameSite: capitalize(String(c.attributes.samesite)) }),
+        };
+        return '  ' + JSON.stringify(obj);
+      }).join(',\n')}\n);`;
+      break;
+    }
+
+    case 'postman': {
+      // Newman-style cookie jar
+      const items = cookies.map(c => ({
+        domain: c.attributes.domain || 'example.com',
+        expirationDate: c.attributes.expires
+          ? new Date(c.attributes.expires).getTime() / 1000
+          : Math.floor(Date.now()/1000) + 86400,
+        hostOnly: !c.attributes.domain,
+        httpOnly: !!c.attributes.httponly,
+        name: c.name,
+        path: c.attributes.path || '/',
+        sameSite: c.attributes.samesite ? capitalize(String(c.attributes.samesite)).toLowerCase() : 'unspecified',
+        secure: !!c.attributes.secure,
+        session: !c.attributes.expires,
+        storeId: null,
+        value: c.value
+      }));
+      output = JSON.stringify(items, null, 2);
+      break;
+    }
+
+    case 'har': {
+      const harCookies = cookies.map(c => ({
+        name: c.name,
+        value: c.value,
+        ...(c.attributes.path && { path: c.attributes.path }),
+        ...(c.attributes.domain && { domain: c.attributes.domain }),
+        ...(c.attributes.expires && { expires: new Date(c.attributes.expires).toISOString() }),
+        httpOnly: !!c.attributes.httponly,
+        secure: !!c.attributes.secure
+      }));
+      output = JSON.stringify({
+        log: {
+          version: '1.2',
+          creator: { name: 'Cookie Parser Pro', version: '1.0' },
+          entries: [{
+            request: { method: 'GET', url: 'https://example.com', cookies: harCookies, headers: [], queryString: [], headersSize: -1, bodySize: -1, httpVersion: 'HTTP/1.1' }
+          }]
+        }
+      }, null, 2);
+      break;
+    }
+  }
+
+  document.getElementById('exportOutput').value = output;
+}
+
+function capitalize(s) {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function copyExport() {
+  const output = document.getElementById('exportOutput').value;
+  navigator.clipboard.writeText(output).then(() => {
+    showToast('Exported data copied to clipboard', 'success');
+  });
+}
+
+function downloadExport() {
+  const output = document.getElementById('exportOutput').value;
+  const extensions = {
+    json: 'json', header: 'txt', setcookie: 'txt', env: 'env',
+    curl: 'sh', netscape: 'txt', javascript: 'js',
+    python: 'py', playwright: 'js', puppeteer: 'js', postman: 'json', har: 'har'
+  };
+  const ext = extensions[state.exportFormat] || 'txt';
+  const blob = new Blob([output], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cookies-export.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('File downloaded', 'success');
+}
+
+// Cookie Builder
+function updateBuilder() {
+  const name = document.getElementById('builderName').value || 'cookie_name';
+  const rawValue = document.getElementById('builderValue').value || 'cookie_value';
+  const domain = document.getElementById('builderDomain').value;
+  const path = document.getElementById('builderPath').value;
+  const maxAge = document.getElementById('builderMaxAge').value;
+  const expiresInput = document.getElementById('builderExpires').value;
+  const sameSite = document.getElementById('builderSameSite').value;
+  const secure = document.getElementById('builderSecure').checked;
+  const httpOnly = document.getElementById('builderHttpOnly').checked;
+  const partitioned = document.getElementById('builderPartitioned').checked;
+  const urlEncode = document.getElementById('builderUrlEncode').checked;
+
+  const value = urlEncode ? encodeURIComponent(rawValue) : rawValue;
+
+  let cookie = `Set-Cookie: ${name}=${value}`;
+  if (domain) cookie += `; Domain=${domain}`;
+  if (path) cookie += `; Path=${path}`;
+  if (expiresInput) {
+    try { cookie += `; Expires=${new Date(expiresInput).toUTCString()}`; } catch(e) {}
+  }
+  if (maxAge) cookie += `; Max-Age=${maxAge}`;
+  if (sameSite) cookie += `; SameSite=${sameSite}`;
+  if (secure) cookie += '; Secure';
+  if (httpOnly) cookie += '; HttpOnly';
+  if (partitioned) cookie += '; Partitioned';
+
+  document.getElementById('builderOutput').textContent = cookie;
+
+  // Validation hints
+  const warnings = [];
+  if (!/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/.test(name)) {
+    warnings.push('⚠ Cookie name contains characters disallowed by RFC 6265 (only letters/digits and ! # $ % & \' * + - . ^ _ ` | ~).');
+  }
+  if (name.startsWith('__Host-')) {
+    if (!secure) warnings.push('🔴 __Host- prefix requires Secure.');
+    if (path !== '/') warnings.push('🔴 __Host- prefix requires Path=/.');
+    if (domain) warnings.push('🔴 __Host- prefix forbids Domain attribute.');
+  }
+  if (name.startsWith('__Secure-') && !secure) {
+    warnings.push('🔴 __Secure- prefix requires Secure.');
+  }
+  if (sameSite === 'None' && !secure) {
+    warnings.push('🔴 SameSite=None requires Secure.');
+  }
+  if (partitioned && !secure) {
+    warnings.push('🔴 Partitioned requires Secure.');
+  }
+  if (partitioned && sameSite && sameSite !== 'None') {
+    warnings.push('⚠ Partitioned cookies are typically used with SameSite=None.');
+  }
+  const sizeBytes = new Blob([`${name}=${value}`]).size;
+  if (sizeBytes > 4096) warnings.push(`⚠ Cookie size ${sizeBytes}B exceeds RFC 6265 4KB limit.`);
+
+  const warnBox = document.getElementById('builderWarnings');
+  if (warnings.length === 0) {
+    warnBox.style.display = 'none';
+    warnBox.innerHTML = '';
+  } else {
+    warnBox.style.display = '';
+    warnBox.innerHTML = warnings.map(w => `<div class="builder-warn">${escapeHtml(w)}</div>`).join('');
+  }
+}
+
+// Populate the builder from an existing cookie (called from detail view).
+function sendToBuilder(index) {
+  const c = state.cookies[index];
+  if (!c) return;
+  document.getElementById('builderName').value = c.name;
+  document.getElementById('builderValue').value = c.value;
+  document.getElementById('builderDomain').value = c.attributes.domain || '';
+  document.getElementById('builderPath').value = c.attributes.path || '/';
+  document.getElementById('builderMaxAge').value = c.attributes['max-age'] || '';
+  document.getElementById('builderExpires').value = '';
+  if (c.attributes.expires) {
+    const d = new Date(c.attributes.expires);
+    if (!isNaN(d.getTime())) {
+      // Convert to local datetime-local format
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      document.getElementById('builderExpires').value = new Date(d - tzOffset).toISOString().slice(0, 16);
+    }
+  }
+  const ss = c.attributes.samesite ? String(c.attributes.samesite) : '';
+  const cased = ss ? ss.charAt(0).toUpperCase() + ss.slice(1).toLowerCase() : '';
+  document.getElementById('builderSameSite').value = ['Strict','Lax','None'].includes(cased) ? cased : '';
+  document.getElementById('builderSecure').checked = !!c.attributes.secure;
+  document.getElementById('builderHttpOnly').checked = !!c.attributes.httponly;
+  document.getElementById('builderPartitioned').checked = !!c.attributes.partitioned;
+  document.getElementById('builderUrlEncode').checked = false;
+  updateBuilder();
+  // Scroll into view
+  document.getElementById('builderOutput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast(`Loaded "${c.name}" into Builder`, 'success');
+}
+
+function copyBuilderOutput() {
+  const output = document.getElementById('builderOutput').textContent;
+  navigator.clipboard.writeText(output).then(() => {
+    showToast('Cookie string copied', 'success');
+  });
+}
+
+// History
+function addToHistory(input) {
+  const preview = input.substring(0, 80) + (input.length > 80 ? '...' : '');
+  const entry = {
+    preview,
+    full: input,
+    time: new Date().toLocaleTimeString(),
+    count: state.cookies.length
+  };
+  
+  // Avoid duplicates
+  state.history = state.history.filter(h => h.full !== input);
+  state.history.unshift(entry);
+  if (state.history.length > 20) state.history.pop();
+  
+  localStorage.setItem('cookieParserHistory', JSON.stringify(state.history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  
+  if (state.history.length === 0) {
+    container.innerHTML = '<div style="padding:15px;text-align:center;font-size:12px;color:var(--text-muted)">No parsing history yet</div>';
+    return;
+  }
+
+  container.innerHTML = state.history.map((h, i) => `
+    <div class="history-item" onclick="loadFromHistory(${i})">
+      <span class="history-item-text">${escapeHtml(h.preview)}</span>
+      <span class="history-item-time">${h.count}🍪 · ${h.time}</span>
+    </div>
+  `).join('');
+}
+
+function loadFromHistory(index) {
+  const entry = state.history[index];
+  if (entry) {
+    document.getElementById('cookieInput').value = entry.full;
+    parseCookies();
+    showToast('Loaded from history', 'info');
+  }
+}
+
+function clearHistory() {
+  if (state.history.length === 0) {
+    showToast('History is already empty', 'info');
+    return;
+  }
+  if (!confirm(`Clear all ${state.history.length} history entries?`)) return;
+  state.history = [];
+  localStorage.removeItem('cookieParserHistory');
+  renderHistory();
+  showToast('History cleared', 'info');
+}
+
+// Theme toggle
+function applyTheme(theme) {
+  state.isDark = theme === 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('cookieParserTheme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.innerHTML = state.isDark ? '☀️ Light' : '🌙 Dark';
+}
+
+function toggleTheme() {
+  applyTheme(state.isDark ? 'light' : 'dark');
+  showToast(`${state.isDark ? 'Dark' : 'Light'} theme applied`, 'info');
+}
+
+// Toast notifications
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${escapeHtml(message)}</span>`;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Utility functions
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function truncate(str, len) {
+  if (!str) return '';
+  return str.length > len ? str.substring(0, len) + '…' : str;
+}
+
+function syntaxHighlightJSON(json) {
+  // Robust single-pass tokenizer (handles escaped quotes, nested values).
+  const escaped = escapeHtml(json);
+  return escaped.replace(
+    /("(\\.|[^"\\])*"\s*:?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+    (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        cls = /:\s*$/.test(match) ? 'json-key' : 'json-string';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
+}
+
+// =================== Keyboard shortcuts ===================
+document.addEventListener('keydown', (e) => {
+  const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+  const mod = e.ctrlKey || e.metaKey;
+
+  // Ctrl/Cmd + Enter — force parse
+  if (mod && e.key === 'Enter') {
+    e.preventDefault();
+    parseCookies();
+    showToast(`Parsed ${state.cookies.length} cookie(s)`, 'success');
+    return;
+  }
+  // Ctrl/Cmd + F — focus filter
+  if (mod && (e.key === 'f' || e.key === 'F')) {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+    return;
+  }
+  // Ctrl/Cmd + E — open export
+  if (mod && (e.key === 'e' || e.key === 'E')) {
+    e.preventDefault();
+    openExportModal();
+    return;
+  }
+  // Esc — close any open modal
+  if (e.key === 'Escape') {
+    closeExportModal();
+    closeShortcutsModal();
+    closeCompareModal();
+    return;
+  }
+  // ? — open shortcuts (only when not typing)
+  if (!isTyping && e.key === '?') {
+    e.preventDefault();
+    openShortcutsModal();
+  }
+});
+
+// =================== Shortcuts modal ===================
+function openShortcutsModal() {
+  document.getElementById('shortcutsModal').classList.add('active');
+}
+function closeShortcutsModal() {
+  document.getElementById('shortcutsModal').classList.remove('active');
+}
+
+// =================== Drag & drop file import ===================
+(function setupDragDrop() {
+  const ta = document.getElementById('cookieInput');
+  if (!ta) return;
+  let dragCounter = 0;
+
+  function over(e) { e.preventDefault(); e.stopPropagation(); }
+  window.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+    dragCounter++;
+    ta.classList.add('dragging');
+  });
+  window.addEventListener('dragleave', () => {
+    dragCounter = Math.max(0, dragCounter - 1);
+    if (dragCounter === 0) ta.classList.remove('dragging');
+  });
+  window.addEventListener('dragover', over);
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    ta.classList.remove('dragging');
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File too large (max 5MB)', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = String(ev.target.result || '');
+      ta.value = text;
+      autoDetectFormat(text, file.name);
+      parseCookies();
+      showToast(`Imported "${file.name}"`, 'success');
+    };
+    reader.readAsText(file);
+  });
+})();
+
+// =================== Compare mode ===================
+function openCompareModal() {
+  document.getElementById('compareModal').classList.add('active');
+}
+function closeCompareModal() {
+  document.getElementById('compareModal').classList.remove('active');
+}
+
+function useCurrentAsCompare(which) {
+  const text = document.getElementById('cookieInput').value;
+  if (!text) { showToast('Input panel is empty', 'info'); return; }
+  document.getElementById(which === 'A' ? 'compareInputA' : 'compareInputB').value = text;
+}
+
+function swapCompare() {
+  const a = document.getElementById('compareInputA');
+  const b = document.getElementById('compareInputB');
+  const tmp = a.value;
+  a.value = b.value;
+  b.value = tmp;
+}
+
+function parseAnyFormat(input) {
+  const trimmed = (input || '').trim();
+  if (!trimmed) return [];
+  // Try each format and pick the one that returns the most cookies.
+  const candidates = [];
+  const tryFormat = (fn) => { try { candidates.push(fn(trimmed)); } catch(e) {} };
+  tryFormat(parseSetCookieFormat);
+  tryFormat(parseJSONFormat);
+  tryFormat(parseNetscapeFormat);
+  tryFormat(parseHeaderFormat);
+  tryFormat(parseKeyValueFormat);
+  candidates.sort((a, b) => b.length - a.length);
+  return candidates[0] || [];
+}
+
+function runCompare() {
+  const a = parseAnyFormat(document.getElementById('compareInputA').value);
+  const b = parseAnyFormat(document.getElementById('compareInputB').value);
+  if (a.length === 0 && b.length === 0) {
+    showToast('Both inputs are empty or invalid', 'error');
+    return;
+  }
+  const mapA = new Map(a.map(c => [c.name, c.value]));
+  const mapB = new Map(b.map(c => [c.name, c.value]));
+  const allNames = new Set([...mapA.keys(), ...mapB.keys()]);
+  const rows = [];
+  let added = 0, removed = 0, changed = 0, unchanged = 0;
+
+  for (const name of allNames) {
+    const va = mapA.get(name);
+    const vb = mapB.get(name);
+    if (va === undefined) { rows.push({ name, status: 'added', a: '', b: vb }); added++; }
+    else if (vb === undefined) { rows.push({ name, status: 'removed', a: va, b: '' }); removed++; }
+    else if (va !== vb) { rows.push({ name, status: 'changed', a: va, b: vb }); changed++; }
+    else { rows.push({ name, status: 'unchanged', a: va, b: vb }); unchanged++; }
+  }
+  // Sort: added > removed > changed > unchanged, then by name
+  const order = { added: 0, removed: 1, changed: 2, unchanged: 3 };
+  rows.sort((x, y) => order[x.status] - order[y.status] || x.name.localeCompare(y.name));
+
+  const statusColor = { added: 'var(--success)', removed: 'var(--danger)', changed: 'var(--warning)', unchanged: 'var(--text-muted)' };
+  const statusIcon = { added: '+', removed: '−', changed: '≠', unchanged: '=' };
+
+  const summary = `
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;">
+      <span style="color:var(--success)"><b>+${added}</b> added</span>
+      <span style="color:var(--danger)"><b>−${removed}</b> removed</span>
+      <span style="color:var(--warning)"><b>≠${changed}</b> changed</span>
+      <span style="color:var(--text-muted)"><b>=${unchanged}</b> unchanged</span>
+      <span style="color:var(--text-muted)">A: ${a.length} · B: ${b.length}</span>
+    </div>`;
+
+  const table = `
+    <div class="table-container" style="max-height:380px;">
+      <table>
+        <thead>
+          <tr><th style="width:24px;"></th><th>Name</th><th>Set A</th><th>Set B</th></tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr style="border-left:3px solid ${statusColor[r.status]};">
+              <td style="color:${statusColor[r.status]};font-weight:700;text-align:center;">${statusIcon[r.status]}</td>
+              <td style="color:var(--accent);font-weight:600;">${escapeHtml(r.name)}</td>
+              <td title="${escapeHtml(r.a)}" style="color:${r.status==='removed'?'var(--danger)':'inherit'};">${escapeHtml(truncate(r.a, 60))}</td>
+              <td title="${escapeHtml(r.b)}" style="color:${r.status==='added'?'var(--success)':r.status==='changed'?'var(--warning)':'inherit'};">${escapeHtml(truncate(r.b, 60))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('compareResult').innerHTML = summary + table;
+}
+
+// =================== Persist UI prefs ===================
+function persistPrefs() {
+  try {
+    localStorage.setItem('cookieParserPrefs', JSON.stringify({
+      inputFormat: state.inputFormat,
+      currentView: state.currentView,
+      sortBy: state.sortBy
+    }));
+  } catch(e) {}
+}
+
+// =================== Init ===================
+(function init() {
+  // Theme
+  const savedTheme = localStorage.getItem('cookieParserTheme') || 'dark';
+  applyTheme(savedTheme);
+
+  // Prefs
+  try {
+    const prefs = JSON.parse(localStorage.getItem('cookieParserPrefs') || '{}');
+    if (prefs.inputFormat) {
+      state.inputFormat = prefs.inputFormat;
+      document.querySelectorAll('.panel .format-bar .format-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.format === prefs.inputFormat);
+      });
+    }
+    if (prefs.currentView) {
+      state.currentView = prefs.currentView;
+      document.querySelectorAll('.tabs .tab').forEach((t, i) => {
+        const views = ['cards', 'detail', 'table', 'raw'];
+        t.classList.toggle('active', views[i] === prefs.currentView);
+      });
+    }
+    if (prefs.sortBy) {
+      state.sortBy = prefs.sortBy;
+      const sel = document.getElementById('sortSelect');
+      if (sel) sel.value = prefs.sortBy;
+    }
+  } catch(e) {}
+
+  // Restore from URL hash (#data=base64url)
+  if (location.hash.startsWith('#data=')) {
+    try {
+      const encoded = decodeURIComponent(location.hash.slice(6));
+      const raw = utf8FromBase64(encoded);
+      if (raw != null) {
+        document.getElementById('cookieInput').value = raw;
+        autoDetectFormat(raw);
+        parseCookies();
+        showToast('Loaded from shared URL', 'success');
+      }
+    } catch(e) {
+      showToast('Invalid shared URL data', 'error');
+    }
+  }
+
+  // Render history & initial state
+  renderHistory();
+  updateAll();
+  updateBuilder();
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
