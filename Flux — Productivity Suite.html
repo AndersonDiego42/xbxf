@@ -468,6 +468,17 @@ input.field::placeholder, textarea.field::placeholder { color: var(--text-2); }
 .heat-3 { background: var(--green-tint-3); }
 .heat-4 { background: var(--green); }
 
+/* Habit detail modal: 12-week GitHub-style grid (columns = weeks, rows = Mon→Sun). */
+.hd-grid { display: flex; gap: 3px; align-items: flex-start; overflow-x: auto; padding-bottom: 4px; }
+.hd-dow { display: flex; flex-direction: column; gap: 3px; margin-right: 3px; flex-shrink: 0; }
+.hd-dow span { width: 12px; height: 13px; font-size: 9px; color: var(--text-2); line-height: 13px; text-align: center; }
+.hd-col { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.hd-cell { width: 13px; height: 13px; border-radius: 3px; background: var(--bg-3); cursor: pointer;
+  transition: transform 0.15s; display: block; }
+.hd-cell:hover { transform: scale(1.3); outline: 1px solid var(--border-light); }
+.hd-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hd-cell.future { background: transparent; cursor: default; pointer-events: none; }
+
 /* Icon / color pickers used in the habit dialog. */
 .picker-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
 .picker-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -551,6 +562,13 @@ button.due:hover { filter: brightness(1.25); }
   background: var(--bg-3); padding: 2px 6px; border-radius: 4px;
 }
 .subtask-progress svg, .task-flag svg { width: 11px; height: 11px; }
+/* Mini fill bar inside the subtask counter; turns green when everything's done. */
+.sub-mini-bar { width: 26px; height: 3px; border-radius: 2px; background: var(--bg-1);
+  overflow: hidden; margin-left: 2px; flex-shrink: 0; }
+.sub-mini-fill { display: block; height: 100%; border-radius: 2px; background: var(--accent);
+  transition: width var(--dur) var(--ease); }
+.subtask-progress.all-done { color: var(--green); }
+.subtask-progress.all-done .sub-mini-fill { background: var(--green); }
 .task-actions { align-self: flex-start; }
 /* Per-column "Add task" button. */
 .col-add {
@@ -1290,9 +1308,14 @@ button.due:hover { filter: brightness(1.25); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
   background: var(--bg-3); border: 1px solid var(--border-light); padding: 12px 20px;
   border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 1000; opacity: 0;
-  transition: all var(--dur-slow) var(--ease); font-size: var(--fs-base); }
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  transition: all var(--dur-slow) var(--ease); font-size: var(--fs-base); pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
 .toast { font-weight: var(--fw-medium); }
+/* Inline action button inside a toast (e.g. Undo). */
+.toast-action { background: none; border: none; color: var(--accent); font: inherit;
+  font-weight: var(--fw-semibold); cursor: pointer; margin-left: 10px; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px; }
+.toast-action:hover { color: var(--accent-hover); }
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
@@ -1352,6 +1375,21 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
 .settings-danger .sg-title { color: var(--red); }
 .settings-about { font-size: var(--fs-xs); color: var(--text-2); line-height: var(--lh-relaxed); }
 .settings-about strong { color: var(--text-1); }
+/* Accent-colour swatch picker (Settings → Appearance). */
+.accent-swatches { display: inline-flex; gap: var(--sp-2); flex-wrap: wrap; }
+.accent-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+  padding: 0; position: relative; transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
+.accent-swatch:hover { transform: scale(1.12); }
+.accent-swatch.active { border-color: var(--text-0); box-shadow: 0 0 0 2px var(--bg-1); }
+.accent-swatch:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+/* iOS-style toggle switch (Settings rows with a boolean pref). */
+.switch { position: relative; width: 40px; height: 22px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--bg-2); cursor: pointer; padding: 0; transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text-2); transition: transform var(--dur) var(--ease), background var(--dur) var(--ease); }
+.switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked="true"]::after { transform: translateX(18px); background: #fff; }
+.switch:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 /* On narrow screens stack each row's label above its control so the segmented
    controls (System/Light/Dark) never squash or overflow the dialog. */
 @media (max-width: 460px) {
@@ -1557,6 +1595,15 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
   .nav-item:hover, .btn:hover, .stat-card:hover, .task-card:hover,
   .note-color-dot:hover { transform: none !important; }
 }
+/* App-level "Reduce motion" preference (Settings → Appearance) — mirrors the
+   OS media query above so users can opt out without changing OS settings. */
+html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-motion="reduce"] :is(.nav-item, .btn, .stat-card, .task-card, .note-color-dot):hover { transform: none !important; }
 
 /* --- Pattern: Button success modifier (completes the .btn family) ---
    Existing .btn variants: .primary .icon .ghost .danger.
@@ -1788,6 +1835,17 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
       if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
       var meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', theme === 'light' ? '#f4f5f7' : '#0a0b0e');
+      /* Accent colour + reduce-motion prefs also apply pre-paint (no flash).
+         Palette kept in sync with the ACCENTS map in the main script. */
+      var prefs = JSON.parse(localStorage.getItem('flux_prefs') || '{}');
+      var pal = { blue: ['#3b82f6', '#60a5fa'], teal: ['#14b8a6', '#2dd4bf'], green: ['#22c55e', '#4ade80'],
+                  amber: ['#f59e0b', '#fbbf24'], rose: ['#f43f5e', '#fb7185'] };
+      var acc = pal[prefs.accent];
+      if (acc) {
+        var r = document.documentElement.style;
+        r.setProperty('--accent', acc[0]); r.setProperty('--accent-hover', acc[1]); r.setProperty('--accent-dim', acc[0] + '26');
+      }
+      if (prefs.reduceMotion) document.documentElement.setAttribute('data-motion', 'reduce');
     } catch (e) {}
   })();
 </script>
@@ -1994,6 +2052,8 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
             <button class="btn danger" id="mindDel" title="Delete selected node (Del)">Delete</button>
           </div>
           <div class="mind-tb-group">
+            <button class="btn" id="mindArrange" title="Auto-arrange the map in a radial tree around the centre">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="10" y1="10" x2="6.5" y2="6.5"/><line x1="14" y1="10" x2="17.5" y2="6.5"/><line x1="10" y1="14" x2="6.5" y2="17.5"/><line x1="14" y1="14" x2="17.5" y2="17.5"/></svg>Arrange</button>
             <button class="btn ghost" id="mindReset" title="Clear the whole map">Reset</button>
           </div>
         </div>
@@ -2007,7 +2067,7 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
           <button class="btn icon" id="mindFit" title="Fit map to view" aria-label="Fit to view"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button>
         </div>
         <div class="mind-count" id="mindCount"></div>
-        <div class="mind-hint">Drag to move · Double-click or Enter to edit · "+ Child" branches from selection · Click a line to remove it · Scroll to zoom</div>
+        <div class="mind-hint">Drag to move · Double-click or Enter to edit · Tab or "+ Child" branches from selection · Click a line to remove it · Scroll to zoom</div>
       </div>
     </section>
 
@@ -2141,6 +2201,8 @@ kbd { background: var(--bg-3); border: 1px solid var(--border-light); border-bot
         <div class="section-title" style="margin:0">Budget Tracker</div>
         <div class="flex gap-2" style="flex-wrap:wrap">
           <select class="field" id="budgetMonth" aria-label="Select month" style="width:auto"></select>
+          <button class="btn" id="budgetExport" aria-label="Export this month as CSV" title="Export this month as CSV">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button>
           <button class="btn" id="budgetSettings" aria-label="Set category budgets" title="Set category budgets">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Budgets</button>
           <button class="btn primary" id="addExpense">
@@ -2697,12 +2759,24 @@ function onActivate(el, handler) {
   el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } };
 }
 
-function toast(msg) {
+// Toast with an optional action button: toast('Deleted', { label: 'Undo', onClick: fn }).
+// Action toasts stay up a little longer; clicking the action dismisses immediately.
+function toast(msg, action) {
   const el = $('#toast');
-  el.textContent = msg;
+  if (action && action.label && typeof action.onClick === 'function') {
+    el.textContent = '';
+    el.append(document.createTextNode(msg + ' '));
+    const btn = document.createElement('button');
+    btn.className = 'toast-action';
+    btn.textContent = action.label;
+    btn.onclick = () => { el.classList.remove('show'); clearTimeout(el._timer); action.onClick(); };
+    el.appendChild(btn);
+  } else {
+    el.textContent = msg;
+  }
   el.classList.add('show');
   clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.remove('show'), 2200);
+  el._timer = setTimeout(() => el.classList.remove('show'), action ? 5000 : 2200);
 }
 
 // Inline SVG icons reused across views.
@@ -2746,11 +2820,12 @@ function modal(title, fields, onSubmit) {
     if (onSubmit(data) === false) return;
     close();
   };
-  // Enter submits — except inside a textarea/select (those need Enter for content).
+  // Enter submits — except inside a textarea/select (those need Enter for content)
+  // or on any button (Cancel / injected Delete buttons must keep their own action).
   // (The Tab focus-trap is handled by trapModalFocus above.)
   m.querySelector('.modal').addEventListener('keydown', (e) => {
     const t = (e.target.tagName || '').toLowerCase();
-    if (e.key === 'Enter' && t !== 'select' && t !== 'textarea' && !e.target.hasAttribute('data-cancel')) {
+    if (e.key === 'Enter' && t !== 'select' && t !== 'textarea' && t !== 'button') {
       e.preventDefault(); m.querySelector('[data-ok]').click();
     }
   });
@@ -2954,10 +3029,14 @@ const Theme = (() => {
 /* ============ PREFERENCES ============ */
 // Small app-wide UI preferences kept in their own localStorage key (separate from
 // the data Store) so they're instant on load and untouched by data import/reset.
-// Currently: clock24 (24-hour clock). Extend the defaults to add more prefs.
+//   clock24      : 24-hour clock in the top bar / time displays
+//   accent       : accent colour key ('indigo' default — see ACCENTS)
+//   weekStart    : 0 = Sunday (default) | 1 = Monday — affects the Calendar
+//   startView    : which view opens on launch ('dashboard' default)
+//   reduceMotion : app-level animations toggle (mirrors the OS media query)
 const Prefs = (() => {
   const KEY = 'flux_prefs';
-  const defaults = { clock24: false };
+  const defaults = { clock24: false, accent: 'indigo', weekStart: 0, startView: 'dashboard', reduceMotion: false };
   let prefs;
   try { prefs = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY)) || {}); }
   catch { prefs = { ...defaults }; }
@@ -2969,6 +3048,35 @@ const Prefs = (() => {
   }
   return { get, set };
 })();
+
+// Accent palette: key → { label, main, hover }. The -dim variant is derived
+// (hex + alpha suffix), matching how the default tokens are defined in :root.
+// Kept in sync with the tiny pre-paint script in <head> (which reads flux_prefs
+// directly so the accent applies before first render — no flash).
+const ACCENTS = {
+  indigo: { label: 'Indigo', main: '#6366f1', hover: '#7c7ff5' },
+  blue:   { label: 'Blue',   main: '#3b82f6', hover: '#60a5fa' },
+  teal:   { label: 'Teal',   main: '#14b8a6', hover: '#2dd4bf' },
+  green:  { label: 'Green',  main: '#22c55e', hover: '#4ade80' },
+  amber:  { label: 'Amber',  main: '#f59e0b', hover: '#fbbf24' },
+  rose:   { label: 'Rose',   main: '#f43f5e', hover: '#fb7185' },
+};
+// Apply an accent to the live document (used by Settings; the pre-paint script
+// handles first load). Unknown keys fall back to the default (indigo).
+function applyAccent(key) {
+  const a = ACCENTS[key] || ACCENTS.indigo;
+  const r = document.documentElement.style;
+  if (key === 'indigo') { r.removeProperty('--accent'); r.removeProperty('--accent-hover'); r.removeProperty('--accent-dim'); }
+  else { r.setProperty('--accent', a.main); r.setProperty('--accent-hover', a.hover); r.setProperty('--accent-dim', a.main + '26'); }
+}
+// Apply the app-level reduce-motion override (a [data-motion] attribute that a
+// CSS block mirrors the OS media query onto).
+function applyMotionPref(reduce) {
+  if (reduce) document.documentElement.setAttribute('data-motion', 'reduce');
+  else document.documentElement.removeAttribute('data-motion');
+}
+applyAccent(Prefs.get('accent'));
+applyMotionPref(Prefs.get('reduceMotion'));
 
 /* ============ CLOCK ============ */
 function tickClock() {
@@ -3325,14 +3433,26 @@ function migrateHabits(state) {
   return changed;
 }
 
+// Streak lengths worth celebrating (first time the current streak reaches them).
+const HABIT_STREAK_MILESTONES = [7, 14, 21, 30, 60, 100, 365];
+
 function toggleHabit(id, day) {
   const key = day || today();
+  let celebrate = 0, name = '';
   Store.set(s => {
     const h = s.habits.find(x => x.id === id); if (!h) return;
+    const prevStreak = h.streak || 0;
+    const marking = !h.history[key];
     if (h.history[key]) delete h.history[key]; else h.history[key] = true;
     h.streak = calcStreak(h.history);
     h.bestStreak = Math.max(h.bestStreak || 0, calcBestStreak(h.history));
+    // Celebrate only when checking (not unchecking) pushes the current streak
+    // up onto a milestone it wasn't already at.
+    if (marking && h.streak > prevStreak && HABIT_STREAK_MILESTONES.includes(h.streak)) {
+      celebrate = h.streak; name = h.name;
+    }
   });
+  if (celebrate) toast(`🔥 ${celebrate}-day streak on "${name}"!`);
 }
 // Pick a heat-cell intensity class for a completed day. Recent days look
 // brighter so the most relevant activity stands out. (Index 0 = oldest.)
@@ -3358,7 +3478,7 @@ function renderHabits() {
   const bestStreak = habits.reduce((m, h) => Math.max(m, h.streak || 0), 0);
   const allBest = habits.reduce((m, h) => Math.max(m, h.bestStreak || 0), 0);
   $('#habitStats').innerHTML = habits.length ? [
-    { label: 'Today', value: `${doneToday}/${habits.length}`, color: 'var(--green)', dim: 'var(--green-dim)', sub: `${pct}% complete` },
+    { label: 'Today', value: `${doneToday}/${habits.length}`, color: 'var(--green)', dim: 'var(--green-dim)', sub: doneToday === habits.length ? '🌟 Perfect day!' : `${pct}% complete` },
     { label: 'Active streaks', value: bestStreak, color: 'var(--amber)', dim: 'var(--amber-dim)', sub: 'longest current 🔥' },
     { label: 'Best ever', value: allBest, color: 'var(--purple)', dim: 'var(--purple-dim)', sub: 'record streak' },
     { label: 'Tracking', value: habits.length, color: 'var(--accent)', dim: 'var(--accent-dim)', sub: 'habits total' },
@@ -3399,6 +3519,7 @@ function renderHabits() {
       <div class="habit-actions">
         <button class="btn ghost icon sm" data-move-habit="${h.id}" data-dir="-1" ${idx === 0 ? 'disabled' : ''} aria-label="Move up" title="Move up"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg></button>
         <button class="btn ghost icon sm" data-move-habit="${h.id}" data-dir="1" ${idx === habits.length - 1 ? 'disabled' : ''} aria-label="Move down" title="Move down"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="btn ghost icon sm" data-detail-habit="${h.id}" aria-label="View details for ${esc(h.name)}" title="Details (12-week view)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></button>
         <button class="btn ghost icon sm" data-edit-habit="${h.id}" aria-label="Edit ${esc(h.name)}" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>
         <button class="btn ghost icon sm" data-del-habit="${h.id}" aria-label="Delete ${esc(h.name)}" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
@@ -3409,13 +3530,26 @@ function renderHabits() {
   $$('[data-habit]').forEach(el => onActivate(el, () => toggleHabit(+el.dataset.habit)));
   // Past-day toggle via heatmap cells
   $$('[data-habit-cell]').forEach(el => onActivate(el, () => toggleHabit(+el.dataset.habitCell, el.dataset.day)));
-  // Edit / delete / reorder
+  // Detail / edit / delete / reorder
+  $$('[data-detail-habit]').forEach(el => el.onclick = () => openHabitDetail(+el.dataset.detailHabit));
   $$('[data-edit-habit]').forEach(el => el.onclick = () => openHabitDialog(+el.dataset.editHabit));
+  // Delete with Undo: no blocking confirm — the toast's Undo restores the habit
+  // (full history included) at its original position.
   $$('[data-del-habit]').forEach(el => el.onclick = () => {
-    const h = Store.get().habits.find(x => x.id === +el.dataset.delHabit);
-    if (h && !confirm(`Delete habit "${h.name}"? Its history will be lost.`)) return;
-    Store.set(s => { s.habits = s.habits.filter(h => h.id !== +el.dataset.delHabit); });
-    toast('Habit deleted');
+    const id = +el.dataset.delHabit;
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.habits.findIndex(h => h.id === id);
+      if (at >= 0) removed = s.habits.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast(`"${removed.name}" deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.habits.some(h => h.id === removed.id)) return; // guard double-restore
+        s.habits.splice(Math.min(at, s.habits.length), 0, removed);
+      });
+      toast('Habit restored');
+    }});
   });
   $$('[data-move-habit]').forEach(el => el.onclick = () => moveHabit(+el.dataset.moveHabit, +el.dataset.dir));
 }
@@ -3427,6 +3561,101 @@ function moveHabit(id, dir) {
     if (i < 0 || j < 0 || j >= s.habits.length) return;
     [s.habits[i], s.habits[j]] = [s.habits[j], s.habits[i]];
   });
+}
+
+// Per-habit detail modal: a 12-week GitHub-style heat grid (click any cell to
+// toggle that day) plus lifetime stats. Re-renders in place after each toggle.
+function openHabitDetail(id) {
+  const m = $('#modal');
+
+  const build = () => {
+    const h = Store.get().habits.find(x => x.id === id);
+    if (!h) return null;
+    const color = h.color || 'var(--accent)';
+    const totalDone = Object.keys(h.history || {}).filter(k => h.history[k]).length;
+
+    // 12 full weeks ending with the current week (Mon-start), oldest week first.
+    const end = new Date(); end.setHours(0, 0, 0, 0);
+    const dow = (end.getDay() + 6) % 7;            // Mon=0 … Sun=6
+    const weekStart = new Date(end); weekStart.setDate(end.getDate() - dow); // this week's Monday
+    const weeks = [];
+    for (let w = 11; w >= 0; w--) {
+      const col = [];
+      for (let r = 0; r < 7; r++) {
+        const d = new Date(weekStart); d.setDate(weekStart.getDate() - w * 7 + r);
+        col.push(d > end ? null : dateKey(d));      // future days render as blanks
+      }
+      weeks.push(col);
+    }
+    const labelFor = (k) => new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const grid = `<div class="hd-grid" role="group" aria-label="Last 12 weeks for ${esc(h.name)} — click a day to toggle it">
+        <div class="hd-dow" aria-hidden="true">${['M','T','W','T','F','S','S'].map(d => `<span>${d}</span>`).join('')}</div>
+        ${weeks.map(col => `<div class="hd-col">${col.map(k => k == null
+          ? '<span class="hd-cell future" aria-hidden="true"></span>'
+          : `<span class="hd-cell ${h.history[k] ? 'on' : ''}" data-hd-day="${k}" role="button" tabindex="0"
+               title="${labelFor(k)}${h.history[k] ? ' · done' : ''}" style="${h.history[k] ? `background:${color}` : ''}"></span>`).join('')}</div>`).join('')}
+      </div>`;
+
+    const rate30 = completionRate(h.history);
+    const wk = weekCount(h.history);
+    return `<div class="modal modal-lg" role="dialog" aria-modal="true" aria-label="Habit details">
+      <h3 style="display:flex;align-items:center;gap:8px">
+        <span class="habit-icon" style="background:${color}22;color:${color};width:28px;height:28px;font-size:15px" aria-hidden="true">${esc(h.icon || '✅')}</span>
+        ${esc(h.name)}
+      </h3>
+      <div class="goal-hist-summary">
+        <div class="ghs-tile"><div class="ghs-val" style="color:var(--amber)">🔥 ${h.streak || 0}</div><div class="ghs-lbl">Current streak</div></div>
+        <div class="ghs-tile"><div class="ghs-val" style="color:var(--purple)">${h.bestStreak || 0}</div><div class="ghs-lbl">Best streak</div></div>
+        <div class="ghs-tile"><div class="ghs-val" style="color:var(--cyan)">${rate30}%</div><div class="ghs-lbl">30-day rate</div></div>
+        <div class="ghs-tile"><div class="ghs-val" style="color:var(--green)">${totalDone}</div><div class="ghs-lbl">Total check-ins</div></div>
+      </div>
+      <div class="sub" style="margin-bottom:6px">Last 12 weeks · ${wk}/${h.target || 7} this week</div>
+      ${grid}
+      <div class="flex gap-2" style="justify-content:flex-end;margin-top:18px"><button class="btn" data-cancel>Close</button></div>
+    </div>`;
+  };
+
+  const html = build();
+  if (!html) return;
+  m.innerHTML = html;
+  m.classList.add('show');
+  // Focus handling: we repaint the dialog in place after each cell toggle, so the
+  // Tab-trap lives on the persistent overlay (survives innerHTML swaps) instead of
+  // going through trapModalFocus (whose listener would die with the old .modal).
+  modalLastFocus = document.activeElement;
+  const restoreFocus = () => {
+    if (modalLastFocus && document.contains(modalLastFocus)) { try { modalLastFocus.focus(); } catch {} }
+    modalLastFocus = null;
+  };
+  const onTrapKey = (e) => {
+    // Self-clean if the dialog was closed some other way (e.g. global Esc).
+    if (!m.classList.contains('show')) { m.removeEventListener('keydown', onTrapKey); return; }
+    if (e.key !== 'Tab') return;
+    const f = $$('button, [tabindex]:not([tabindex="-1"])', m).filter(el => !el.disabled && el.offsetParent !== null);
+    if (!f.length) return;
+    const firstEl = f[0], lastEl = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+    else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+  };
+  m.addEventListener('keydown', onTrapKey);
+  const close = () => { m.classList.remove('show'); m.removeEventListener('keydown', onTrapKey); restoreFocus(); };
+  requestAnimationFrame(() => m.querySelector('[data-cancel]')?.focus());
+
+  const wire = () => {
+    m.querySelector('[data-cancel]').onclick = close;
+    $$('[data-hd-day]', m).forEach(el => onActivate(el, () => {
+      const day = el.dataset.hdDay;
+      toggleHabit(id, day);
+      // Repaint the dialog in place, keeping focus on the same cell.
+      const fresh = build();
+      if (!fresh) { close(); return; }
+      m.innerHTML = fresh;
+      wire();
+      m.querySelector(`[data-hd-day="${day}"]`)?.focus();
+    }));
+  };
+  wire();
+  m.onclick = (e) => { if (e.target === m) close(); };
 }
 
 // Rich create/edit dialog with name, weekly target, icon picker and color swatches.
@@ -3836,9 +4065,10 @@ function renderTasks() {
         const tagChips = (t.tags || []).map(tag => `<span class="badge task-tag" data-tagjump="${esc(tag)}">#${esc(tag)}</span>`).join('');
         const subs = t.subtasks || [];
         const subsDone = subs.filter(s => s.done).length;
-        const subBar = subs.length ? `<div class="subtask-progress" title="${subsDone}/${subs.length} subtasks done">
+        const subBar = subs.length ? `<div class="subtask-progress ${subsDone === subs.length ? 'all-done' : ''}" title="${subsDone}/${subs.length} subtasks done">
             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            ${subsDone}/${subs.length}</div>` : '';
+            ${subsDone}/${subs.length}
+            <span class="sub-mini-bar" aria-hidden="true"><span class="sub-mini-fill" style="width:${Math.round((subsDone / subs.length) * 100)}%"></span></span></div>` : '';
         const descIcon = (t.desc || '').trim() ? `<span class="task-flag" title="Has notes"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>` : '';
         return `<div class="task-card pri-${t.priority}" draggable="true" data-task="${t.id}" tabindex="0">
           <div class="task-card-top">
@@ -3889,8 +4119,21 @@ function renderTasks() {
   $$('[data-edit-task]').forEach(el => el.onclick = (e) => { e.stopPropagation(); openTaskDialog(+el.dataset.editTask); });
   $$('[data-del-task]').forEach(el => el.onclick = (e) => {
     e.stopPropagation();
-    Store.set(s => { s.tasks = s.tasks.filter(t => t.id !== +el.dataset.delTask); });
-    toast('Task deleted');
+    const id = +el.dataset.delTask;
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.tasks.findIndex(t => t.id === id);
+      if (at >= 0) removed = s.tasks.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast('Task deleted', { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        // Guard against double-restore (e.g. stale toast) by checking the id is gone.
+        if (s.tasks.some(t => t.id === removed.id)) return;
+        s.tasks.splice(Math.min(at, s.tasks.length), 0, removed);
+      });
+      toast('Task restored');
+    }});
   });
   // Cross-tool "Send to…" menu per task.
   $$('[data-send-task]').forEach(el => el.onclick = (e) => { e.stopPropagation(); openTaskSendMenu(+el.dataset.sendTask); });
@@ -3927,12 +4170,35 @@ function openTaskSendMenu(id) {
       } },
     { icon: XICONS.note, label: 'Capture as a note', sub: 'Create a note from this task',
       run: () => createNoteFromTask(t) },
+    { icon: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+      label: 'Duplicate task', sub: 'Copy it into To Do (subtasks reset)',
+      run: () => duplicateTask(id) },
   ];
   if (t.due) actions.splice(3, 0, {
     icon: XICONS.calendar, label: 'View on calendar', sub: `Due ${new Date(t.due + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
     run: () => jumpToCalendarDate(t.due),
   });
   openActionMenu(`Send "${t.title.length > 32 ? t.title.slice(0, 32) + '…' : t.title}" to…`, actions);
+}
+
+// Duplicate a task: full copy with "(copy)" suffix, unchecked subtasks, fresh
+// created timestamp, dropped into To Do.
+function duplicateTask(id) {
+  Store.set(s => {
+    const t = s.tasks.find(x => x.id === id); if (!t) return;
+    s.tasks.push({
+      id: s.nextTaskId++,
+      title: t.title + ' (copy)',
+      status: 'todo',
+      priority: t.priority,
+      due: t.due || '',
+      desc: t.desc || '',
+      tags: Array.isArray(t.tags) ? [...t.tags] : [],
+      subtasks: (t.subtasks || []).map(st => ({ t: st.t, done: false })),
+      created: Date.now(),
+    });
+  });
+  toast('Task duplicated');
 }
 
 // Jump to the Calendar (month view) with a given 'YYYY-MM-DD' day selected.
@@ -4085,12 +4351,21 @@ $('#taskClearFilters').onclick = () => {
   $('#taskSearch').value = ''; $('#taskPriorityFilter').value = 'all'; $('#taskTagFilter').value = '';
   renderTasks();
 };
+// Bulk clear with Undo (replaces confirm): removed tasks are kept (with their
+// original indexes) so Undo restores them in-place, preserving board order.
 $('#clearDone').onclick = () => {
-  const n = Store.get().tasks.filter(t => t.status === 'done').length;
-  if (!n) { toast('No completed tasks'); return; }
-  if (!confirm(`Remove ${n} completed task${n === 1 ? '' : 's'}? This can't be undone.`)) return;
-  Store.set(s => { s.tasks = s.tasks.filter(t => t.status !== 'done'); });
-  toast('Completed tasks cleared');
+  const removed = [];
+  Store.set(s => {
+    s.tasks.forEach((t, i) => { if (t.status === 'done') removed.push([i, t]); });
+    if (removed.length) s.tasks = s.tasks.filter(t => t.status !== 'done');
+  });
+  if (!removed.length) { toast('No completed tasks'); return; }
+  toast(`${removed.length} completed task${removed.length === 1 ? '' : 's'} cleared`, { label: 'Undo', onClick: () => {
+    Store.set(s => {
+      removed.forEach(([i, t]) => { if (!s.tasks.some(x => x.id === t.id)) s.tasks.splice(Math.min(i, s.tasks.length), 0, t); });
+    });
+    toast('Tasks restored');
+  }});
 };
 
 /* ============ NOTES ============ */
@@ -4335,15 +4610,30 @@ $('#addNote').onclick = () => {
   $('#noteTitle').focus();
 };
 
+// Delete with Undo: no blocking confirm — the toast's Undo restores the note at
+// its original position and re-selects it.
 $('#delNote').onclick = () => {
   if (!activeNote) return;
-  const n = Store.get().notes.find(x => x.id === activeNote);
-  if (n && (n.title || n.body) && !confirm(`Delete "${n.title || 'Untitled'}"? This can't be undone.`)) return;
-  Store.set(s => { s.notes = s.notes.filter(n => n.id !== activeNote); });
+  const id = activeNote;
+  let removed = null, at = -1;
+  Store.set(s => {
+    at = s.notes.findIndex(n => n.id === id);
+    if (at >= 0) removed = s.notes.splice(at, 1)[0];
+  });
+  if (!removed) return;
   activeNote = Store.get().notes[0]?.id || null;
   isEditingNote = false; notePreviewOn = false;
   renderNotes();
-  toast('Note deleted');
+  toast(`"${removed.title || 'Untitled'}" deleted`, { label: 'Undo', onClick: () => {
+    Store.set(s => {
+      if (s.notes.some(n => n.id === removed.id)) return; // guard double-restore
+      s.notes.splice(Math.min(at, s.notes.length), 0, removed);
+    });
+    activeNote = removed.id;
+    isEditingNote = false; notePreviewOn = false;
+    renderNotes();
+    toast('Note restored');
+  }});
 };
 
 // Pin / unpin the active note.
@@ -4483,13 +4773,17 @@ function renderMind() {
         renderMind();
       };
       const up = () => {
-        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
         if (moved) {
           didDragNode = true;
           Store.set(s => { const n = s.mind.nodes.find(x => x.id === node.id); if (n) { n.x = node.x; n.y = node.y; } });
         }
       };
-      document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up); // touch: browser gesture takeover must also end the drag
     });
     vp.appendChild(el);
   });
@@ -4587,22 +4881,141 @@ $('#mindEdit').onclick = () => {
 
 $('#mindConnect').onclick = () => { connectMode = !connectMode; mindSelected = []; toast(connectMode ? 'Select two nodes to connect' : 'Connect cancelled'); renderMind(); };
 
+// Delete with Undo: restores the node AND every edge that touched it.
 $('#mindDel').onclick = () => {
   if (!mindSelected.length) { toast('Select a node first'); return; }
   const id = mindSelected[0];
   const node = Store.get().mind.nodes.find(n => n.id === id);
   if (node && node.root) { toast('The central node can\u0027t be deleted'); return; }
+  let removedNode = null, removedEdges = [];
   Store.set(s => {
+    removedNode = s.mind.nodes.find(n => n.id === id) || null;
+    removedEdges = s.mind.edges.filter(e => e.includes(id));
     s.mind.nodes = s.mind.nodes.filter(n => n.id !== id);
     s.mind.edges = s.mind.edges.filter(e => !e.includes(id));
   });
-  mindSelected = []; toast('Node deleted'); renderMind();
+  mindSelected = []; renderMind();
+  if (!removedNode) return;
+  toast(`"${removedNode.text}" deleted`, { label: 'Undo', onClick: () => {
+    Store.set(s => {
+      if (s.mind.nodes.some(n => n.id === removedNode.id)) return; // guard double-restore
+      s.mind.nodes.push(removedNode);
+      // Only restore edges whose other endpoint still exists.
+      removedEdges.forEach(e => {
+        const other = e[0] === removedNode.id ? e[1] : e[0];
+        if (s.mind.nodes.some(n => n.id === other)) s.mind.edges.push(e);
+      });
+    });
+    renderMind();
+    toast('Node restored');
+  }});
 };
 
+// Reset with Undo (replaces confirm): the entire previous map is snapshotted
+// so a stray click can be reverted losslessly.
 $('#mindReset').onclick = () => {
-  if (!confirm('Reset the mind map? This removes all nodes and connections.')) return;
+  const prev = JSON.parse(JSON.stringify(Store.get().mind));
+  if (prev.nodes.length <= 1 && !prev.edges.length) { toast('Mind map is already empty'); return; }
   Store.set(s => { s.mind = { nodes: [{ id: 1, x: 400, y: 200, text: 'Central Idea', root: true, color: '' }], edges: [], nextId: 2 }; });
   panOffset = { x: 0, y: 0 }; mindZoom = 1; mindSelected = []; connectMode = false; renderMind();
+  toast('Mind map reset', { label: 'Undo', onClick: () => {
+    Store.set(s => { s.mind = prev; });
+    mindSelected = []; renderMind();
+    toast('Mind map restored');
+  }});
+};
+
+/* ---- Auto-arrange: radial BFS tree layout ---- */
+// Compute new positions for every node: a BFS tree rooted at the central node is
+// laid out in concentric rings, with each branch's angular span proportional to
+// its leaf count (so bushy branches get more room). Nodes not reachable from the
+// root are parked in a tidy grid below the tree. Returns a Map(id → {x, y});
+// pure (no state writes) so it's directly testable.
+function computeMindLayout(mind) {
+  const pos = new Map();
+  const nodes = mind.nodes;
+  if (!nodes.length) return pos;
+  const root = nodes.find(n => n.root) || nodes[0];
+
+  // Adjacency list over undirected edges.
+  const adj = new Map(nodes.map(n => [n.id, []]));
+  mind.edges.forEach(([a, b]) => {
+    if (adj.has(a) && adj.has(b)) { adj.get(a).push(b); adj.get(b).push(a); }
+  });
+
+  // BFS from the root → parent/children tree + depth.
+  const parent = new Map([[root.id, null]]);
+  const children = new Map(nodes.map(n => [n.id, []]));
+  const depth = new Map([[root.id, 0]]);
+  const queue = [root.id];
+  while (queue.length) {
+    const id = queue.shift();
+    for (const next of adj.get(id) || []) {
+      if (parent.has(next)) continue;
+      parent.set(next, id);
+      children.get(id).push(next);
+      depth.set(next, depth.get(id) + 1);
+      queue.push(next);
+    }
+  }
+
+  // Leaf count per subtree (min 1) → angular weight.
+  const leaves = new Map();
+  const countLeaves = (id) => {
+    const kids = children.get(id);
+    const n = kids.length ? kids.reduce((a, k) => a + countLeaves(k), 0) : 1;
+    leaves.set(id, n); return n;
+  };
+  countLeaves(root.id);
+
+  // Place the tree: root at origin, each depth ring RING px further out.
+  const RING = 170;
+  const cx = root.x, cy = root.y;   // keep the root where it is
+  pos.set(root.id, { x: cx, y: cy });
+  const place = (id, a0, a1) => {
+    const kids = children.get(id);
+    if (!kids.length) return;
+    let a = a0;
+    const total = kids.reduce((s, k) => s + leaves.get(k), 0);
+    for (const k of kids) {
+      const span = ((a1 - a0) * leaves.get(k)) / total;
+      const mid = a + span / 2;
+      const r = depth.get(k) * RING;
+      pos.set(k, { x: Math.round(cx + r * Math.cos(mid)), y: Math.round(cy + r * Math.sin(mid)) });
+      place(k, a, a + span);
+      a += span;
+    }
+  };
+  place(root.id, -Math.PI / 2, (3 * Math.PI) / 2); // start at 12 o'clock, full circle
+
+  // Disconnected nodes: park in a grid below the arranged tree.
+  const orphans = nodes.filter(n => !parent.has(n.id));
+  if (orphans.length) {
+    const placed = [...pos.values()];
+    const bottom = Math.max(...placed.map(p => p.y)) + 120;
+    const left = Math.min(...placed.map(p => p.x));
+    orphans.forEach((n, i) => pos.set(n.id, { x: left + (i % 5) * 160, y: bottom + Math.floor(i / 5) * 90 }));
+  }
+  return pos;
+}
+
+// Apply the layout with Undo (previous positions restorable via the action toast).
+$('#mindArrange').onclick = () => {
+  const mind = Store.get().mind;
+  if (mind.nodes.length < 2) { toast('Nothing to arrange yet'); return; }
+  const before = new Map(mind.nodes.map(n => [n.id, { x: n.x, y: n.y }]));
+  const layout = computeMindLayout(mind);
+  Store.set(s => s.mind.nodes.forEach(n => {
+    const p = layout.get(n.id); if (p) { n.x = p.x; n.y = p.y; }
+  }));
+  renderMind(); mindFit();
+  toast('Map arranged', { label: 'Undo', onClick: () => {
+    Store.set(s => s.mind.nodes.forEach(n => {
+      const p = before.get(n.id); if (p) { n.x = p.x; n.y = p.y; }
+    }));
+    renderMind(); mindFit();
+    toast('Layout restored');
+  }});
 };
 
 /* ---- Zoom & fit ---- */
@@ -4980,12 +5393,16 @@ function renderCalendar() {
   grid.hidden = false; agenda.hidden = true;
 
   const { tasks: tasksByDate, events: eventsByDate } = calItemsByDate();
-  const heads = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-head">${d}</div>`).join('');
+  // Week-start preference: 0 = Sunday (default), 1 = Monday. Rotates the header
+  // labels and shifts both the week-view start and the month-view leading offset.
+  const ws = Prefs.get('weekStart') === 1 ? 1 : 0;
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const heads = Array.from({ length: 7 }, (_, i) => `<div class="cal-head">${DAY_NAMES[(i + ws) % 7]}</div>`).join('');
 
   // Build the list of day Date objects to render for this mode.
   let days = [];
   if (calMode === 'week') {
-    const start = new Date(calDate); start.setDate(start.getDate() - start.getDay());
+    const start = new Date(calDate); start.setDate(start.getDate() - ((start.getDay() - ws + 7) % 7));
     $('#calMonth').textContent = weekLabel(start);
     grid.className = 'cal-grid week mt-4';
     for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); days.push({ date: d, other: false }); }
@@ -4994,7 +5411,7 @@ function renderCalendar() {
     const year = calDate.getFullYear(), month = calDate.getMonth();
     $('#calMonth').textContent = calDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
     grid.className = 'cal-grid mt-4';
-    const firstWeekday = new Date(year, month, 1).getDay();
+    const firstWeekday = (new Date(year, month, 1).getDay() - ws + 7) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
     let cells = '';
@@ -5151,11 +5568,28 @@ function openEventDialog(id, defaultDate = '') {
     close(); toast(id ? 'Event updated' : 'Event added');
   };
   $('#evSave').onclick = save;
+  // Delete with Undo: restores the event at its original position.
   if (id) $('#evDelete').onclick = () => {
-    Store.set(s => { s.events = (s.events || []).filter(e => e.id !== id); });
-    close(); toast('Event deleted');
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = (s.events || []).findIndex(e => e.id === id);
+      if (at >= 0) removed = s.events.splice(at, 1)[0];
+    });
+    close();
+    if (!removed) return;
+    toast(`"${removed.title}" deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.events.some(e => e.id === removed.id)) return; // guard double-restore
+        s.events.splice(Math.min(at, s.events.length), 0, removed);
+      });
+      toast('Event restored');
+    }});
   };
-  m.querySelector('.modal').onkeydown = (e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { save(); } };
+  // Enter-to-save convenience — but not from a textarea (newline) or a button
+  // (would double-fire: the button's own click + save()).
+  m.querySelector('.modal').onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') { e.preventDefault(); save(); }
+  };
 }
 
 // View-mode segmented control.
@@ -5234,6 +5668,7 @@ const SHORTCUTS = [
   ['/', 'Focus the search box (Tasks / Notes)'],
   ['P', 'Pin / unpin the open note (Notes view)'],
   ['Enter / F2', 'Edit the selected node (Mind Map)'],
+  ['Tab', 'Add a child to the selected node (Mind Map)'],
   ['Del', 'Delete the selected node (Mind Map)'],
   ['← ↑ → ↓', 'Move the selected day (Calendar)'],
   ['Enter', 'Add an event on the selected day (Calendar)'],
@@ -5266,6 +5701,10 @@ function showSettings() {
   const s = Store.get();
   const themeMode = Theme.mode();          // 'system' | 'light' | 'dark'
   const clock24 = !!Prefs.get('clock24');
+  const accent = ACCENTS[Prefs.get('accent')] ? Prefs.get('accent') : 'indigo';
+  const weekStart = Prefs.get('weekStart') === 1 ? 1 : 0;
+  const startView = VIEW_INFO[Prefs.get('startView')] ? Prefs.get('startView') : 'dashboard';
+  const reduceMotion = !!Prefs.get('reduceMotion');
 
   // Live data summary (entity counts) — at-a-glance "how much have I got stored".
   const counts = [
@@ -5299,10 +5738,37 @@ function showSettings() {
         </div>
       </div>
       <div class="settings-row">
+        <div><div class="sr-label">Accent color</div><div class="sr-sub">Buttons, highlights &amp; progress bars</div></div>
+        <div class="sr-control accent-swatches" id="setAccent" role="radiogroup" aria-label="Accent color">
+          ${Object.entries(ACCENTS).map(([k, a]) =>
+            `<button type="button" class="accent-swatch ${k === accent ? 'active' : ''}" data-accent="${k}" style="background:${a.main}" role="radio" aria-checked="${k === accent}" aria-label="${a.label}" title="${a.label}"></button>`).join('')}
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="sr-label">Reduce motion</div><div class="sr-sub">Minimise animations &amp; transitions</div></div>
+        <button type="button" class="switch" id="setMotion" role="switch" aria-checked="${reduceMotion}" aria-label="Reduce motion"></button>
+      </div>
+      <div class="settings-row">
         <div><div class="sr-label">Clock format</div><div class="sr-sub">Top-bar &amp; time displays</div></div>
         <div class="sr-control seg-control" id="setClock" role="radiogroup" aria-label="Clock format">
           ${segBtn('clock', '12', clock24 ? '24' : '12', '12-hour')}${segBtn('clock', '24', clock24 ? '24' : '12', '24-hour')}
         </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="sg-title"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>General</div>
+      <div class="settings-row">
+        <div><div class="sr-label">Week starts on</div><div class="sr-sub">Calendar layout</div></div>
+        <div class="sr-control seg-control" id="setWeekStart" role="radiogroup" aria-label="Week starts on">
+          ${segBtn('ws', '0', String(weekStart), 'Sunday')}${segBtn('ws', '1', String(weekStart), 'Monday')}
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="sr-label">Startup view</div><div class="sr-sub">The tool that opens on launch</div></div>
+        <select class="field sm" id="setStartView" aria-label="Startup view" style="max-width:180px">
+          ${Object.entries(VIEW_INFO).map(([k, v]) => `<option value="${k}" ${k === startView ? 'selected' : ''}>${v.title}</option>`).join('')}
+        </select>
       </div>
     </div>
 
@@ -5380,6 +5846,39 @@ function showSettings() {
     $$('#setClock [data-clock]').forEach(x => { const on = x === b; x.classList.toggle('active', on); x.setAttribute('aria-checked', String(on)); });
     renderActive(); // some views render times (Time Tracker, Calendar) — refresh
   });
+
+  // Accent-colour swatches — applies live (token-driven, so everything recolours).
+  $$('#setAccent [data-accent]').forEach(b => b.onclick = () => {
+    const k = b.dataset.accent;
+    Prefs.set('accent', k);
+    applyAccent(k);
+    $$('#setAccent [data-accent]').forEach(x => { const on = x === b; x.classList.toggle('active', on); x.setAttribute('aria-checked', String(on)); });
+    toast(`${ACCENTS[k].label} accent`);
+  });
+
+  // Reduce-motion switch.
+  $('#setMotion').onclick = () => {
+    const next = !(Prefs.get('reduceMotion'));
+    Prefs.set('reduceMotion', next);
+    applyMotionPref(next);
+    $('#setMotion').setAttribute('aria-checked', String(next));
+    toast(next ? 'Animations minimised' : 'Animations enabled');
+  };
+
+  // Week-start segmented control — repaints the Calendar if it's the active view.
+  $$('#setWeekStart [data-ws]').forEach(b => b.onclick = () => {
+    const v = +b.dataset.ws;
+    Prefs.set('weekStart', v);
+    $$('#setWeekStart [data-ws]').forEach(x => { const on = x === b; x.classList.toggle('active', on); x.setAttribute('aria-checked', String(on)); });
+    renderActive();
+    toast(v === 1 ? 'Weeks start on Monday' : 'Weeks start on Sunday');
+  });
+
+  // Startup-view select.
+  $('#setStartView').onchange = (e) => {
+    Prefs.set('startView', e.target.value);
+    toast(`Opens on ${VIEW_INFO[e.target.value].title}`);
+  };
 
   // Data actions.
   $('#setExport').onclick = exportData;
@@ -5504,7 +6003,8 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter')      { openEventDialog(null, calSelected); e.preventDefault(); return; }
     if (e.key.toLowerCase() === 't') { $('#calToday').click(); e.preventDefault(); return; }
   }
-  // Mind Map: Delete/Backspace removes the selected node, Enter/F2 opens its editor.
+  // Mind Map: Delete/Backspace removes the selected node, Enter/F2 opens its
+  // editor, Tab branches a child off the selection (mirrors classic mind-map apps).
   if (activeView() === 'mindmap') {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const btn = $('#mindDel');
@@ -5513,6 +6013,11 @@ document.addEventListener('keydown', (e) => {
     }
     if (e.key === 'Enter' || e.key === 'F2') {
       const btn = $('#mindEdit');
+      if (btn && !btn.disabled) { btn.click(); e.preventDefault(); }
+      return;
+    }
+    if (e.key === 'Tab') {
+      const btn = $('#mindAddChild');
       if (btn && !btn.disabled) { btn.click(); e.preventDefault(); }
       return;
     }
@@ -5734,12 +6239,23 @@ function renderGoals() {
   // Detailed log dialog.
   $$('[data-log-goal]').forEach(el => el.onclick = () => openLogDialog(+el.dataset.logGoal));
   $$('[data-edit-goal]').forEach(el => el.onclick = () => openGoalDialog(+el.dataset.editGoal));
+  // Delete with Undo: no blocking confirm — the toast's Undo restores the goal
+  // (progress log included) at its original position.
   $$('[data-del-goal]').forEach(el => el.onclick = () => {
     const id = +el.dataset.delGoal;
-    const g = Store.get().goals.find(x => x.id === id);
-    if (g && !confirm(`Delete "${g.name}"? This can't be undone.`)) return;
-    Store.set(s => { s.goals = s.goals.filter(g => g.id !== id); });
-    toast('Goal deleted');
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.goals.findIndex(g => g.id === id);
+      if (at >= 0) removed = s.goals.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast(`"${removed.name}" deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.goals.some(g => g.id === removed.id)) return; // guard double-restore
+        s.goals.splice(Math.min(at, s.goals.length), 0, removed);
+      });
+      toast('Goal restored');
+    }});
   });
 }
 
@@ -5940,14 +6456,29 @@ function renderBudget() {
   const balance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
 
-  // Summary stat tiles (now includes a savings-rate tile).
+  // Previous month's totals for month-over-month deltas.
+  const [my, mm] = month.split('-').map(Number);
+  const prevKey = `${mm === 1 ? my - 1 : my}-${pad2(mm === 1 ? 12 : mm - 1)}`;
+  const prevAll = (Store.get().expenses || []).filter(e => e.date.startsWith(prevKey));
+  const prevIncome  = prevAll.filter(e => e.type === 'income').reduce((a, e) => a + e.amount, 0);
+  const prevExpense = prevAll.filter(e => e.type === 'expense').reduce((a, e) => a + e.amount, 0);
+  // Delta sub-label vs last month. For expenses, spending less is good (green).
+  const mom = (cur, prev, downIsGood) => {
+    if (!prevAll.length) return '';
+    const diff = cur - prev;
+    if (Math.abs(diff) < 0.005) return `<div class="delta" style="color:var(--text-2)">same as last month</div>`;
+    const good = downIsGood ? diff < 0 : diff > 0;
+    return `<div class="delta" style="color:${good ? 'var(--green)' : 'var(--red)'}">${diff > 0 ? '▲' : '▼'} ${fmtCurrency(Math.abs(diff))} vs last month</div>`;
+  };
+
+  // Summary stat tiles (savings rate + month-over-month deltas).
   $('#budgetStats').innerHTML = [
-    { label: 'Income', value: fmtCurrency(totalIncome), color: 'var(--green)' },
-    { label: 'Expenses', value: fmtCurrency(totalExpense), color: 'var(--red)' },
-    { label: 'Balance', value: fmtCurrency(balance), color: balance >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'Savings Rate', value: (totalIncome > 0 ? savingsRate + '%' : '—'), color: savingsRate >= 0 ? 'var(--cyan)' : 'var(--red)' },
+    { label: 'Income', value: fmtCurrency(totalIncome), color: 'var(--green)', sub: mom(totalIncome, prevIncome, false) },
+    { label: 'Expenses', value: fmtCurrency(totalExpense), color: 'var(--red)', sub: mom(totalExpense, prevExpense, true) },
+    { label: 'Balance', value: fmtCurrency(balance), color: balance >= 0 ? 'var(--green)' : 'var(--red)', sub: '' },
+    { label: 'Savings Rate', value: (totalIncome > 0 ? savingsRate + '%' : '—'), color: savingsRate >= 0 ? 'var(--cyan)' : 'var(--red)', sub: '' },
   ].map(c => `<div class="stat-card static"><div class="label">${c.label}</div>
-    <div class="value" style="font-size:var(--fs-xl);color:${c.color}">${c.value}</div></div>`).join('');
+    <div class="value" style="font-size:var(--fs-xl);color:${c.color}">${c.value}</div>${c.sub}</div>`).join('');
 
   renderExpenseList(monthAll);
   renderBudgetDonut(monthAll);
@@ -5983,6 +6514,8 @@ function renderExpenseList(monthAll) {
         ${e.notes ? `<div class="expense-notes">${esc(e.notes)}</div>` : ''}
       </div>
       <span class="expense-amt ${e.type}">${e.type === 'income' ? '+' : '-'}$${e.amount.toFixed(2)}</span>
+      <button class="btn ghost icon" data-dup-expense="${e.id}" aria-label="Duplicate entry with today's date" title="Duplicate (today's date)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
       <button class="btn ghost icon" data-del-expense="${e.id}" aria-label="Delete entry">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>`).join('')
@@ -5993,10 +6526,34 @@ function renderExpenseList(monthAll) {
     const id = +el.dataset.editExpense;
     onActivate(el, () => openExpenseDialog(id)); // sets both click + Enter/Space
   });
+  // Duplicate: same title/amount/type/category/notes, dated today. Handy for
+  // recurring entries like rent or a regular coffee.
+  $$('[data-dup-expense]').forEach(el => el.onclick = (ev) => {
+    ev.stopPropagation();
+    Store.set(s => {
+      const src = s.expenses.find(e => e.id === +el.dataset.dupExpense); if (!src) return;
+      s.expenses.push({ id: s.nextExpenseId++, title: src.title, amount: src.amount,
+        type: src.type, category: src.category, date: today(), notes: src.notes || '' });
+    });
+    toast('Entry duplicated (today)');
+  });
+  // Delete with Undo: the toast's Undo restores the entry at its original position.
   $$('[data-del-expense]').forEach(el => el.onclick = (ev) => {
     ev.stopPropagation();
-    Store.set(s => { s.expenses = s.expenses.filter(e => e.id !== +el.dataset.delExpense); });
-    toast('Entry deleted');
+    const id = +el.dataset.delExpense;
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.expenses.findIndex(e => e.id === id);
+      if (at >= 0) removed = s.expenses.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast(`"${removed.title}" deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.expenses.some(e => e.id === removed.id)) return; // guard double-restore
+        s.expenses.splice(Math.min(at, s.expenses.length), 0, removed);
+      });
+      toast('Entry restored');
+    }});
   });
 }
 
@@ -6085,6 +6642,36 @@ function renderBudgetTrend() {
     </div>`).join('');
 }
 
+// Build a CSV string of one month's transactions (oldest first). Separated from
+// the download trigger so it's directly testable. RFC-4180-style quoting: any
+// field containing a comma, quote or newline is wrapped and inner quotes doubled.
+function buildBudgetCsv(month) {
+  const csvCell = (v) => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = (Store.get().expenses || [])
+    .filter(e => e.date.startsWith(month))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)
+    .map(e => [e.date, e.type, e.category, e.title, e.amount.toFixed(2), e.notes || '']);
+  return ['Date,Type,Category,Description,Amount,Notes',
+    ...rows.map(r => r.map(csvCell).join(','))].join('\n');
+}
+
+// Download the selected month's transactions as budget-YYYY-MM.csv.
+function exportBudgetCsv() {
+  const month = budgetMonthKey();
+  const monthRows = (Store.get().expenses || []).filter(e => e.date.startsWith(month));
+  if (!monthRows.length) { toast('No entries this month to export'); return; }
+  const blob = new Blob([buildBudgetCsv(month)], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `budget-${month}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`Exported ${monthRows.length} entr${monthRows.length === 1 ? 'y' : 'ies'}`);
+}
+
 // Unified add / edit dialog for a transaction (id null = create).
 function openExpenseDialog(id = null) {
   const existing = id != null ? (Store.get().expenses || []).find(e => e.id === id) : null;
@@ -6131,6 +6718,7 @@ function openBudgetSettings() {
 }
 
 $('#addExpense').onclick = () => openExpenseDialog(null);
+$('#budgetExport').onclick = exportBudgetCsv;
 $('#budgetSettings').onclick = openBudgetSettings;
 $('#budgetMonth').onchange = () => renderBudget();
 $('#budgetSearch').oninput = (e) => { budgetSearch = e.target.value; renderBudget(); };
@@ -6249,10 +6837,23 @@ function renderCountdowns() {
     const id = +b.dataset.pinCd;
     Store.set(s => { const c = s.countdowns.find(x => x.id === id); if (c) c.pinned = !c.pinned; });
   });
+  // Delete with Undo: restores the countdown at its original position.
   $$('[data-del-cd]').forEach(b => b.onclick = (ev) => {
     ev.stopPropagation();
-    Store.set(s => { s.countdowns = s.countdowns.filter(c => c.id !== +b.dataset.delCd); });
-    toast('Countdown removed');
+    const id = +b.dataset.delCd;
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.countdowns.findIndex(c => c.id === id);
+      if (at >= 0) removed = s.countdowns.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast(`"${removed.name}" removed`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.countdowns.some(c => c.id === removed.id)) return; // guard double-restore
+        s.countdowns.splice(Math.min(at, s.countdowns.length), 0, removed);
+      });
+      toast('Countdown restored');
+    }});
   });
 
   // Live second-tick only when something shows live segments and the view is active.
@@ -6384,11 +6985,27 @@ function openCountdownDialog(id = null) {
     close(); toast(id ? 'Countdown updated' : 'Countdown added');
   };
   $('#cdSave').onclick = save;
+  // Delete with Undo — mirrors the card-level delete on the countdown list.
   if (id) $('#cdDelete').onclick = () => {
-    Store.set(s => { s.countdowns = s.countdowns.filter(x => x.id !== id); });
-    close(); toast('Countdown removed');
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = s.countdowns.findIndex(x => x.id === id);
+      if (at >= 0) removed = s.countdowns.splice(at, 1)[0];
+    });
+    close();
+    if (!removed) return;
+    toast(`"${removed.name}" removed`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.countdowns.some(c => c.id === removed.id)) return;
+        s.countdowns.splice(Math.min(at, s.countdowns.length), 0, removed);
+      });
+      toast('Countdown restored');
+    }});
   };
-  m.querySelector('.modal').onkeydown = (e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') { save(); } };
+  // Enter-to-save — but not from textarea/select (content keys) or buttons (double-fire).
+  m.querySelector('.modal').onkeydown = (e) => {
+    if (e.key === 'Enter' && !['TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName)) { e.preventDefault(); save(); }
+  };
 }
 
 $('#addCountdown').onclick = () => openCountdownDialog(null);
@@ -7012,10 +7629,23 @@ const TimeTracker = (() => {
       const e = Store.get().timeEntries.find(x => x.id === +b.dataset.resumeTt);
       if (e) quickStart(e.project, e.note, e.tags || [], e.billable);
     });
+    // Delete with Undo: restores the entry at its original position.
     $$('[data-del-tt]', box).forEach(b => b.onclick = (ev) => {
       ev.stopPropagation();
-      Store.set(st => { st.timeEntries = st.timeEntries.filter(x => x.id !== +b.dataset.delTt); });
-      toast('Entry deleted');
+      const id = +b.dataset.delTt;
+      let removed = null, at = -1;
+      Store.set(st => {
+        at = st.timeEntries.findIndex(x => x.id === id);
+        if (at >= 0) removed = st.timeEntries.splice(at, 1)[0];
+      });
+      if (!removed) return;
+      toast(`"${removed.project}" entry deleted`, { label: 'Undo', onClick: () => {
+        Store.set(st => {
+          if (st.timeEntries.some(x => x.id === removed.id)) return;
+          st.timeEntries.splice(Math.min(at, st.timeEntries.length), 0, removed);
+        });
+        toast('Entry restored');
+      }});
     });
   }
 
@@ -7093,7 +7723,22 @@ const TimeTracker = (() => {
       const footer = $('#modal .flex');
       const del = document.createElement('button');
       del.className = 'btn danger'; del.textContent = 'Delete'; del.style.marginRight = 'auto';
-      del.onclick = () => { Store.set(st => { st.timeEntries = st.timeEntries.filter(x => x.id !== id); }); $('#modal').classList.remove('show'); toast('Entry deleted'); };
+      del.onclick = () => {
+        let removed = null, at = -1;
+        Store.set(st => {
+          at = st.timeEntries.findIndex(x => x.id === id);
+          if (at >= 0) removed = st.timeEntries.splice(at, 1)[0];
+        });
+        $('#modal').classList.remove('show');
+        if (!removed) return;
+        toast(`"${removed.project}" entry deleted`, { label: 'Undo', onClick: () => {
+          Store.set(st => {
+            if (st.timeEntries.some(x => x.id === removed.id)) return;
+            st.timeEntries.splice(Math.min(at, st.timeEntries.length), 0, removed);
+          });
+          toast('Entry restored');
+        }});
+      };
       footer.prepend(del);
     }
   }
@@ -7274,10 +7919,22 @@ const Flashcards = (() => {
     $$('[data-del-deck]', grid).forEach(b => b.onclick = (ev) => {
       ev.stopPropagation();
       const id = +b.dataset.delDeck;
-      const dk = getDeck(id);
-      if (dk && dk.cards.length && !confirm(`Delete "${dk.name}" and its ${dk.cards.length} card(s)?`)) return;
-      Store.set(s => { s.decks = s.decks.filter(d => d.id !== id); });
-      toast('Deck deleted');
+      // Delete with Undo (replaces confirm): the whole deck object (cards
+      // included) is kept in the closure, so restore is lossless.
+      let removed = null, at = -1;
+      Store.set(s => {
+        at = s.decks.findIndex(d => d.id === id);
+        if (at >= 0) removed = s.decks.splice(at, 1)[0];
+      });
+      if (!removed) return;
+      const n = removed.cards.length;
+      toast(`"${removed.name}" deleted${n ? ` (${n} card${n === 1 ? '' : 's'})` : ''}`, { label: 'Undo', onClick: () => {
+        Store.set(s => {
+          if (s.decks.some(d => d.id === removed.id)) return; // guard double-restore
+          s.decks.splice(Math.min(at, s.decks.length), 0, removed);
+        });
+        toast('Deck restored');
+      }});
     });
   }
 
@@ -7363,10 +8020,25 @@ const Flashcards = (() => {
     }).join('');
     $$('[data-star-card]', box).forEach(b => b.onclick = () => toggleStar(+b.dataset.starCard));
     $$('[data-edit-card]', box).forEach(b => b.onclick = () => openCardDialog(openDeckId, +b.dataset.editCard));
+    // Delete with Undo: the deck id is captured too, so restore works even if
+    // the user navigates elsewhere before clicking Undo.
     $$('[data-del-card]', box).forEach(b => b.onclick = () => {
-      const cid = +b.dataset.delCard;
-      Store.set(s => { const dk = s.decks.find(x => x.id === openDeckId); if (dk) dk.cards = dk.cards.filter(c => c.id !== cid); });
-      toast('Card deleted');
+      const cid = +b.dataset.delCard, deckId = openDeckId;
+      let removed = null, at = -1;
+      Store.set(s => {
+        const dk = s.decks.find(x => x.id === deckId); if (!dk) return;
+        at = dk.cards.findIndex(c => c.id === cid);
+        if (at >= 0) removed = dk.cards.splice(at, 1)[0];
+      });
+      if (!removed) return;
+      toast('Card deleted', { label: 'Undo', onClick: () => {
+        Store.set(s => {
+          const dk = s.decks.find(x => x.id === deckId); if (!dk) return;
+          if (dk.cards.some(c => c.id === removed.id)) return; // guard double-restore
+          dk.cards.splice(Math.min(at, dk.cards.length), 0, removed);
+        });
+        toast('Card restored');
+      }});
     });
   }
 
@@ -7674,10 +8346,23 @@ const Flashcards = (() => {
       catch { toast('Copy failed — clipboard blocked'); }
       close();
     };
+    // Delete with Undo (replaces confirm) — mirrors the deck-list delete.
     m.querySelector('[data-act="delete"]').onclick = () => {
-      if (!confirm(`Delete "${d.name}" and its ${d.cards.length} card(s)?`)) return;
-      Store.set(s => { s.decks = s.decks.filter(x => x.id !== openDeckId); });
-      close(); toast('Deck deleted'); showDeckList();
+      let removed = null, at = -1;
+      Store.set(s => {
+        at = s.decks.findIndex(x => x.id === openDeckId);
+        if (at >= 0) removed = s.decks.splice(at, 1)[0];
+      });
+      close(); showDeckList();
+      if (!removed) return;
+      const n = removed.cards.length;
+      toast(`"${removed.name}" deleted${n ? ` (${n} card${n === 1 ? '' : 's'})` : ''}`, { label: 'Undo', onClick: () => {
+        Store.set(s => {
+          if (s.decks.some(x => x.id === removed.id)) return; // guard double-restore
+          s.decks.splice(Math.min(at, s.decks.length), 0, removed);
+        });
+        toast('Deck restored');
+      }});
     };
   }
 
@@ -7919,11 +8604,22 @@ const Matrix = (() => {
     Store.set(s => { const it = s.matrix.find(x => x.id === id); if (it) it.done = !it.done; });
   }
 
+  // Delete with Undo (replaces the old confirm() prompt): restores the item
+  // at its original position, so quadrant + manual order are preserved.
   function remove(id) {
-    const m = (Store.get().matrix || []).find(x => x.id === id); if (!m) return;
-    if (!confirm(`Delete "${m.text}"?`)) return;
-    Store.set(s => { s.matrix = s.matrix.filter(x => x.id !== id); });
-    toast('Task deleted');
+    let removed = null, at = -1;
+    Store.set(s => {
+      at = (s.matrix || []).findIndex(x => x.id === id);
+      if (at >= 0) removed = s.matrix.splice(at, 1)[0];
+    });
+    if (!removed) return;
+    toast(`"${removed.text}" deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.matrix.some(x => x.id === removed.id)) return; // guard double-restore
+        s.matrix.splice(Math.min(at, s.matrix.length), 0, removed);
+      });
+      toast('Task restored');
+    }});
   }
 
   // Move an item to a different quadrant (used by drag-and-drop / keyboard).
@@ -7980,13 +8676,20 @@ const Matrix = (() => {
   function setSort(mode) { sortMode = mode; render(); }
   function toggleHideDone() { hideDone = !hideDone; render(); }
 
+  // Bulk clear with Undo (replaces confirm) — mirrors the Tasks board version.
   function clearDone() {
-    const items = Store.get().matrix || [];
-    const n = items.filter(m => m.done).length;
-    if (!n) { toast('No completed tasks'); return; }
-    if (!confirm(`Remove ${n} completed task${n === 1 ? '' : 's'}?`)) return;
-    Store.set(s => { s.matrix = s.matrix.filter(m => !m.done); });
-    toast(`Cleared ${n} task${n === 1 ? '' : 's'}`);
+    const removed = [];
+    Store.set(s => {
+      (s.matrix || []).forEach((m, i) => { if (m.done) removed.push([i, m]); });
+      if (removed.length) s.matrix = s.matrix.filter(m => !m.done);
+    });
+    if (!removed.length) { toast('No completed tasks'); return; }
+    toast(`Cleared ${removed.length} task${removed.length === 1 ? '' : 's'}`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        removed.forEach(([i, m]) => { if (!s.matrix.some(x => x.id === m.id)) s.matrix.splice(Math.min(i, s.matrix.length), 0, m); });
+      });
+      toast('Tasks restored');
+    }});
   }
 
   // Cross-tool "Send to…" menu for a matrix item. Since matrix items are plain
@@ -8265,12 +8968,23 @@ const Journal = (() => {
     $('#jrComposer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     requestAnimationFrame(() => $('#jrBody')?.focus());
   }
+  // Delete with Undo (replaces the old confirm() prompt): journal entries are
+  // keyed by date, so restore is a simple push + the list re-sorts on render.
   function remove(date) {
-    const e = byDate(date); if (!e) return;
-    if (!confirm(`Delete the entry for ${fmtDate(date)}?`)) return;
-    Store.set(s => { s.journal = s.journal.filter(x => x.date !== date); });
+    let removed = null;
+    Store.set(s => {
+      const at = s.journal.findIndex(x => x.date === date);
+      if (at >= 0) removed = s.journal.splice(at, 1)[0];
+    });
+    if (!removed) return;
     if (editingDate === date) loadIntoComposer(today());
-    toast('Entry deleted');
+    toast(`Entry for ${fmtDate(date)} deleted`, { label: 'Undo', onClick: () => {
+      Store.set(s => {
+        if (s.journal.some(x => x.date === removed.date)) return; // guard double-restore
+        s.journal.push(removed);
+      });
+      toast('Entry restored');
+    }});
   }
   function toggleStar(date) {
     let nowStarred = false;
@@ -8530,7 +9244,12 @@ Store.subscribe(renderActive);
 
 migrateState();
 Calc.buildKeys();
-renderActive();
+// Startup view preference (Settings → General): open the configured view on
+// launch. Falls back to the Dashboard (the HTML default) for unknown values.
+const startView = Prefs.get('startView');
+if (startView && startView !== 'dashboard' && VIEW_INFO[startView]) showView(startView);
+else renderActive();
+
 </script>
 </body>
 </html>

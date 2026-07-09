@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevForge — Developer Toolkit</title>
-<meta name="description" content="Fast, 100% client-side developer toolkit: JSON, YAML, XML, TOML & INI formatters/validators plus Base64/URL, JWT and hash utilities. No backend, no tracking.">
+<meta name="description" content="Fast, 100% client-side developer toolkit: JSON, YAML, XML, TOML, INI, SQL & CSS formatters plus Base64/URL, JWT, hash, UUID/ULID, timestamp, color, regex, cron, diff, lorem & Markdown utilities. No backend, no tracking.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -430,6 +430,48 @@ input.search{background:var(--bg-2);border:1px solid var(--border-2);min-width:2
 .toast i{font-size:14px}
 .toast.ok i{color:var(--ok)} .toast.err i{color:var(--err)} .toast.info i{color:var(--accent)}
 
+/* ============================================================
+   OVERLAYS — modal scrim, command palette, help modal
+   ============================================================ */
+.overlay{position:fixed;inset:0;z-index:var(--z-overlay);display:flex;align-items:flex-start;justify-content:center;padding:10vh var(--sp-4) var(--sp-4);background:rgba(0,0,0,.5);backdrop-filter:blur(2px);animation:ds-fade var(--dur) var(--ease)}
+.overlay[hidden]{display:none}
+
+/* Command palette */
+.cmdk{width:100%;max-width:560px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden;animation:ds-pop var(--dur) var(--ease-out);display:flex;flex-direction:column;max-height:70vh}
+.cmdk__search{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border)}
+.cmdk__search i{color:var(--txt-2)}
+.cmdk__search input{flex:1;background:transparent;border:none;outline:none;color:var(--txt-0);font-size:var(--fs-lg);font-family:var(--sans);padding:0}
+.cmdk__search input:focus{box-shadow:none}
+.cmdk__list{overflow-y:auto;padding:var(--sp-2)}
+.cmdk__group{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--txt-3);padding:var(--sp-3) var(--sp-3) var(--sp-1);font-weight:600}
+.cmdk__item{display:flex;align-items:center;gap:var(--sp-3);padding:9px var(--sp-3);border-radius:var(--r-sm);cursor:pointer;color:var(--txt-1);font-size:var(--fs-md)}
+.cmdk__item .ico{width:24px;height:24px;border-radius:var(--r-xs);display:grid;place-items:center;font-size:12px;background:var(--bg-3);flex-shrink:0}
+.cmdk__item .name{flex:1;color:var(--txt-0)}
+.cmdk__item .sub{color:var(--txt-3);font-size:var(--fs-xs)}
+.cmdk__item .kbd{font-family:var(--mono);font-size:10px;color:var(--txt-3);background:var(--bg-3);border:1px solid var(--border-2);border-radius:4px;padding:1px 5px}
+.cmdk__item.is-active,.cmdk__item:hover{background:var(--accent-soft);color:#fff}
+.cmdk__item.is-active .ico{background:var(--accent);color:#fff}
+.cmdk__empty{padding:var(--sp-6);text-align:center;color:var(--txt-3);font-size:var(--fs-sm)}
+.cmdk__foot{display:flex;gap:var(--sp-4);padding:var(--sp-2) var(--sp-5);border-top:1px solid var(--border);font-size:var(--fs-xs);color:var(--txt-3);flex-wrap:wrap}
+.cmdk__foot kbd{font-family:var(--mono);font-size:10px;background:var(--bg-3);border:1px solid var(--border-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+
+/* Help modal */
+.modal{width:100%;max-width:600px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--r-lg);box-shadow:var(--sh-3);overflow:hidden;animation:ds-pop var(--dur) var(--ease-out);display:flex;flex-direction:column;max-height:80vh}
+.modal__head{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border)}
+.modal__head .h3{flex:1}
+.modal__head i.title-ico{color:var(--accent)}
+.modal__close{background:none;border:none;color:var(--txt-2);cursor:pointer;font-size:16px;padding:6px;border-radius:var(--r-sm);transition:background var(--dur),color var(--dur)}
+.modal__close:hover{background:var(--bg-3);color:var(--txt-0)}
+.modal__body{overflow-y:auto;padding:var(--sp-5)}
+.kbd-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2) var(--sp-6)}
+@media(max-width:560px){.kbd-grid{grid-template-columns:1fr}}
+.kbd-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:5px 0;border-bottom:1px solid var(--border)}
+.kbd-row span{color:var(--txt-1);font-size:var(--fs-sm)}
+.kbd-row .keys{display:flex;gap:4px;flex-shrink:0}
+.kbd-row kbd{font-family:var(--mono);font-size:10px;background:var(--bg-3);border:1px solid var(--border-2);border-radius:4px;padding:2px 6px;color:var(--txt-0)}
+.help-sec-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--txt-3);font-weight:600;margin:var(--sp-4) 0 var(--sp-2)}
+.help-sec-title:first-child{margin-top:0}
+
 /* problems list */
 .problems{position:absolute;inset:0;overflow:auto;padding:var(--sp-2)}
 .problem{display:flex;gap:10px;padding:8px 12px;border-radius:var(--r-sm);font-size:var(--fs-sm);cursor:pointer;transition:background var(--dur)}
@@ -441,12 +483,194 @@ input.search{background:var(--bg-2);border:1px solid var(--border-2);min-width:2
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--txt-3);gap:10px;font-size:var(--fs-sm)}
 .empty-state i{font-size:30px;opacity:.5}
 
-/* responsive */
-@media(max-width:1180px){.editor-grid.three{grid-template-columns:1fr 1fr}.editor-grid.three .pane:nth-child(3){grid-column:1 / -1}.hint-kbd{display:none}}
-@media(max-width:1080px){.app{grid-template-columns:64px 1fr}.brand .name,.nav-label,.nav-item .kbd,.nav-item span.lbl{display:none}.nav-item{justify-content:center;padding:9px}.nav-item.active::before{display:none}.sidebar-foot{display:none}.brand{justify-content:center;padding:var(--sp-4) 0}}
-@media(max-width:820px){.editor-grid,.editor-grid.three{grid-template-columns:1fr!important;grid-auto-rows:minmax(220px,1fr)}.editor-grid.three .pane:nth-child(3){grid-column:auto}.editor-grid{overflow-y:auto}}
+/* ---------- Mobile nav toggle + backdrop ---------- */
+.nav-toggle{display:none;margin-right:var(--sp-1)}
+.cmdk-hint{margin-left:4px}
+.sidebar-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:calc(var(--z-overlay) - 1);opacity:0;animation:ds-fade var(--dur) var(--ease) forwards;backdrop-filter:blur(1px)}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+/* third pane wraps below on medium widths */
+@media(max-width:1180px){
+  .editor-grid.three{grid-template-columns:1fr 1fr}
+  .editor-grid.three .pane:nth-child(3){grid-column:1 / -1}
+  .hint-kbd{display:none}
+}
+
+/* collapse sidebar to an icon rail */
+@media(max-width:1080px){
+  .app{grid-template-columns:64px 1fr}
+  .brand .name,.nav-label,.nav-item .kbd,.nav-item span.lbl{display:none}
+  .nav-item{justify-content:center;padding:9px}
+  .nav-item.active::before{display:none}
+  .sidebar-foot{display:none}
+  .brand{justify-content:center;padding:var(--sp-4) 0}
+}
+
+/* tablet / phone: off-canvas sidebar + hamburger */
+@media(max-width:820px){
+  .app{grid-template-columns:1fr;grid-template-rows:48px 1fr;grid-template-areas:"top" "main"}
+  .nav-toggle{display:inline-flex}
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:240px;z-index:var(--z-overlay);
+    transform:translateX(-100%);transition:transform var(--dur-slow) var(--ease-out);
+    box-shadow:var(--sh-3)
+  }
+  .sidebar.is-open{transform:none}
+  /* restore full labels inside the open drawer */
+  .brand{justify-content:flex-start;padding:var(--sp-4) var(--sp-5)}
+  .brand .name{display:block}
+  .nav-label{display:block}
+  .nav-item{justify-content:flex-start;padding:9px var(--sp-3)}
+  .nav-item span.lbl{display:inline}
+  .nav-item .kbd{display:inline}
+  .nav-item.active::before{display:block}
+  .sidebar-foot{display:flex}
+  /* editor panes stack vertically and scroll */
+  .editor-grid,.editor-grid.three{grid-template-columns:1fr!important;grid-auto-rows:minmax(240px,1fr)}
+  .editor-grid.three .pane:nth-child(3){grid-column:auto}
+  .editor-grid{overflow-y:auto}
+  /* compact topbar meta */
+  .topbar{gap:var(--sp-2);padding:0 var(--sp-3)}
+  .topbar .crumb .sub{display:none}
+  .cmdk-hint{display:none}
+  #cmd-palette-btn .lbl,#open-file .lbl,#share-link .lbl{display:none}
+}
+
+/* small phones: trim chrome further */
+@media(max-width:560px){
+  .toolbar{padding:var(--sp-2) var(--sp-3);gap:6px}
+  .toolbar .btn .lbl{display:none}
+  .toolbar .btn.primary .lbl{display:inline}
+  .toolbar .field{font-size:var(--fs-xs)}
+  .statusbar{padding:var(--sp-2) var(--sp-3);gap:var(--sp-3)}
+  .topbar .crumb{font-size:var(--fs-md)}
+  #global-status{display:none}
+  .toast{min-width:0;max-width:calc(100vw - 32px)}
+  .toasts{left:16px;right:16px;bottom:16px}
+}
 @media(max-width:760px){.toolbar{padding:var(--sp-2) var(--sp-3);gap:var(--sp-1)}.btn .lbl{display:none}.topbar .meta .lbl{display:none}.toolbar .field{font-size:11px}input.search{min-width:130px}.statusbar{gap:var(--sp-3)}.hash-verify{padding:var(--sp-2) var(--sp-3)}.hash-verify__lbl{display:none}.hash-verify input{min-width:120px}}
 @media(max-width:520px){.topbar .crumb .sub{display:none}.statusbar .status-stat:nth-child(n+4){display:none}}
+
+/* ============================================================
+   NEW TOOLS — generators, converters & utilities
+   ============================================================ */
+/* generic scroll body that replaces the editor-grid for single-pane tools */
+.tool-body{flex:1;overflow:auto;padding:var(--sp-6);min-height:0}
+.tool-body--narrow{max-width:760px;margin:0 auto;width:100%}
+.kv-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.kv-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.kv-table .kv-key{color:var(--txt-2);width:170px;white-space:nowrap}
+.kv-table .kv-val{font-family:var(--mono);color:var(--txt-0);word-break:break-word}
+.kv-table .kv-val.copyable{cursor:copy}
+.field-block{display:flex;flex-direction:column;gap:6px;margin-bottom:var(--sp-4)}
+.field-block>label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--txt-2);font-weight:600}
+.field-block input[type=text],.field-block input[type=number],.field-block select{width:100%}
+/* timestamp live panel */
+.ts-live{background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4)}
+.ts-live__row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap}
+.ts-live__label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--txt-2);font-weight:600}
+.ts-live__clock{font-family:var(--mono);font-size:var(--fs-md);color:var(--txt-0);font-weight:600}
+.ts-live__chips{display:flex;gap:var(--sp-2);margin-top:var(--sp-3);flex-wrap:wrap}
+.ts-chip{display:inline-flex;align-items:center;gap:8px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:999px;padding:5px 12px;cursor:copy;color:var(--txt-0);transition:border-color var(--dur),transform var(--dur)}
+.ts-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.ts-chip__k{font-size:11px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.04em}
+.ts-chip__v{font-family:var(--mono);font-size:13px;font-weight:600}
+.ts-shift{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.ts-shift__lbl{font-size:var(--fs-xs);color:var(--txt-3);margin-right:2px}
+.out-list{font-family:var(--mono);font-size:13px;line-height:1.9}
+.out-list .out-row{display:flex;align-items:center;gap:var(--sp-3);padding:5px 8px;border-radius:var(--r-xs);cursor:copy;transition:background var(--dur)}
+.out-list .out-row:hover{background:var(--accent-soft)}
+.out-list .out-row .idx{color:var(--txt-3);width:28px;flex-shrink:0;text-align:right}
+.out-list .out-row .val{color:var(--txt-0);word-break:break-all;flex:1}
+/* mock-data generator list */
+.gen-list{font-family:var(--mono);font-size:13px;line-height:1.5}
+.gen-row{padding:6px 10px;border-bottom:1px solid var(--border);cursor:copy;color:var(--txt-0);word-break:break-word;transition:background var(--dur)}
+.gen-row:hover{background:var(--accent-soft)}
+.gen-row:last-child{border-bottom:0}
+
+/* color tool */
+.color-preview{height:120px;border-radius:var(--r-md);border:1px solid var(--border);box-shadow:var(--sh-1);margin-bottom:var(--sp-4)}
+.color-picker-row{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4);flex-wrap:wrap}
+.color-picker-row input[type=color]{width:48px;height:38px;padding:2px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--bg-2);cursor:pointer}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin-top:var(--sp-2)}
+.swatch{width:40px;height:40px;border-radius:var(--r-sm);border:1px solid var(--border);cursor:pointer;transition:transform var(--dur)}
+.swatch:hover{transform:scale(1.1)}
+/* contrast / accessibility cards */
+.contrast-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:var(--sp-3)}
+.contrast-card{border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);box-shadow:var(--sh-1);overflow:hidden}
+.cc-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cc-sample{font-size:24px;font-weight:700;line-height:1}
+.cc-ratio{font-family:var(--mono);font-size:15px;font-weight:600}
+.cc-label{font-size:var(--fs-xs);opacity:.85;margin:6px 0 8px;font-weight:600}
+.cc-badges{display:flex;flex-direction:column;gap:4px}
+.cb-lvl{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.cb-lvl small{opacity:.7;font-weight:500}
+.cb-badge{margin-left:auto;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.cb-badge.pass{background:rgba(34,197,94,.22);color:#16a34a;border:1px solid rgba(34,197,94,.5)}
+.cb-badge.fail{background:rgba(239,68,68,.2);color:#dc2626;border:1px solid rgba(239,68,68,.5)}
+/* color harmonies */
+.harmony-wrap{display:flex;flex-direction:column;gap:var(--sp-3)}
+.harmony-row{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.harmony-name{min-width:120px;font-size:var(--fs-xs);color:var(--txt-2);font-weight:600}
+.harmony-row .swatches{margin-top:0}
+
+/* regex tool */
+.regex-bar{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--border);background:var(--bg-1);flex-wrap:wrap}
+.regex-bar .re-delim{color:var(--txt-3);font-family:var(--mono);font-size:16px}
+.regex-bar input.re-pattern{flex:1;min-width:160px;font-family:var(--mono)}
+.regex-bar input.re-flags{width:70px;font-family:var(--mono);text-align:center}
+.regex-out{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.regex-out .regex-highlight{position:relative;inset:auto;flex:0 0 auto;max-height:45%;border-bottom:1px solid var(--border)}
+.regex-out .regex-results{position:relative;inset:auto;flex:1 1 auto;overflow:auto}
+.regex-out.is-replace .regex-highlight{display:none}
+.regex-out.is-replace .regex-results{flex:1}
+.regex-highlight{overflow:auto;padding:var(--sp-3) var(--sp-4);font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--txt-1)}
+.regex-highlight mark{background:var(--accent-soft);color:var(--accent);border-radius:3px;padding:0 1px;box-shadow:0 0 0 1px var(--accent-soft)}
+.regex-highlight mark.alt{background:var(--ok-soft);color:var(--ok)}
+.match-item{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;background:var(--bg-1);font-family:var(--mono);font-size:12px}
+.match-item .m-head{color:var(--accent);font-size:11px;margin-bottom:3px}
+.match-item .m-grp{color:var(--txt-2);display:block;margin-top:2px}
+.match-item .m-grp b{color:var(--cyan);font-weight:600}
+
+/* cron tool */
+.cron-fields{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4)}
+@media(max-width:560px){.cron-fields{grid-template-columns:repeat(2,1fr)}}
+.cron-field{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-sm);padding:var(--sp-3);text-align:center}
+.cron-field .cf-name{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--txt-3);font-weight:600}
+.cron-field .cf-val{font-family:var(--mono);font-size:18px;color:var(--accent);margin:4px 0}
+.cron-field .cf-desc{font-size:11px;color:var(--txt-2)}
+.cron-summary{font-size:var(--fs-lg);color:var(--txt-0);padding:var(--sp-4);background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r-md);margin-bottom:var(--sp-4);display:flex;align-items:center;gap:var(--sp-3)}
+.cron-summary i{color:var(--accent)}
+.next-runs{font-family:var(--mono);font-size:12.5px;line-height:1.9}
+.next-runs .nr{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--txt-1)}
+.next-runs .nr b{color:var(--txt-0)}
+
+/* markdown preview */
+.md-preview{position:absolute;inset:0;overflow:auto;padding:var(--sp-5) var(--sp-6);line-height:1.7;color:var(--txt-0)}
+.md-preview h1,.md-preview h2,.md-preview h3{margin:1em 0 .5em;line-height:1.3;font-weight:700}
+.md-preview h1{font-size:1.8em;border-bottom:1px solid var(--border);padding-bottom:.3em}
+.md-preview h2{font-size:1.45em;border-bottom:1px solid var(--border);padding-bottom:.2em}
+.md-preview h3{font-size:1.2em}
+.md-preview p{margin:.6em 0}
+.md-preview a{color:var(--accent);text-decoration:none}
+.md-preview a:hover{text-decoration:underline}
+.md-preview code{font-family:var(--mono);background:var(--bg-2);padding:1px 5px;border-radius:4px;font-size:.9em;color:var(--cyan)}
+.md-preview pre{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);overflow:auto;margin:.8em 0}
+.md-preview pre code{background:none;padding:0;color:var(--txt-0)}
+.md-preview blockquote{border-left:3px solid var(--accent);padding-left:var(--sp-4);color:var(--txt-1);margin:.8em 0}
+.md-preview ul,.md-preview ol{padding-left:1.5em;margin:.6em 0}
+.md-preview li{margin:.3em 0}
+.md-preview table{border-collapse:collapse;margin:.8em 0;width:100%}
+.md-preview th,.md-preview td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+.md-preview th{background:var(--bg-2)}
+.md-preview hr{border:none;border-top:1px solid var(--border);margin:1.2em 0}
+.md-preview img{max-width:100%;border-radius:var(--r-sm)}
+
+/* diff stats bar */
+.diff-stats{display:flex;gap:var(--sp-4);padding:var(--sp-2) var(--sp-5);background:var(--bg-1);border-bottom:1px solid var(--border);font-size:var(--fs-sm);flex-wrap:wrap}
+.diff-stats .ds-add{color:var(--ok)} .diff-stats .ds-del{color:var(--err)} .diff-stats .ds-same{color:var(--txt-2)}
 </style>
 </head>
 <body>
@@ -471,17 +695,33 @@ input.search{background:var(--bg-2);border:1px solid var(--border-2);min-width:2
       <div class="nav-label">Web &amp; DB</div>
       <div class="nav-item" data-tool="sql" title="SQL Formatter & Minifier (Alt+9)"><span class="ico" style="color:#7dcfff"><i class="fa-solid fa-database"></i></span><span class="lbl">SQL</span><span class="kbd">9</span></div>
       <div class="nav-item" data-tool="css" title="CSS Formatter & Minifier (Alt+0)"><span class="ico" style="color:#9ece6a"><i class="fa-brands fa-css3-alt"></i></span><span class="lbl">CSS</span><span class="kbd">0</span></div>
+      <div class="nav-label">Generators &amp; Utilities</div>
+      <div class="nav-item" data-tool="uuid" title="UUID & ULID Generator"><span class="ico" style="color:#e0af68"><i class="fa-solid fa-hashtag"></i></span><span class="lbl">UUID / ULID</span></div>
+      <div class="nav-item" data-tool="ts" title="Timestamp Converter"><span class="ico" style="color:#7dcfff"><i class="fa-solid fa-clock"></i></span><span class="lbl">Timestamp</span></div>
+      <div class="nav-item" data-tool="color" title="Color Converter"><span class="ico" style="color:#bb9af7"><i class="fa-solid fa-palette"></i></span><span class="lbl">Color</span></div>
+      <div class="nav-item" data-tool="regex" title="Regex Tester"><span class="ico" style="color:#f7768e"><i class="fa-solid fa-asterisk"></i></span><span class="lbl">Regex</span></div>
+      <div class="nav-item" data-tool="cron" title="Cron Expression Parser"><span class="ico" style="color:#9ece6a"><i class="fa-solid fa-calendar-days"></i></span><span class="lbl">Cron</span></div>
+      <div class="nav-item" data-tool="lorem" title="Lorem Ipsum & Mock Data Generator"><span class="ico" style="color:var(--txt-1)"><i class="fa-solid fa-paragraph"></i></span><span class="lbl">Lorem &amp; Mock Data</span></div>
+      <div class="nav-label">Text</div>
+      <div class="nav-item" data-tool="diff" title="Text Diff / Compare"><span class="ico" style="color:var(--accent)"><i class="fa-solid fa-code-compare"></i></span><span class="lbl">Text Diff</span></div>
+      <div class="nav-item" data-tool="md" title="Markdown Preview"><span class="ico" style="color:#7dcfff"><i class="fa-brands fa-markdown"></i></span><span class="lbl">Markdown</span></div>
     </nav>
-    <div class="sidebar-foot"><i class="fa-solid fa-shield-halved"></i> 100% local · v1.22</div>
+    <div class="sidebar-foot"><i class="fa-solid fa-shield-halved"></i> 100% local · v1.29</div>
   </aside>
+
+  <!-- mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 
   <!-- TOPBAR -->
   <header class="topbar">
+    <button class="btn ghost sm nav-toggle" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav" title="Menu"><i class="fa-solid fa-bars"></i></button>
     <div class="crumb"><i id="crumb-icon" class="fa-solid fa-code"></i><span id="crumb-title">JSON Formatter & Validator</span><span class="sub" id="crumb-sub">— Format, validate, query & convert</span></div>
     <div class="spacer"></div>
     <div class="meta">
-      <button class="btn ghost sm" id="open-file" title="Open a file into the input editor"><i class="fa-solid fa-folder-open"></i><span class="lbl">Open</span></button>
-      <button class="btn ghost sm" id="share-link" title="Copy a shareable link with the current content"><i class="fa-solid fa-share-nodes"></i><span class="lbl">Share</span></button>
+      <button class="btn ghost sm" id="cmd-palette-btn" aria-label="Open command palette" title="Command palette (Ctrl/⌘+K)"><i class="fa-solid fa-magnifying-glass"></i><span class="lbl">Search</span><kbd class="cmdk-hint">⌘K</kbd></button>
+      <button class="btn ghost sm" id="open-file" aria-label="Open a file" title="Open a file into the input editor"><i class="fa-solid fa-folder-open"></i><span class="lbl">Open</span></button>
+      <button class="btn ghost sm" id="share-link" aria-label="Copy a shareable link" title="Copy a shareable link with the current content"><i class="fa-solid fa-share-nodes"></i><span class="lbl">Share</span></button>
+      <button class="btn ghost sm" id="help-btn" aria-label="Keyboard shortcuts & help" title="Keyboard shortcuts (?)"><i class="fa-solid fa-circle-question"></i></button>
       <span class="hint-kbd"><kbd>⌘/Ctrl+↵</kbd> run · drag &amp; drop files</span>
       <div class="status-stat" id="global-status"><span class="statusdot" id="global-dot"></span> <span id="global-status-text">Ready</span></div>
     </div>
@@ -492,6 +732,34 @@ input.search{background:var(--bg-2);border:1px solid var(--border-2);min-width:2
   <main class="main" id="main"></main>
 </div>
 <div class="toasts" id="toasts"></div>
+
+<!-- COMMAND PALETTE -->
+<div class="overlay" id="cmdk-overlay" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <div class="cmdk" role="document">
+    <div class="cmdk__search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="cmdk-input" placeholder="Search tools & actions…" autocomplete="off" spellcheck="false" aria-label="Search commands">
+    </div>
+    <div class="cmdk__list" id="cmdk-list" role="listbox" aria-label="Commands"></div>
+    <div class="cmdk__foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> select</span>
+      <span><kbd>esc</kbd> close</span>
+    </div>
+  </div>
+</div>
+
+<!-- HELP / SHORTCUTS MODAL -->
+<div class="overlay" id="help-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+  <div class="modal" role="document">
+    <div class="modal__head">
+      <i class="fa-solid fa-keyboard title-ico"></i>
+      <span class="h3" id="help-title">Keyboard Shortcuts</span>
+      <button class="modal__close" id="help-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal__body" id="help-body"></div>
+  </div>
+</div>
 
 <script>
 /* TOML parser loads asynchronously as an ES module (see <head>). Code reads
@@ -530,9 +798,18 @@ const Store = (()=>{
     // encoding: hex|base64|base64url (hex respects casing) · inputMode: text|hex (raw bytes)
     // hmac + hmacKey: HMAC mode with a secret key · expected: digest to compare/verify against
     sql :{input:'',indent:2,uppercase:true,keywordCase:'upper'},   // SQL formatter — keywordCase: upper | lower | preserve (uppercase kept for back-compat)
-    css :{input:'',indent:2,styleMode:'expanded',sortProps:false,lowerHex:true,shortHex:false}  // CSS formatter / minifier
+    css :{input:'',indent:2,styleMode:'expanded',sortProps:false,lowerHex:true,shortHex:false},  // CSS formatter / minifier
+    // ---- Generators & utilities ----
+    uuid:{kind:'v4',count:5,upper:false,hyphens:true,output:''},   // kind: v4 | v7 | nil | ulid
+    ts  :{input:'',unit:'auto',tz:'local'},                        // timestamp converter — unit: auto|s|ms ; tz: local|utc
+    color:{input:'#5b9dff'},                                       // color converter
+    regex:{pattern:'',flags:'g',input:'',replace:'',mode:'match'}, // regex tester — mode: match | replace
+    diff:{inputA:'',inputB:'',mode:'line',ignoreCase:false,ignoreWs:false}, // text diff — mode: line | word
+    cron:{input:'*/5 * * * *',tz:'local'},                         // cron expression parser
+    lorem:{kind:'paragraphs',count:3,startLorem:true,output:''},   // lorem generator — kind: paragraphs|sentences|words
+    md  :{input:'',view:'preview'}                                 // markdown preview — view: preview | html
   });
-  const TOOLS_LIST=['json','yaml','xml','toml','ini','base64','jwt','hash','sql','css'];
+  const TOOLS_LIST=['json','yaml','xml','toml','ini','base64','jwt','hash','sql','css','uuid','ts','color','regex','diff','cron','lorem','md'];
   const clone=o=>JSON.parse(JSON.stringify(o));
 
   // Build initial state by merging persisted values onto fresh defaults.
@@ -906,7 +1183,15 @@ const TOOLS={
   jwt:{title:'JWT Decoder',sub:'— Inspect header, payload & claims',icon:'fa-key'},
   hash:{title:'Hash Generator',sub:'— SHA-1/256/384/512 via Web Crypto',icon:'fa-fingerprint'},
   sql:{title:'SQL Formatter',sub:'— Beautify, minify & highlight queries',icon:'fa-database'},
-  css:{title:'CSS Formatter',sub:'— Beautify, minify & inspect stylesheets',icon:'fa-css3-alt',iconStyle:'fa-brands'}
+  css:{title:'CSS Formatter',sub:'— Beautify, minify & inspect stylesheets',icon:'fa-css3-alt',iconStyle:'fa-brands'},
+  uuid:{title:'UUID & ULID Generator',sub:'— v4 / v7 / NIL / ULID, bulk',icon:'fa-hashtag'},
+  ts:{title:'Timestamp Converter',sub:'— Unix epoch ↔ human date',icon:'fa-clock'},
+  color:{title:'Color Converter',sub:'— HEX ↔ RGB ↔ HSL with preview',icon:'fa-palette'},
+  regex:{title:'Regex Tester',sub:'— Live match, groups & replace',icon:'fa-asterisk'},
+  diff:{title:'Text Diff',sub:'— Compare two texts line by line',icon:'fa-code-compare'},
+  cron:{title:'Cron Parser',sub:'— Explain & preview next runs',icon:'fa-calendar-days'},
+  lorem:{title:'Lorem & Mock Data',sub:'— Placeholder text + names, emails, addresses & JSON',icon:'fa-paragraph'},
+  md:{title:'Markdown Preview',sub:'— Live render Markdown to HTML',icon:'fa-markdown',iconStyle:'fa-brands'}
 };
 
 /* ---------- JSON TOOL ----------
@@ -3156,6 +3441,1139 @@ function renderCSS(){
   return root;
 }
 
+/* ---------- UUID / ULID GENERATOR ----------
+   Cryptographically-strong v4 (Web Crypto), draft v7 (time-ordered), NIL UUID
+   and Crockford-base32 ULID. Bulk generation with copy/download. */
+function uuidV4(){
+  const b=crypto.getRandomValues(new Uint8Array(16));
+  b[6]=(b[6]&0x0f)|0x40; b[8]=(b[8]&0x3f)|0x80;
+  const h=[...b].map(x=>x.toString(16).padStart(2,'0'));
+  return `${h.slice(0,4).join('')}-${h.slice(4,6).join('')}-${h.slice(6,8).join('')}-${h.slice(8,10).join('')}-${h.slice(10,16).join('')}`;
+}
+function uuidV7(){
+  const ts=Date.now();
+  const b=crypto.getRandomValues(new Uint8Array(16));
+  // 48-bit big-endian timestamp
+  b[0]=(ts/0x10000000000)&0xff; b[1]=(ts/0x100000000)&0xff; b[2]=(ts/0x1000000)&0xff;
+  b[3]=(ts/0x10000)&0xff; b[4]=(ts/0x100)&0xff; b[5]=ts&0xff;
+  b[6]=(b[6]&0x0f)|0x70; b[8]=(b[8]&0x3f)|0x80;
+  const h=[...b].map(x=>x.toString(16).padStart(2,'0'));
+  return `${h.slice(0,4).join('')}-${h.slice(4,6).join('')}-${h.slice(6,8).join('')}-${h.slice(8,10).join('')}-${h.slice(10,16).join('')}`;
+}
+function ulid(){
+  const ENC='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  let ts=Date.now(),time='';
+  for(let i=0;i<10;i++){time=ENC[ts%32]+time;ts=Math.floor(ts/32);}
+  const rnd=crypto.getRandomValues(new Uint8Array(16));
+  let rand='';for(let i=0;i<16;i++)rand+=ENC[rnd[i]%32];
+  return time+rand;
+}
+function renderUUID(){
+  const st=Store.getTool('uuid');
+  const root=el('section','tool');root.dataset.tool='uuid';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn primary" data-act="gen"><i class="fa-solid fa-rotate"></i><span class="lbl">Generate</span></button>
+      <div class="sep"></div>
+      <span class="field">Type
+        <select data-set="kind">
+          <option value="v4">UUID v4 (random)</option>
+          <option value="v7">UUID v7 (time-ordered)</option>
+          <option value="nil">NIL UUID</option>
+          <option value="ulid">ULID</option>
+        </select>
+      </span>
+      <span class="field">Count <input type="number" data-set="count" min="1" max="500" style="width:74px"></span>
+      <span class="opt-grp">
+        <span class="field"><span class="switch" data-toggle="upper"></span> Uppercase</span>
+        <span class="field"><span class="switch" data-toggle="hyphens"></span> Hyphens</span>
+      </span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="copy" title="Copy all"><i class="fa-solid fa-copy"></i><span class="lbl">Copy all</span></button>
+      <button class="btn ghost sm" data-act="download" title="Download"><i class="fa-solid fa-download"></i></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="tool-body">
+      <div class="out-list" data-slot="output"></div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <span class="status-stat"><i class="fa-solid fa-hashtag"></i> <b data-slot="cnt">0</b> generated</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const out=$('[data-slot=output]',root);
+  const setStatus=makeStatusSetter(root);
+  let ids=[];
+  $('[data-set=kind]',root).value=st.kind;
+  $('[data-set=count]',root).value=st.count;
+  if(st.upper)$('[data-toggle=upper]',root).classList.add('on');
+  if(st.hyphens)$('[data-toggle=hyphens]',root).classList.add('on');
+
+  function format(id,cfg){
+    let s=id;
+    if(!cfg.hyphens&&cfg.kind!=='ulid')s=s.replace(/-/g,'');
+    s=cfg.upper?s.toUpperCase():s.toLowerCase();
+    // ULID is canonically uppercase; respect the toggle but default upper
+    if(cfg.kind==='ulid'&&!cfg.upper)s=id.toUpperCase()===id?id.toLowerCase():s;
+    return s;
+  }
+  function gen(){
+    const cfg=Store.getTool('uuid');
+    const n=Math.min(500,Math.max(1,cfg.count|0||1));
+    const fn=cfg.kind==='v7'?uuidV7:cfg.kind==='ulid'?ulid:cfg.kind==='nil'?()=>'00000000-0000-0000-0000-000000000000':uuidV4;
+    ids=[];for(let i=0;i<n;i++)ids.push(format(fn(),cfg));
+    out.innerHTML=ids.map((id,i)=>`<div class="out-row" data-copy="${esc(id)}" title="Click to copy"><span class="idx">${i+1}</span><span class="val">${esc(id)}</span><i class="fa-solid fa-copy" style="color:var(--txt-3);font-size:11px"></i></div>`).join('');
+    $('[data-slot=cnt]',root).textContent=n;
+    const labels={v4:'UUID v4',v7:'UUID v7',nil:'NIL UUID',ulid:'ULID'};
+    $('[data-slot=info]',root).innerHTML=`<i class="fa-solid fa-fingerprint"></i> ${labels[cfg.kind]}`;
+    setStatus('ok',n+' generated');
+    Store.patch('uuid','output',ids.join('\n'));
+  }
+  out.addEventListener('click',e=>{const r=e.target.closest('[data-copy]');if(r)copy(r.dataset.copy);});
+  root.addEventListener('click',e=>{
+    const tog=e.target.closest('[data-toggle]');
+    if(tog){tog.classList.toggle('on');Store.patch('uuid',tog.dataset.toggle,tog.classList.contains('on'));gen();return;}
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='gen')gen();
+    else if(b.dataset.act==='copy')copy(ids.join('\n'));
+    else if(b.dataset.act==='download')download(ids.join('\n'),'ids.txt');
+    else if(b.dataset.act==='clear'){ids=[];out.innerHTML='';$('[data-slot=cnt]',root).textContent='0';setStatus('idle','Idle');$('[data-slot=info]',root).innerHTML='';}
+  });
+  root.addEventListener('change',e=>{const s=e.target.closest('[data-set]');if(s){Store.patch('uuid',s.dataset.set,s.dataset.set==='count'?+s.value:s.value);gen();}});
+  setTimeout(gen,30);
+  return root;
+}
+
+/* ---------- TIMESTAMP CONVERTER ----------
+   Unix epoch (s or ms) ↔ human-readable date in local or UTC. Also surfaces
+   relative time and common formats. Empty input shows the live "now". */
+function renderTimestamp(){
+  const st=Store.getTool('ts');
+  const root=el('section','tool');root.dataset.tool='ts';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn primary" data-act="now"><i class="fa-solid fa-bolt"></i><span class="lbl">Now</span></button>
+      <div class="sep"></div>
+      <span class="field">Unit
+        <select data-set="unit"><option value="auto">Auto-detect</option><option value="s">Seconds</option><option value="ms">Milliseconds</option></select>
+      </span>
+      <span class="field">Display
+        <select data-set="tz"><option value="local">Local time</option><option value="utc">UTC</option></select>
+      </span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="copy" title="Copy ISO"><i class="fa-solid fa-copy"></i></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="tool-body tool-body--narrow">
+      <div class="ts-live" data-slot="live">
+        <div class="ts-live__row">
+          <span class="ts-live__label"><i class="fa-solid fa-circle" style="color:var(--ok);font-size:7px;vertical-align:middle"></i> Current time</span>
+          <span class="ts-live__clock" data-slot="liveclock">—</span>
+        </div>
+        <div class="ts-live__chips">
+          <button class="ts-chip" data-livecopy="s" title="Copy epoch seconds"><span class="ts-chip__k">epoch&nbsp;s</span><span class="ts-chip__v" data-slot="lives">—</span></button>
+          <button class="ts-chip" data-livecopy="ms" title="Copy epoch milliseconds"><span class="ts-chip__k">epoch&nbsp;ms</span><span class="ts-chip__v" data-slot="livems">—</span></button>
+        </div>
+      </div>
+      <div class="field-block">
+        <label>Unix timestamp or date string</label>
+        <input type="text" class="input--mono" data-input placeholder="e.g. 1700000000  ·  2023-11-14T22:13:20Z  ·  leave empty for now">
+        <div class="ts-shift" data-slot="shift">
+          <span class="ts-shift__lbl">Shift:</span>
+          <button class="btn ghost sm" data-shift="-86400000">−1d</button>
+          <button class="btn ghost sm" data-shift="-3600000">−1h</button>
+          <button class="btn ghost sm" data-shift="-60000">−1m</button>
+          <button class="btn ghost sm" data-shift="60000">+1m</button>
+          <button class="btn ghost sm" data-shift="3600000">+1h</button>
+          <button class="btn ghost sm" data-shift="86400000">+1d</button>
+        </div>
+      </div>
+      <table class="kv-table" data-slot="output"></table>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const out=$('[data-slot=output]',root), inp=$('[data-input]',root);
+  const setStatus=makeStatusSetter(root);
+  inp.value=st.input||'';
+  $('[data-set=unit]',root).value=st.unit;
+  $('[data-set=tz]',root).value=st.tz;
+  let lastIso='';
+
+  function rel(ms){
+    const diff=ms-Date.now(),abs=Math.abs(diff),fut=diff>0;
+    const U=[['year',31536e6],['month',2592e6],['day',864e5],['hour',36e5],['minute',6e4],['second',1e3]];
+    for(const [name,size] of U){const v=Math.floor(abs/size);if(v>=1)return `${fut?'in ':''}${v} ${name}${v>1?'s':''}${fut?'':' ago'}`;}
+    return 'just now';
+  }
+  // Detailed "Xd Yh Zm" breakdown of the distance from now.
+  function relExact(ms){
+    let diff=ms-Date.now();const fut=diff>0;diff=Math.abs(diff);
+    const d=Math.floor(diff/864e5);diff%=864e5;
+    const h=Math.floor(diff/36e5);diff%=36e5;
+    const m=Math.floor(diff/6e4);diff%=6e4;
+    const s=Math.floor(diff/1e3);
+    const parts=[];if(d)parts.push(d+'d');if(h)parts.push(h+'h');if(m)parts.push(m+'m');if(s||!parts.length)parts.push(s+'s');
+    return (fut?'in ':'')+parts.join(' ')+(fut?'':' ago');
+  }
+  // ISO-8601 week number + ISO week-year.
+  function isoWeek(d,utc){
+    const t=new Date(Date.UTC(utc?d.getUTCFullYear():d.getFullYear(),utc?d.getUTCMonth():d.getMonth(),utc?d.getUTCDate():d.getDate()));
+    const day=(t.getUTCDay()+6)%7;            // Mon=0 … Sun=6
+    t.setUTCDate(t.getUTCDate()-day+3);        // nearest Thursday
+    const firstThu=new Date(Date.UTC(t.getUTCFullYear(),0,4));
+    const week=1+Math.round(((t-firstThu)/864e5-3+((firstThu.getUTCDay()+6)%7))/7);
+    return {week,year:t.getUTCFullYear()};
+  }
+  function dayOfYear(d,utc){
+    const y=utc?d.getUTCFullYear():d.getFullYear();
+    const start=utc?Date.UTC(y,0,0):new Date(y,0,0).getTime();
+    const cur=utc?Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()):new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    return Math.floor((cur-start)/864e5);
+  }
+  function parseInput(raw,cfg){
+    raw=raw.trim();
+    if(!raw)return Date.now();
+    if(/^-?\d+$/.test(raw)){
+      let n=+raw;
+      if(cfg.unit==='s')return n*1000;
+      if(cfg.unit==='ms')return n;
+      // auto: <= 1e11 treated as seconds (covers up to year 5138)
+      return Math.abs(n)<1e11?n*1000:n;
+    }
+    const d=new Date(raw);
+    if(isNaN(d))throw new Error('Unrecognized date/timestamp');
+    return d.getTime();
+  }
+  function fmt(ms,utc){
+    const d=new Date(ms);
+    const opts={year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:utc?'UTC':undefined,timeZoneName:'short'};
+    return new Intl.DateTimeFormat('en-GB',opts).format(d);
+  }
+  function row(k,v,copy){return `<tr><td class="kv-key">${esc(k)}</td><td class="kv-val${copy?' copyable':''}"${copy?` data-copy="${esc(v)}" title="Click to copy"`:''}>${esc(v)}</td></tr>`;}
+  function run(){
+    const cfg=Store.getTool('ts');const raw=inp.value;
+    try{
+      const ms=parseInput(raw,cfg);const d=new Date(ms);
+      if(isNaN(d))throw new Error('Invalid');
+      const utc=cfg.tz==='utc';
+      lastIso=d.toISOString();
+      const iw=isoWeek(d,utc);
+      const quarter=Math.floor((utc?d.getUTCMonth():d.getMonth())/3)+1;
+      const dateOnly=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:utc?'UTC':undefined}).format(d);
+      const timeOnly=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:utc?'UTC':undefined}).format(d);
+      out.innerHTML=
+        row('Unix (seconds)',Math.floor(ms/1000),true)+
+        row('Unix (millis)',ms,true)+
+        row('Unix (micros)',ms*1000,true)+
+        row('ISO 8601',lastIso,true)+
+        row('Date only',dateOnly,true)+
+        row('Time only',timeOnly,true)+
+        row(utc?'UTC':'Local',fmt(ms,utc))+
+        row('RFC / UTC string',d.toUTCString())+
+        row('Relative',rel(ms))+
+        row('Exact diff',relExact(ms))+
+        row('Day of week',new Intl.DateTimeFormat('en-GB',{weekday:'long',timeZone:utc?'UTC':undefined}).format(d))+
+        row('Day of year',dayOfYear(d,utc)+' / '+(( (utc?d.getUTCFullYear():d.getFullYear())%4===0&&((utc?d.getUTCFullYear():d.getFullYear())%100!==0||(utc?d.getUTCFullYear():d.getFullYear())%400===0))?366:365))+
+        row('ISO week',`${iw.year}-W${String(iw.week).padStart(2,'0')}`,true)+
+        row('Quarter',`Q${quarter}`);
+      setStatus('ok',raw.trim()?'Converted':'Showing current time');
+      $('[data-slot=info]',root).innerHTML=`<i class="fa-solid fa-clock"></i> ${cfg.tz==='utc'?'UTC':'Local'}`;
+    }catch(e){
+      out.innerHTML='';setStatus('err',e.message);lastIso='';
+    }
+  }
+  out.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy);});
+  inp.addEventListener('input',debounce(()=>{Store.patch('ts','input',inp.value);run();},180));
+
+  // Live current-time ticker (updates every second). Cleaned up on tool change.
+  const liveClock=$('[data-slot=liveclock]',root), liveS=$('[data-slot=lives]',root), liveMs=$('[data-slot=livems]',root);
+  let liveSnapS='0', liveSnapMs='0';
+  function tickLive(){
+    const now=Date.now();liveSnapS=String(Math.floor(now/1000));liveSnapMs=String(now);
+    liveS.textContent=liveSnapS;liveMs.textContent=liveSnapMs;
+    liveClock.textContent=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now)+
+      '  ·  '+new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'UTC'}).format(now)+' UTC';
+  }
+  tickLive();const liveTimer=setInterval(tickLive,1000);
+  root._cleanup=()=>clearInterval(liveTimer);
+
+  root.addEventListener('click',e=>{
+    const chip=e.target.closest('[data-livecopy]');
+    if(chip){copy(chip.dataset.livecopy==='s'?liveSnapS:liveSnapMs);return;}
+    const sh=e.target.closest('[data-shift]');
+    if(sh){
+      // shift the *currently displayed* instant by the given ms, then write it back,
+      // preserving whatever representation the user is currently using.
+      const cfg=Store.getTool('ts');const raw=(inp.value||'').trim();
+      let base;try{base=parseInput(raw,cfg);}catch(_){base=Date.now();}
+      const next=base+(+sh.dataset.shift);
+      let val;
+      if(cfg.unit==='ms')val=String(next);
+      else if(cfg.unit==='s')val=String(Math.round(next/1000));
+      else if(/^-?\d+$/.test(raw)){
+        // auto-detected numeric: keep the same magnitude (s vs ms) the user typed
+        val=Math.abs(+raw)<1e11?String(Math.round(next/1000)):String(next);
+      }else{
+        // input was a date string (or empty) → write a clean ISO string
+        val=new Date(next).toISOString();
+      }
+      inp.value=val;Store.patch('ts','input',val);run();return;
+    }
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='now'){inp.value='';Store.patch('ts','input','');run();}
+    else if(b.dataset.act==='copy')copy(lastIso);
+    else if(b.dataset.act==='clear'){inp.value='';Store.patch('ts','input','');run();}
+  });
+  root.addEventListener('change',e=>{const s=e.target.closest('[data-set]');if(s){Store.patch('ts',s.dataset.set,s.value);run();}});
+  setTimeout(run,30);
+  return root;
+}
+
+/* ---------- COLOR CONVERTER ----------
+   Parse HEX / rgb() / hsl() / named colors → unified output across formats,
+   with a live preview, native picker and tints/shades palette. */
+const COLOR_NAMES={black:'#000000',white:'#ffffff',red:'#ff0000',green:'#008000',blue:'#0000ff',yellow:'#ffff00',cyan:'#00ffff',magenta:'#ff00ff',gray:'#808080',grey:'#808080',orange:'#ffa500',purple:'#800080',pink:'#ffc0cb',brown:'#a52a2a',silver:'#c0c0c0',gold:'#ffd700',navy:'#000080',teal:'#008080',lime:'#00ff00',indigo:'#4b0082',violet:'#ee82ee',coral:'#ff7f50',salmon:'#fa8072',khaki:'#f0e68c',crimson:'#dc143c',transparent:'#00000000'};
+function parseColor(str){
+  str=str.trim().toLowerCase();
+  if(COLOR_NAMES[str])str=COLOR_NAMES[str];
+  let m;
+  if((m=/^#([0-9a-f]{3,8})$/i.exec(str))){
+    let h=m[1];
+    if(h.length===3)h=[...h].map(c=>c+c).join('');
+    else if(h.length===4)h=[...h].map(c=>c+c).join('');
+    if(h.length===6)return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a:1};
+    if(h.length===8)return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16),a:parseInt(h.slice(6,8),16)/255};
+  }
+  if((m=/^rgba?\(\s*([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)(?:[ ,/]+([\d.]+%?))?\s*\)$/i.exec(str))){
+    const a=m[4]==null?1:(m[4].endsWith('%')?parseFloat(m[4])/100:parseFloat(m[4]));
+    return {r:+m[1],g:+m[2],b:+m[3],a};
+  }
+  if((m=/^hsla?\(\s*([\d.]+)[ ,]+([\d.]+)%[ ,]+([\d.]+)%(?:[ ,/]+([\d.]+%?))?\s*\)$/i.exec(str))){
+    const a=m[4]==null?1:(m[4].endsWith('%')?parseFloat(m[4])/100:parseFloat(m[4]));
+    const rgb=hslToRgb(+m[1],+m[2],+m[3]);return {...rgb,a};
+  }
+  return null;
+}
+function hslToRgb(h,s,l){
+  s/=100;l/=100;
+  const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1))));
+  return {r:f(0),g:f(8),b:f(4)};
+}
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0;if(d){if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}
+  const l=(max+min)/2,s=d?d/(1-Math.abs(2*l-1)):0;
+  return {h:Math.round(h),s:Math.round(s*100),l:Math.round(l*100)};
+}
+function rgbToHex(r,g,b,a){
+  const h=x=>Math.round(x).toString(16).padStart(2,'0');
+  let s='#'+h(r)+h(g)+h(b);if(a!=null&&a<1)s+=h(a*255);return s;
+}
+function rgbToHsv(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0;if(d){if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}
+  const s=max?d/max:0;
+  return {h:Math.round(h),s:Math.round(s*100),v:Math.round(max*100)};
+}
+function rgbToCmyk(r,g,b){
+  r/=255;g/=255;b/=255;
+  const k=1-Math.max(r,g,b);
+  if(k===1)return {c:0,m:0,y:0,k:100};
+  return {c:Math.round((1-r-k)/(1-k)*100),m:Math.round((1-g-k)/(1-k)*100),y:Math.round((1-b-k)/(1-k)*100),k:Math.round(k*100)};
+}
+// Relative luminance (WCAG 2.x) and contrast ratio between two sRGB colors.
+function relLuminance(r,g,b){
+  const f=c=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
+  return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);
+}
+function contrastRatio(c1,c2){
+  const l1=relLuminance(c1.r,c1.g,c1.b),l2=relLuminance(c2.r,c2.g,c2.b);
+  const hi=Math.max(l1,l2),lo=Math.min(l1,l2);
+  return (hi+0.05)/(lo+0.05);
+}
+function renderColor(){
+  const st=Store.getTool('color');
+  const root=el('section','tool');root.dataset.tool='color';
+  root.innerHTML=`
+    <div class="toolbar">
+      <span class="field"><i class="fa-solid fa-eye-dropper"></i> Color
+        <input type="text" class="input--mono" data-input placeholder="#5b9dff · rgb(91,157,255) · hsl(...) · red" style="min-width:240px">
+      </span>
+      <input type="color" data-picker aria-label="Pick a color">
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="random" title="Random color"><i class="fa-solid fa-dice"></i><span class="lbl">Random</span></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="tool-body tool-body--narrow">
+      <div class="color-preview" data-slot="preview"></div>
+      <table class="kv-table" data-slot="output"></table>
+      <div style="margin-top:var(--sp-5)">
+        <div class="label" style="margin-bottom:8px">Contrast &amp; accessibility (WCAG)</div>
+        <div class="contrast-grid" data-slot="contrast"></div>
+      </div>
+      <div style="margin-top:var(--sp-5)">
+        <div class="label" style="margin-bottom:8px">Color harmonies</div>
+        <div class="harmony-wrap" data-slot="harmony"></div>
+      </div>
+      <div style="margin-top:var(--sp-5)">
+        <div class="label" style="margin-bottom:8px">Tints &amp; shades</div>
+        <div class="swatches" data-slot="swatches"></div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const inp=$('[data-input]',root), picker=$('[data-picker]',root), prev=$('[data-slot=preview]',root), out=$('[data-slot=output]',root), sw=$('[data-slot=swatches]',root);
+  const contrastEl=$('[data-slot=contrast]',root), harmonyEl=$('[data-slot=harmony]',root);
+  const setStatus=makeStatusSetter(root);
+  inp.value=st.input||'#5b9dff';
+  function row(k,v){return `<tr><td class="kv-key">${esc(k)}</td><td class="kv-val copyable" data-copy="${esc(v)}" title="Click to copy">${esc(v)}</td></tr>`;}
+  function mix(c,target,t){return {r:c.r+(target-c.r)*t,g:c.g+(target-c.g)*t,b:c.b+(target-c.b)*t};}
+  // WCAG verdict badges for a given contrast ratio.
+  function badges(ratio){
+    const lvl=(ok)=>ok?'<span class="cb-badge pass">PASS</span>':'<span class="cb-badge fail">FAIL</span>';
+    return `<span class="cb-lvl">AA <small>normal</small> ${lvl(ratio>=4.5)}</span>`+
+           `<span class="cb-lvl">AA <small>large</small> ${lvl(ratio>=3)}</span>`+
+           `<span class="cb-lvl">AAA <small>normal</small> ${lvl(ratio>=7)}</span>`;
+  }
+  // Build a contrast card: this color as text on a background swatch.
+  function contrastCard(label,fg,bg){
+    const ratio=contrastRatio(fg,bg);
+    const bgHex=rgbToHex(bg.r,bg.g,bg.b),fgHex=rgbToHex(fg.r,fg.g,fg.b);
+    return `<div class="contrast-card" style="background:${bgHex};color:${fgHex}">
+        <div class="cc-top"><span class="cc-sample">Aa</span><span class="cc-ratio">${ratio.toFixed(2)}:1</span></div>
+        <div class="cc-label">${esc(label)}</div>
+        <div class="cc-badges">${badges(ratio)}</div>
+      </div>`;
+  }
+  // A labelled row of harmony swatches generated by rotating hue.
+  function harmonyRow(name,c,offsets){
+    const hsl=rgbToHsl(c.r,c.g,c.b);
+    let cells='';
+    offsets.forEach(off=>{
+      const h=((hsl.h+off)%360+360)%360;
+      const rgb=hslToRgb(h,hsl.s,hsl.l);
+      const hex=rgbToHex(rgb.r,rgb.g,rgb.b);
+      cells+=`<div class="swatch" style="background:${hex}" data-copy="${hex}" title="${hex} — click to apply & copy"></div>`;
+    });
+    return `<div class="harmony-row"><span class="harmony-name">${esc(name)}</span><div class="swatches">${cells}</div></div>`;
+  }
+  function run(){
+    const raw=inp.value;const c=parseColor(raw);
+    if(!c){out.innerHTML='';sw.innerHTML='';contrastEl.innerHTML='';harmonyEl.innerHTML='';prev.style.background='repeating-conic-gradient(#444 0% 25%,#222 0% 50%) 50%/16px 16px';setStatus('err','Unrecognized color');return;}
+    const hex=rgbToHex(c.r,c.g,c.b,c.a);
+    const hsl=rgbToHsl(c.r,c.g,c.b);
+    const hsv=rgbToHsv(c.r,c.g,c.b);
+    const cmyk=rgbToCmyk(c.r,c.g,c.b);
+    const ra=c.a==null?1:c.a;
+    prev.style.background=`rgba(${c.r|0},${c.g|0},${c.b|0},${ra})`;
+    picker.value=rgbToHex(c.r,c.g,c.b).slice(0,7);
+    out.innerHTML=
+      row('HEX',hex)+
+      row('RGB',`rgb(${c.r|0}, ${c.g|0}, ${c.b|0})`)+
+      (ra<1?row('RGBA',`rgba(${c.r|0}, ${c.g|0}, ${c.b|0}, ${+ra.toFixed(3)})`):'')+
+      row('HSL',`hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`)+
+      row('HSV',`hsv(${hsv.h}, ${hsv.s}%, ${hsv.v}%)`)+
+      row('CMYK',`cmyk(${cmyk.c}%, ${cmyk.m}%, ${cmyk.y}%, ${cmyk.k}%)`)+
+      row('CSS','color: '+hex+';');
+    // contrast vs white & black backgrounds (and as text on the color)
+    const white={r:255,g:255,b:255},black={r:0,g:0,b:0};
+    contrastEl.innerHTML=
+      contrastCard('On white',c,white)+
+      contrastCard('On black',c,black)+
+      contrastCard('White text',white,c)+
+      contrastCard('Black text',black,c);
+    // harmonies
+    harmonyEl.innerHTML=
+      harmonyRow('Complementary',c,[0,180])+
+      harmonyRow('Analogous',c,[-30,0,30])+
+      harmonyRow('Triadic',c,[0,120,240])+
+      harmonyRow('Tetradic',c,[0,90,180,270]);
+    // build 5 tints (toward white) + 5 shades (toward black)
+    let cells='';
+    for(let i=5;i>=1;i--){const m=mix(c,255,i/6);const h=rgbToHex(m.r,m.g,m.b);cells+=`<div class="swatch" style="background:${h}" data-copy="${h}" title="${h} — click to apply & copy"></div>`;}
+    cells+=`<div class="swatch" style="background:${hex};outline:2px solid var(--accent);outline-offset:1px" data-copy="${hex}" title="${hex}"></div>`;
+    for(let i=1;i<=5;i++){const m=mix(c,0,i/6);const h=rgbToHex(m.r,m.g,m.b);cells+=`<div class="swatch" style="background:${h}" data-copy="${h}" title="${h} — click to apply & copy"></div>`;}
+    sw.innerHTML=cells;
+    setStatus('ok','Valid color');
+    $('[data-slot=info]',root).innerHTML=`<i class="fa-solid fa-palette"></i> ${hex}`;
+  }
+  out.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy);});
+  // clicking any harmony/tint swatch applies it as the new color and copies it
+  function swatchClick(e){const s=e.target.closest('[data-copy]');if(s){inp.value=s.dataset.copy;Store.patch('color','input',inp.value);run();copy(s.dataset.copy);}}
+  sw.addEventListener('click',swatchClick);
+  harmonyEl.addEventListener('click',swatchClick);
+  inp.addEventListener('input',debounce(()=>{Store.patch('color','input',inp.value);run();},120));
+  picker.addEventListener('input',()=>{inp.value=picker.value;Store.patch('color','input',inp.value);run();});
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='random'){const h=rgbToHex(Math.random()*256,Math.random()*256,Math.random()*256);inp.value=h;Store.patch('color','input',h);run();}
+    else if(b.dataset.act==='clear'){inp.value='';Store.patch('color','input','');run();}
+  });
+  setTimeout(run,30);
+  return root;
+}
+
+/* ---------- REGEX TESTER ----------
+   Live regular-expression testing with flag toggles, match list (incl. capture
+   groups & named groups) and a replace preview. Highlights matches inline. */
+function renderRegex(){
+  const st=Store.getTool('regex');
+  const root=el('section','tool');root.dataset.tool='regex';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn sm toggle" data-mode="match"><i class="fa-solid fa-magnifying-glass"></i><span class="lbl">Match</span></button>
+      <button class="btn sm toggle" data-mode="replace"><i class="fa-solid fa-pen"></i><span class="lbl">Replace</span></button>
+      <div class="sep"></div>
+      <span class="field" title="Flags">Flags
+        <input type="text" class="re-flags" data-flags placeholder="gim" maxlength="8">
+      </span>
+      <span class="caption" data-slot="info" style="margin-left:6px"></span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="sample"><i class="fa-solid fa-flask"></i><span class="lbl">Sample</span></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="regex-bar">
+      <span class="re-delim">/</span>
+      <input type="text" class="re-pattern" data-pattern placeholder="regular expression…">
+      <span class="re-delim">/</span>
+    </div>
+    <div class="regex-bar" data-slot="replacebar" style="display:none">
+      <span class="caption" style="white-space:nowrap;color:var(--txt-2)">Replacement</span>
+      <input type="text" class="re-pattern" data-replace placeholder="Replacement — use $1, $2 for groups, $& for whole match">
+    </div>
+    <div class="editor-grid">
+      <div class="pane">
+        <div class="pane-head"><span class="dot"></span>Test string<span class="spacer"></span><span class="mini" data-mini="in"></span></div>
+        <div class="pane-body" data-slot="input"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span class="dot out"></span><span data-outlabel>Matches</span><span class="spacer"></span><span class="mini" data-mini="out"></span></div>
+        <div class="pane-body regex-out">
+          <div class="regex-highlight" data-slot="hl"></div>
+          <div class="results regex-results" data-slot="output"></div>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <span class="status-stat"><i class="fa-solid fa-bullseye"></i> <b data-slot="mcount">0</b> matches</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="meta"></span>
+    </div>`;
+  const out=$('[data-slot=output]',root), hl=$('[data-slot=hl]',root), patIn=$('[data-pattern]',root), flagsIn=$('[data-flags]',root), repIn=$('[data-replace]',root), outLabel=$('[data-outlabel]',root);
+  const setStatus=makeStatusSetter(root);
+  patIn.value=st.pattern||'';flagsIn.value=st.flags||'g';repIn.value=st.replace||'';
+  const input=buildCodeInput(st.input,v=>{Store.patch('regex','input',v);run();},'Paste text to test against the pattern…');
+  $('[data-slot=input]',root).appendChild(input);
+  input._setWrap(true);
+
+  function syncMode(){
+    const cfg=Store.getTool('regex');const rep=cfg.mode==='replace';
+    $$('[data-mode]',root).forEach(b=>b.classList.toggle('on',b.dataset.mode===cfg.mode));
+    $('[data-slot=replacebar]',root).style.display=rep?'':'none';
+    outLabel.textContent=rep?'Result':'Matches';
+    $('.regex-out',root).classList.toggle('is-replace',rep);
+  }
+  function buildRegex(cfg){
+    if(!cfg.pattern)return null;
+    let flags=(cfg.flags||'').replace(/[^gimsuy]/g,'');
+    return new RegExp(cfg.pattern,flags);
+  }
+  function run(){
+    const cfg=Store.getTool('regex');
+    $('[data-mini=in]',root).textContent=(cfg.input?cfg.input.split('\n').length:0)+' ln';
+    if(!cfg.pattern){setStatus('idle','Enter a pattern');hl.innerHTML=esc(cfg.input);out.innerHTML='';$('[data-slot=mcount]',root).textContent='0';return;}
+    let re;
+    try{re=buildRegex(cfg);}catch(e){setStatus('err','Invalid regex — '+e.message);hl.innerHTML=esc(cfg.input);out.innerHTML=`<div class="match-item" style="border-color:var(--err)"><span class="m-head" style="color:var(--err)">${esc(e.message)}</span></div>`;$('[data-slot=mcount]',root).textContent='0';return;}
+    const text=cfg.input;
+    if(cfg.mode==='replace'){
+      try{
+        const g=re.flags.includes('g')?re:new RegExp(re.source,re.flags+'g');
+        const result=text.replace(g,cfg.replace||'');
+        out.innerHTML=`<pre class="code-output wrap" style="position:static">${esc(result)}</pre>`;
+        const n=(text.match(g)||[]).length;
+        setStatus('ok',n+' replaced');$('[data-slot=mcount]',root).textContent=n;
+      }catch(e){setStatus('err','Replace failed — '+e.message);}
+      $('[data-slot=meta]',root).innerHTML=`<i class="fa-solid fa-pen"></i> /${esc(re.source)}/${re.flags}`;
+      return;
+    }
+    // match mode — collect matches
+    const g=re.flags.includes('g')?re:new RegExp(re.source,re.flags+'g');
+    const matches=[];let m,guard=0;
+    while((m=g.exec(text))!==null){
+      matches.push(m);
+      if(m.index===g.lastIndex)g.lastIndex++; // avoid zero-width infinite loop
+      if(++guard>10000)break;
+    }
+    // highlight
+    if(matches.length){
+      let html='',last=0,alt=false;
+      matches.forEach(mm=>{
+        html+=esc(text.slice(last,mm.index));
+        html+=`<mark class="${alt?'alt':''}">${esc(mm[0])||'∅'}</mark>`;
+        last=mm.index+mm[0].length;alt=!alt;
+      });
+      html+=esc(text.slice(last));
+      hl.innerHTML=html;
+    }else hl.innerHTML=esc(text);
+    // list
+    out.innerHTML=matches.length?matches.map((mm,i)=>{
+      let groups='';
+      for(let gi=1;gi<mm.length;gi++)if(mm[gi]!==undefined)groups+=`<span class="m-grp">group ${gi}: <b>${esc(mm[gi])}</b></span>`;
+      if(mm.groups)for(const k in mm.groups)groups+=`<span class="m-grp">&lt;${esc(k)}&gt;: <b>${esc(mm.groups[k])}</b></span>`;
+      return `<div class="match-item"><span class="m-head">Match ${i+1} @ index ${mm.index}</span><span class="val">${esc(mm[0])||'(empty)'}</span>${groups}</div>`;
+    }).join(''):'<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i> No matches</div>';
+    $('[data-slot=mcount]',root).textContent=matches.length;
+    $('[data-slot=meta]',root).innerHTML=`<i class="fa-solid fa-code"></i> /${esc(re.source)}/${re.flags}`;
+    setStatus(matches.length?'ok':'warn',matches.length?matches.length+' matches':'No matches');
+  }
+  patIn.addEventListener('input',debounce(()=>{Store.patch('regex','pattern',patIn.value);run();},150));
+  flagsIn.addEventListener('input',debounce(()=>{Store.patch('regex','flags',flagsIn.value);run();},150));
+  repIn.addEventListener('input',debounce(()=>{Store.patch('regex','replace',repIn.value);run();},150));
+  root.addEventListener('click',e=>{
+    const m=e.target.closest('[data-mode]');
+    if(m){Store.patch('regex','mode',m.dataset.mode);syncMode();run();return;}
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='clear'){Store.update('regex',{pattern:'',input:'',replace:''});patIn.value='';repIn.value='';input._ta.value='';input._upd();run();}
+    else if(b.dataset.act==='sample'){
+      const pat='(\\w+)@(\\w+\\.\\w+)',txt='Contact alice@example.com or bob@test.org for details.';
+      Store.update('regex',{pattern:pat,input:txt,flags:'gi'});
+      patIn.value=pat;flagsIn.value='gi';input._ta.value=txt;input._upd();run();
+    }
+  });
+  syncMode();
+  setTimeout(run,30);
+  return root;
+}
+
+/* ---------- TEXT DIFF / COMPARE ----------
+   Two-pane comparison with a Myers-style LCS line diff, optional case /
+   whitespace insensitivity and add/del/same statistics. */
+function lcsDiff(a,b){
+  // longest-common-subsequence over arrays of lines → list of {type,text}
+  const n=a.length,m=b.length;
+  // guard very large inputs (DP is O(n*m))
+  if(n*m>4_000_000){
+    // fallback: naive line-by-line
+    const max=Math.max(n,m),res=[];
+    for(let i=0;i<max;i++){
+      if(i<n&&i<m){res.push({type:a[i]===b[i]?'same':'del',text:a[i]});if(a[i]!==b[i])res.push({type:'add',text:b[i]});}
+      else if(i<n)res.push({type:'del',text:a[i]});
+      else res.push({type:'add',text:b[i]});
+    }
+    return res;
+  }
+  const dp=Array.from({length:n+1},()=>new Int32Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)
+    dp[i][j]=a[i]===b[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const res=[];let i=0,j=0;
+  while(i<n&&j<m){
+    if(a[i]===b[j]){res.push({type:'same',text:a[i]});i++;j++;}
+    else if(dp[i+1][j]>=dp[i][j+1]){res.push({type:'del',text:a[i]});i++;}
+    else{res.push({type:'add',text:b[j]});j++;}
+  }
+  while(i<n)res.push({type:'del',text:a[i++]});
+  while(j<m)res.push({type:'add',text:b[j++]});
+  return res;
+}
+function renderDiff(){
+  const st=Store.getTool('diff');
+  const root=el('section','tool');root.dataset.tool='diff';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn primary" data-act="compare"><i class="fa-solid fa-code-compare"></i><span class="lbl">Compare</span></button>
+      <button class="btn" data-act="swap" title="Swap A & B"><i class="fa-solid fa-arrow-right-arrow-left"></i><span class="lbl">Swap</span></button>
+      <div class="sep"></div>
+      <span class="opt-grp">
+        <span class="field"><span class="switch" data-toggle="ignoreCase"></span> Ignore case</span>
+        <span class="field"><span class="switch" data-toggle="ignoreWs"></span> Ignore whitespace</span>
+      </span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="sample"><i class="fa-solid fa-flask"></i><span class="lbl">Sample</span></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="diff-stats" data-slot="stats" style="display:none"></div>
+    <div class="editor-grid three">
+      <div class="pane">
+        <div class="pane-head"><span class="dot"></span>Original (A)<span class="spacer"></span></div>
+        <div class="pane-body" data-slot="inputA"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span class="dot" style="background:var(--warn)"></span>Changed (B)<span class="spacer"></span></div>
+        <div class="pane-body" data-slot="inputB"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span class="dot out"></span>Diff<span class="spacer"></span></div>
+        <div class="pane-body"><div class="diff" data-slot="output"></div></div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const out=$('[data-slot=output]',root);
+  const setStatus=makeStatusSetter(root);
+  const inA=buildCodeInput(st.inputA,v=>{Store.patch('diff','inputA',v);runDeb();},'Original text…');
+  const inB=buildCodeInput(st.inputB,v=>{Store.patch('diff','inputB',v);runDeb();},'Changed text…');
+  $('[data-slot=inputA]',root).appendChild(inA);
+  $('[data-slot=inputB]',root).appendChild(inB);
+  if(st.ignoreCase)$('[data-toggle=ignoreCase]',root).classList.add('on');
+  if(st.ignoreWs)$('[data-toggle=ignoreWs]',root).classList.add('on');
+  const runDeb=debounce(()=>run(),250);
+
+  function norm(line,cfg){let s=line;if(cfg.ignoreWs)s=s.replace(/\s+/g,' ').trim();if(cfg.ignoreCase)s=s.toLowerCase();return s;}
+  function run(){
+    const cfg=Store.getTool('diff');
+    if(!cfg.inputA&&!cfg.inputB){setStatus('idle','Idle');out.innerHTML='';$('[data-slot=stats]',root).style.display='none';return;}
+    const aRaw=cfg.inputA.split('\n'),bRaw=cfg.inputB.split('\n');
+    const a=aRaw.map(l=>norm(l,cfg)),b=bRaw.map(l=>norm(l,cfg));
+    const diff=lcsDiff(a,b);
+    let lnA=0,lnB=0,add=0,del=0,same=0,html='';
+    diff.forEach(d=>{
+      let raw='';
+      if(d.type==='same'){raw=aRaw[lnA];lnA++;lnB++;same++;}
+      else if(d.type==='del'){raw=aRaw[lnA];lnA++;del++;}
+      else{raw=bRaw[lnB];lnB++;add++;}
+      html+=`<div class="diff-line ${d.type}"><span class="ln">${d.type==='add'?'':lnA}</span><span class="tx">${esc(raw)}</span></div>`;
+    });
+    out.innerHTML=html;
+    const stats=$('[data-slot=stats]',root);stats.style.display='';
+    stats.innerHTML=`<span class="ds-add"><i class="fa-solid fa-plus"></i> ${add} added</span><span class="ds-del"><i class="fa-solid fa-minus"></i> ${del} removed</span><span class="ds-same"><i class="fa-solid fa-equals"></i> ${same} unchanged</span>`;
+    const identical=add===0&&del===0;
+    setStatus(identical?'ok':'warn',identical?'Texts are identical':`${add+del} change${add+del!==1?'s':''}`);
+    $('[data-slot=info]',root).innerHTML=`<i class="fa-solid fa-code-compare"></i> ${aRaw.length} ↔ ${bRaw.length} lines`;
+  }
+  root.addEventListener('click',e=>{
+    const tog=e.target.closest('[data-toggle]');
+    if(tog){tog.classList.toggle('on');Store.patch('diff',tog.dataset.toggle,tog.classList.contains('on'));run();return;}
+    const b=e.target.closest('[data-act]');if(!b)return;const cfg=Store.getTool('diff');
+    if(b.dataset.act==='compare')run();
+    else if(b.dataset.act==='swap'){Store.update('diff',{inputA:cfg.inputB,inputB:cfg.inputA});inA._ta.value=cfg.inputB;inB._ta.value=cfg.inputA;inA._upd();inB._upd();run();}
+    else if(b.dataset.act==='clear'){Store.update('diff',{inputA:'',inputB:''});inA._ta.value='';inB._ta.value='';inA._upd();inB._upd();run();}
+    else if(b.dataset.act==='sample'){
+      const A='function greet(name) {\n  console.log("Hi " + name);\n  return true;\n}',B='function greet(name, greeting) {\n  console.log(greeting + " " + name);\n  return true;\n}';
+      Store.update('diff',{inputA:A,inputB:B});inA._ta.value=A;inB._ta.value=B;inA._upd();inB._upd();run();
+    }
+  });
+  setTimeout(run,30);
+  return root;
+}
+
+/* ---------- CRON EXPRESSION PARSER ----------
+   Parses standard 5-field cron (min hour dom month dow), explains each field
+   in plain English and previews upcoming run times. */
+function renderCron(){
+  const st=Store.getTool('cron');
+  const root=el('section','tool');root.dataset.tool='cron';
+  const PRESETS=[['Every minute','* * * * *'],['Every 5 minutes','*/5 * * * *'],['Every hour','0 * * * *'],['Daily midnight','0 0 * * *'],['Weekdays 9am','0 9 * * 1-5'],['Weekly (Sun)','0 0 * * 0'],['Monthly 1st','0 0 1 * *']];
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn primary" data-act="parse"><i class="fa-solid fa-play"></i><span class="lbl">Parse</span></button>
+      <div class="sep"></div>
+      <span class="field">Preset
+        <select data-preset><option value="">Choose…</option>${PRESETS.map(p=>`<option value="${p[1]}">${p[0]} (${p[1]})</option>`).join('')}</select>
+      </span>
+      <span class="field">Time
+        <select data-set="tz"><option value="local">Local</option><option value="utc">UTC</option></select>
+      </span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="copy" title="Copy expression"><i class="fa-solid fa-copy"></i></button>
+    </div>
+    <div class="tool-body tool-body--narrow">
+      <div class="field-block">
+        <label>Cron expression (min hour day-of-month month day-of-week)</label>
+        <input type="text" class="input--mono" data-input placeholder="*/5 * * * *" style="font-size:16px">
+      </div>
+      <div class="cron-summary" data-slot="summary"><i class="fa-solid fa-circle-info"></i> <span>Enter a cron expression</span></div>
+      <div class="cron-fields" data-slot="fields"></div>
+      <div class="label" style="margin:var(--sp-4) 0 6px">Next runs</div>
+      <div class="next-runs" data-slot="next"></div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const inp=$('[data-input]',root);
+  const setStatus=makeStatusSetter(root);
+  inp.value=st.input||'';$('[data-set=tz]',root).value=st.tz;
+  const NAMES=['minute','hour','day of month','month','day of week'];
+  const RANGES=[[0,59],[0,23],[1,31],[1,12],[0,6]];
+  const MONTHS=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const ALIAS=[{},{},{},{jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12},{sun:0,mon:1,tue:2,wed:3,thu:4,fri:5,sat:6}];
+
+  // parse one field into a sorted set of allowed values
+  function parseField(field,idx){
+    const [lo,hi]=RANGES[idx];const set=new Set();
+    field.split(',').forEach(part=>{
+      let step=1,range=part;
+      const sl=part.split('/');if(sl.length===2){range=sl[0];step=+sl[1];if(!step||step<1)throw new Error('bad step in "'+part+'"');}
+      let a,b;
+      const resolve=v=>{v=v.toLowerCase();if(ALIAS[idx][v]!=null)return ALIAS[idx][v];if(!/^\d+$/.test(v))throw new Error('bad value "'+v+'"');return +v;};
+      if(range==='*'){a=lo;b=hi;}
+      else if(range.includes('-')){const [x,y]=range.split('-');a=resolve(x);b=resolve(y);}
+      else{a=b=resolve(range);}
+      if(a<lo||b>hi||a>b)throw new Error(`${NAMES[idx]} out of range (${lo}-${hi})`);
+      for(let v=a;v<=b;v+=step)set.add(idx===4&&v===7?0:v);
+    });
+    return [...set].sort((x,y)=>x-y);
+  }
+  function describe(field,idx,vals){
+    if(field==='*')return `every ${NAMES[idx]}`;
+    if(/^\*\/(\d+)$/.test(field))return `every ${field.match(/\d+/)[0]} ${NAMES[idx]}s`;
+    if(idx===3)return 'in '+vals.map(v=>MONTHS[v]).join(', ');
+    if(idx===4)return 'on '+vals.map(v=>DAYS[v]).join(', ');
+    if(idx===1)return vals.length<=6?`at hour ${vals.map(v=>String(v).padStart(2,'0')).join(', ')}`:`${vals.length} hours`;
+    if(idx===0)return vals.length<=6?`at minute ${vals.join(', ')}`:`${vals.length} minutes`;
+    if(idx===2)return vals.length<=6?`on day ${vals.join(', ')} of the month`:`${vals.length} days`;
+    return `${vals.length} values`;
+  }
+  function summarize(parts,sets){
+    // human-ish summary
+    const [min,hr,dom,mon,dow]=parts;
+    const isNum=v=>/^\d+$/.test(v);
+    const isStep=v=>/^\*\/(\d+)$/.test(v);
+    const stepOf=v=>v.match(/\d+/)[0];
+    const pad=v=>String(v).padStart(2,'0');
+    // --- time phrase, derived from minute + hour fields ---
+    let time;
+    if(min==='*'&&hr==='*')time='every minute';
+    else if(isStep(min)&&hr==='*')time=`every ${stepOf(min)} minutes`;
+    else if(min==='*'&&hr==='*')time='every minute';
+    else if(isNum(min)&&isNum(hr))time=`at ${pad(hr)}:${pad(min)}`;
+    else if(isNum(min)&&hr==='*')time=`at minute ${+min} of every hour`;
+    else if(min==='*'&&isNum(hr))time=`every minute during the ${pad(hr)}:00 hour`;
+    else if(min==='*'&&hr!=='*')time=`every minute, ${describe(hr,1,sets[1])}`;
+    else{
+      // general: combine minute + hour descriptions
+      const minPhrase=isStep(min)?`every ${stepOf(min)} minutes`:`at minute ${sets[0].join(', ')}`;
+      let hrPhrase;
+      if(hr==='*')hrPhrase='of every hour';
+      else if(isStep(hr))hrPhrase=`every ${stepOf(hr)} hours`;
+      else hrPhrase=`during hour ${sets[1].map(pad).join(', ')}`;
+      time=`${minPhrase} ${hrPhrase}`;
+    }
+    // --- day phrase (dom / dow with cron OR semantics) ---
+    let day='';
+    if(dom!=='*'&&dow!=='*')day=` ${describe(dom,2,sets[2])} and ${describe(dow,4,sets[4])}`;
+    else if(dom!=='*')day=` ${describe(dom,2,sets[2])}`;
+    else if(dow!=='*')day=` ${describe(dow,4,sets[4])}`;
+    let month=mon==='*'?'':` ${describe(mon,3,sets[3])}`;
+    return `Runs ${time}${day}${month}.`;
+  }
+  // compute next N matching dates
+  function nextRuns(sets,parts,utc,n=5){
+    const out=[];
+    let d=new Date();d.setSeconds(0,0);d.setMinutes(d.getMinutes()+1);
+    const get=k=>utc?{min:d.getUTCMinutes(),hr:d.getUTCHours(),dom:d.getUTCDate(),mon:d.getUTCMonth()+1,dow:d.getUTCDay()}[k]:{min:d.getMinutes(),hr:d.getHours(),dom:d.getDate(),mon:d.getMonth()+1,dow:d.getDay()}[k];
+    let guard=0;
+    while(out.length<n&&guard++<500000){
+      const domStar=parts[2]==='*',dowStar=parts[4]==='*';
+      const domOk=sets[2].includes(get('dom')),dowOk=sets[4].includes(get('dow'));
+      // cron OR semantics when both dom & dow are restricted
+      const dayOk=(domStar&&dowStar)?true:(domStar?dowOk:(dowStar?domOk:(domOk||dowOk)));
+      if(sets[0].includes(get('min'))&&sets[1].includes(get('hr'))&&sets[3].includes(get('mon'))&&dayOk){
+        out.push(new Date(d));
+      }
+      d.setMinutes(d.getMinutes()+1);
+    }
+    return out;
+  }
+  function run(){
+    const cfg=Store.getTool('cron');const raw=inp.value.trim();const utc=cfg.tz==='utc';
+    const fieldsEl=$('[data-slot=fields]',root),sumEl=$('[data-slot=summary]',root),nextEl=$('[data-slot=next]',root);
+    if(!raw){setStatus('idle','Idle');sumEl.innerHTML='<i class="fa-solid fa-circle-info"></i> <span>Enter a cron expression</span>';fieldsEl.innerHTML='';nextEl.innerHTML='';return;}
+    const parts=raw.split(/\s+/);
+    if(parts.length!==5){setStatus('err','Expected 5 fields, got '+parts.length);sumEl.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> <span>A standard cron has 5 fields.</span>';fieldsEl.innerHTML='';nextEl.innerHTML='';return;}
+    let sets;
+    try{sets=parts.map((f,i)=>parseField(f,i));}
+    catch(e){setStatus('err',e.message);sumEl.innerHTML=`<i class="fa-solid fa-triangle-exclamation"></i> <span>${esc(e.message)}</span>`;fieldsEl.innerHTML='';nextEl.innerHTML='';return;}
+    sumEl.innerHTML=`<i class="fa-solid fa-circle-check"></i> <span>${esc(summarize(parts,sets))}</span>`;
+    fieldsEl.innerHTML=parts.map((f,i)=>`<div class="cron-field"><div class="cf-name">${NAMES[i]}</div><div class="cf-val">${esc(f)}</div><div class="cf-desc">${esc(describe(f,i,sets[i]))}</div></div>`).join('');
+    const runs=nextRuns(sets,parts,utc);
+    const fmt=d=>utc?d.toUTCString():d.toLocaleString();
+    nextEl.innerHTML=runs.length?runs.map((d,i)=>`<div class="nr"><b>${i+1}.</b> ${esc(fmt(d))}</div>`).join(''):'<div class="nr">No upcoming runs found in range</div>';
+    setStatus('ok','Valid expression');
+    $('[data-slot=info]',root).innerHTML=`<i class="fa-solid fa-calendar-days"></i> ${utc?'UTC':'Local'}`;
+  }
+  inp.addEventListener('input',debounce(()=>{Store.patch('cron','input',inp.value);run();},200));
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='parse')run();
+    else if(b.dataset.act==='copy')copy(inp.value);
+  });
+  root.addEventListener('change',e=>{
+    const pre=e.target.closest('[data-preset]');
+    if(pre){if(pre.value){inp.value=pre.value;Store.patch('cron','input',pre.value);run();}return;}
+    const s=e.target.closest('[data-set]');if(s){Store.patch('cron',s.dataset.set,s.value);run();}
+  });
+  setTimeout(run,30);
+  return root;
+}
+
+/* ---------- LOREM / MOCK-DATA GENERATOR ----------
+   Classic placeholder text (words / sentences / paragraphs) PLUS realistic
+   mock test data: names, emails, addresses, phone numbers, UUIDs, dates and
+   structured person records (JSON). All generated locally & deterministically
+   random per click. */
+const LOREM_WORDS='lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum'.split(' ');
+const MOCK_DATA={
+  first:'James Mary John Patricia Robert Jennifer Michael Linda David Elizabeth William Barbara Richard Susan Joseph Jessica Thomas Sarah Charles Karen Daniel Nancy Matthew Lisa Anthony Margaret Mark Sandra Donald Ashley Liam Olivia Noah Emma Ava Sophia Isabella Mia Amir Priya Wei Yuki Omar Fatima Diego Lucia Hiro Anya'.split(' '),
+  last:'Smith Johnson Williams Brown Jones Garcia Miller Davis Rodriguez Martinez Hernandez Lopez Gonzalez Wilson Anderson Thomas Taylor Moore Jackson Martin Lee Perez Thompson White Harris Sanchez Clark Lewis Robinson Walker Young Allen King Wright Scott Torres Nguyen Hill Flores Patel Kim Chen Khan Singh Müller Rossi Sato Costa'.split(' '),
+  domain:'example.com test.org mail.dev demo.net inbox.io sample.co acme.com mailbox.app webmail.org sandbox.dev'.split(' '),
+  street:'Main Oak Pine Maple Cedar Elm Washington Lake Hill Park View Sunset River Forest Spring Birch Walnut Highland Meadow Ridge'.split(' '),
+  streetType:'St Ave Rd Blvd Ln Dr Way Ct Pl Ter'.split(' '),
+  city:'Springfield Riverside Franklin Greenville Bristol Clinton Fairview Salem Madison Georgetown Arlington Ashland Burlington Manchester Oxford Auburn Dover Newport Kingston Milton'.split(' '),
+  state:'CA TX NY FL IL PA OH GA NC MI WA AZ MA TN CO OR'.split(' '),
+  tld:'com org net io co dev app'.split(' ')
+};
+function renderLorem(){
+  const st=Store.getTool('lorem');
+  const root=el('section','tool');root.dataset.tool='lorem';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn primary" data-act="gen"><i class="fa-solid fa-rotate"></i><span class="lbl">Generate</span></button>
+      <div class="sep"></div>
+      <span class="field">Type
+        <select data-set="kind">
+          <optgroup label="Text">
+            <option value="paragraphs">Paragraphs</option>
+            <option value="sentences">Sentences</option>
+            <option value="words">Words</option>
+          </optgroup>
+          <optgroup label="Mock data">
+            <option value="names">Full names</option>
+            <option value="emails">Email addresses</option>
+            <option value="usernames">Usernames</option>
+            <option value="phones">Phone numbers</option>
+            <option value="addresses">Street addresses</option>
+            <option value="uuids">UUIDs (v4)</option>
+            <option value="dates">Random dates</option>
+            <option value="people">People (JSON)</option>
+          </optgroup>
+        </select>
+      </span>
+      <span class="field">Count <input type="number" data-set="count" min="1" max="500" style="width:74px"></span>
+      <span class="field" data-slot="loremopt"><span class="switch" data-toggle="startLorem"></span> Start with "Lorem ipsum"</span>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="copy" title="Copy all"><i class="fa-solid fa-copy"></i><span class="lbl">Copy</span></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="tool-body tool-body--narrow">
+      <div class="md-preview" style="position:static" data-slot="output"></div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <span class="status-stat"><i class="fa-solid fa-keyboard"></i> <b data-slot="chars">0</b> chars</span>
+      <span class="status-stat"><i class="fa-solid fa-font"></i> <b data-slot="words">0</b> words</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const out=$('[data-slot=output]',root);
+  const setStatus=makeStatusSetter(root);
+  let text='';
+  $('[data-set=kind]',root).value=st.kind;$('[data-set=count]',root).value=st.count;
+  if(st.startLorem)$('[data-toggle=startLorem]',root).classList.add('on');
+  const rnd=n=>Math.floor(Math.random()*n);
+  const pick=a=>a[rnd(a.length)];
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  function words(n){const w=[];for(let i=0;i<n;i++)w.push(LOREM_WORDS[rnd(LOREM_WORDS.length)]);return w;}
+  function sentence(){const n=6+rnd(10);return cap(words(n).join(' '))+'.';}
+  function paragraph(){const n=3+rnd(4);let s=[];for(let i=0;i<n;i++)s.push(sentence());return s.join(' ');}
+  const TEXT_KINDS=['paragraphs','sentences','words'];
+
+  // ----- mock-data atoms -----
+  function fullName(){return pick(MOCK_DATA.first)+' '+pick(MOCK_DATA.last);}
+  function username(f,l){return (f||pick(MOCK_DATA.first)).toLowerCase()+'.'+(l||pick(MOCK_DATA.last)).toLowerCase()+(rnd(90)+10);}
+  function email(f,l){return (f||pick(MOCK_DATA.first)).toLowerCase()+'.'+(l||pick(MOCK_DATA.last)).toLowerCase()+(rnd(900)+100>500?rnd(99):'')+'@'+pick(MOCK_DATA.domain);}
+  function phone(){return `+1 (${rnd(800)+200}) ${String(rnd(900)+100)}-${String(rnd(9000)+1000)}`;}
+  function address(){return `${rnd(9899)+100} ${pick(MOCK_DATA.street)} ${pick(MOCK_DATA.streetType)}, ${pick(MOCK_DATA.city)}, ${pick(MOCK_DATA.state)} ${String(rnd(90000)+10000)}`;}
+  function randDate(){const start=Date.UTC(1970,0,1),end=Date.UTC(2035,0,1);return new Date(start+Math.random()*(end-start)).toISOString().slice(0,10);}
+  function person(){const f=pick(MOCK_DATA.first),l=pick(MOCK_DATA.last);
+    return {id:uuidV4(),name:`${f} ${l}`,email:email(f,l),username:username(f,l),phone:phone(),address:address(),birthdate:randDate()};}
+
+  // build an array of `n` simple strings for the chosen kind
+  function lines(kind,n){
+    const fns={names:fullName,emails:()=>email(),usernames:()=>username(),phones:phone,addresses:address,uuids:uuidV4,dates:randDate};
+    const fn=fns[kind];const out=[];for(let i=0;i<n;i++)out.push(fn());return out;
+  }
+
+  function gen(){
+    const cfg=Store.getTool('lorem');const kind=cfg.kind;
+    const max=TEXT_KINDS.includes(kind)?100:500;
+    const n=Math.min(max,Math.max(1,cfg.count|0||1));
+    // toggle the lorem-only option's visibility
+    $('[data-slot=loremopt]',root).style.display=TEXT_KINDS.includes(kind)?'':'none';
+
+    if(TEXT_KINDS.includes(kind)){
+      let parts=[];
+      if(kind==='words'){text=cap(words(n).join(' '))+'.';}
+      else if(kind==='sentences'){for(let i=0;i<n;i++)parts.push(sentence());text=parts.join(' ');}
+      else{for(let i=0;i<n;i++)parts.push(paragraph());text=parts.join('\n\n');}
+      if(cfg.startLorem){
+        text=text.replace(/^\S+\s+\S+/,'Lorem ipsum');
+        if(!/^Lorem ipsum/.test(text))text='Lorem ipsum '+text;
+      }
+      out.innerHTML=text.split('\n\n').map(p=>`<p>${esc(p)}</p>`).join('');
+      $('[data-slot=info]',root).innerHTML='<i class="fa-solid fa-paragraph"></i> '+kind;
+    }else if(kind==='people'){
+      const arr=[];for(let i=0;i<n;i++)arr.push(person());
+      text=JSON.stringify(arr,null,2);
+      out.innerHTML=`<pre class="code-output copyable" style="position:static;white-space:pre-wrap" title="Click to copy">${esc(text)}</pre>`;
+      $('[data-slot=info]',root).innerHTML='<i class="fa-solid fa-users"></i> JSON';
+    }else{
+      const arr=lines(kind,n);
+      text=arr.join('\n');
+      out.innerHTML='<div class="gen-list">'+arr.map(v=>`<div class="gen-row copyable" data-copy="${esc(v)}" title="Click to copy">${esc(v)}</div>`).join('')+'</div>';
+      $('[data-slot=info]',root).innerHTML='<i class="fa-solid fa-table-list"></i> '+kind;
+    }
+    $('[data-slot=chars]',root).textContent=text.length;
+    $('[data-slot=words]',root).textContent=text.trim()?text.trim().split(/\s+/).length:0;
+    setStatus('ok',n+' '+kind);
+    Store.patch('lorem','output',text);
+  }
+  out.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c){copy(c.dataset.copy);return;}const pre=e.target.closest('pre.copyable');if(pre)copy(text);});
+  root.addEventListener('click',e=>{
+    const tog=e.target.closest('[data-toggle]');
+    if(tog){tog.classList.toggle('on');Store.patch('lorem',tog.dataset.toggle,tog.classList.contains('on'));gen();return;}
+    const b=e.target.closest('[data-act]');if(!b)return;
+    if(b.dataset.act==='gen')gen();
+    else if(b.dataset.act==='copy')copy(text);
+    else if(b.dataset.act==='clear'){text='';out.innerHTML='';$('[data-slot=chars]',root).textContent='0';$('[data-slot=words]',root).textContent='0';setStatus('idle','Idle');$('[data-slot=info]',root).innerHTML='';}
+  });
+  root.addEventListener('change',e=>{const s=e.target.closest('[data-set]');if(s){Store.patch('lorem',s.dataset.set,s.dataset.set==='count'?+s.value:s.value);gen();}});
+  setTimeout(gen,30);
+  return root;
+}
+
+/* ---------- MARKDOWN PREVIEW ----------
+   Lightweight, dependency-free Markdown → HTML renderer (headings, lists,
+   code, blockquotes, tables, links, emphasis) with live preview / HTML source. */
+function mdToHtml(src){
+  const escapeHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // extract fenced code blocks first
+  const blocks=[];
+  src=src.replace(/```([\w-]*)\n([\s\S]*?)```/g,(_,lang,code)=>{blocks.push(`<pre><code>${escapeHtml(code.replace(/\n$/,''))}</code></pre>`);return `\u0000B${blocks.length-1}\u0000`;});
+  const lines=src.split('\n');
+  let html='',i=0;
+  const inline=t=>{
+    t=escapeHtml(t);
+    t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+    t=t.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,'<img alt="$1" src="$2">');
+    t=t.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/__([^_]+)__/g,'<strong>$1</strong>');
+    t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/_([^_]+)_/g,'<em>$1</em>');
+    t=t.replace(/~~([^~]+)~~/g,'<del>$1</del>');
+    return t;
+  };
+  while(i<lines.length){
+    let line=lines[i];
+    if(/^\u0000B\d+\u0000$/.test(line.trim())){html+=blocks[+line.trim().match(/\d+/)[0]];i++;continue;}
+    if(!line.trim()){i++;continue;}
+    let m;
+    if((m=/^(#{1,6})\s+(.*)$/.exec(line))){html+=`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`;i++;continue;}
+    if(/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(line)){html+='<hr>';i++;continue;}
+    if(/^>\s?/.test(line)){let buf=[];while(i<lines.length&&/^>\s?/.test(lines[i])){buf.push(lines[i].replace(/^>\s?/,''));i++;}html+=`<blockquote>${inline(buf.join(' '))}</blockquote>`;continue;}
+    // table
+    if(/\|/.test(line)&&i+1<lines.length&&/^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1])){
+      const head=line.split('|').map(s=>s.trim()).filter((s,idx,arr)=>!(idx===0&&!s)&&!(idx===arr.length-1&&!s));
+      i+=2;let rows=[];
+      while(i<lines.length&&/\|/.test(lines[i])&&lines[i].trim()){rows.push(lines[i].split('|').map(s=>s.trim()).filter((s,idx,arr)=>!(idx===0&&!s)&&!(idx===arr.length-1&&!s)));i++;}
+      html+=`<table><thead><tr>${head.map(h=>`<th>${inline(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      continue;
+    }
+    // lists
+    if(/^\s*[-*+]\s+/.test(line)){let buf=[];while(i<lines.length&&/^\s*[-*+]\s+/.test(lines[i])){buf.push(lines[i].replace(/^\s*[-*+]\s+/,''));i++;}html+=`<ul>${buf.map(b=>`<li>${inline(b)}</li>`).join('')}</ul>`;continue;}
+    if(/^\s*\d+\.\s+/.test(line)){let buf=[];while(i<lines.length&&/^\s*\d+\.\s+/.test(lines[i])){buf.push(lines[i].replace(/^\s*\d+\.\s+/,''));i++;}html+=`<ol>${buf.map(b=>`<li>${inline(b)}</li>`).join('')}</ol>`;continue;}
+    // paragraph (merge consecutive non-blank lines)
+    let buf=[line];i++;
+    while(i<lines.length&&lines[i].trim()&&!/^(#{1,6}\s|>\s?|\s*[-*+]\s|\s*\d+\.\s|```)/.test(lines[i])&&!/^\u0000B\d+\u0000$/.test(lines[i].trim())){buf.push(lines[i]);i++;}
+    html+=`<p>${inline(buf.join(' '))}</p>`;
+  }
+  return html;
+}
+function renderMarkdown(){
+  const st=Store.getTool('md');
+  const root=el('section','tool');root.dataset.tool='md';
+  root.innerHTML=`
+    <div class="toolbar">
+      <button class="btn sm toggle" data-view="preview"><i class="fa-solid fa-eye"></i><span class="lbl">Preview</span></button>
+      <button class="btn sm toggle" data-view="html"><i class="fa-solid fa-code"></i><span class="lbl">HTML</span></button>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="sample"><i class="fa-solid fa-flask"></i><span class="lbl">Sample</span></button>
+      <button class="btn ghost sm" data-act="copy" title="Copy HTML"><i class="fa-solid fa-copy"></i><span class="lbl">Copy HTML</span></button>
+      <button class="btn ghost sm danger" data-act="clear" title="Clear"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="editor-grid">
+      <div class="pane">
+        <div class="pane-head"><span class="dot"></span>Markdown<span class="spacer"></span><span class="mini" data-mini="in"></span></div>
+        <div class="pane-body" data-slot="input"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span class="dot out"></span><span data-outlabel>Preview</span><span class="spacer"></span></div>
+        <div class="pane-body">
+          <div class="md-preview" data-slot="preview"></div>
+          <pre class="code-output copyable" data-slot="html" style="display:none" title="Click to copy"></pre>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span class="status-pill idle" data-slot="status"><i class="fa-solid fa-circle-notch"></i> Idle</span>
+      <span class="status-stat"><i class="fa-solid fa-keyboard"></i> <b data-slot="chars">0</b> chars</span>
+      <div class="spacer"></div>
+      <span class="status-stat" data-slot="info"></span>
+    </div>`;
+  const preview=$('[data-slot=preview]',root), htmlOut=$('[data-slot=html]',root), outLabel=$('[data-outlabel]',root);
+  const setStatus=makeStatusSetter(root);
+  let lastHtml='';
+  const input=buildCodeInput(st.input,v=>{Store.patch('md','input',v);runDeb();},'# Hello DevForge\n\nType **Markdown** here…');
+  $('[data-slot=input]',root).appendChild(input);
+  const runDeb=debounce(()=>run(),180);
+  function syncView(){
+    const v=Store.getTool('md').view;
+    $$('[data-view]',root).forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+    preview.style.display=v==='preview'?'':'none';
+    htmlOut.style.display=v==='html'?'':'none';
+    outLabel.textContent=v==='preview'?'Preview':'HTML source';
+  }
+  function run(){
+    const cfg=Store.getTool('md');const src=cfg.input;
+    $('[data-slot=chars]',root).textContent=src.length;
+    $('[data-mini=in]',root).textContent=(src?src.split('\n').length:0)+' ln';
+    if(!src.trim()){preview.innerHTML='';htmlOut.textContent='';lastHtml='';setStatus('idle','Idle');$('[data-slot=info]',root).innerHTML='';return;}
+    try{
+      lastHtml=mdToHtml(src);
+      preview.innerHTML=lastHtml;
+      htmlOut.textContent=lastHtml;
+      setStatus('ok','Rendered');
+      $('[data-slot=info]',root).innerHTML='<i class="fa-brands fa-markdown"></i> Markdown';
+    }catch(e){setStatus('err','Render failed — '+e.message);}
+  }
+  root.addEventListener('click',e=>{
+    const v=e.target.closest('[data-view]');
+    if(v){Store.patch('md','view',v.dataset.view);syncView();return;}
+    const b=e.target.closest('[data-act]');if(!b)return;const cfg=Store.getTool('md');
+    if(b.dataset.act==='copy')copy(lastHtml);
+    else if(b.dataset.act==='clear'){Store.patch('md','input','');input._ta.value='';input._upd();run();}
+    else if(b.dataset.act==='sample'){const S=MD_SAMPLE;Store.patch('md','input',S);input._ta.value=S;input._upd();run();}
+  });
+  syncView();
+  setTimeout(run,30);
+  return root;
+}
+
 /* ============================================================
    SAMPLES
    ============================================================ */
@@ -3234,6 +4652,35 @@ const SQL_SAMPLE=`select u.id, u.name, count(o.id) as order_count from users u l
 const CSS_SAMPLE=`/* DevForge sample stylesheet */
 .card{display:flex;gap:12px;padding:16px;border-radius:10px;background:#13171c;color:#eef1f5}.card .title,.card h2{font-size:18px;font-weight:600;margin:0}@media (max-width:600px){.card{flex-direction:column;padding:10px}}`;
 
+const MD_SAMPLE=`# DevForge Markdown
+
+A **lightweight**, _dependency-free_ Markdown renderer.
+
+## Features
+- Headings, **bold**, *italic*, ~~strikethrough~~
+- \`inline code\` and fenced blocks
+- [Links](https://example.com) and lists
+
+\`\`\`js
+function hello(name) {
+  return "Hi " + name;
+}
+\`\`\`
+
+> Everything runs 100% locally in your browser.
+
+| Tool | Type |
+| ---- | ---- |
+| JSON | Formatter |
+| Regex | Tester |
+
+1. First item
+2. Second item
+
+---
+
+Made with ⚡ by DevForge.`;
+
 /* ============================================================
    APP CONTROLLER (UI layer)
    ------------------------------------------------------------
@@ -3242,13 +4689,16 @@ const CSS_SAMPLE=`/* DevForge sample stylesheet */
    clean separation: state changes flow one direction → store → App.render.
    ============================================================ */
 const App = (()=>{
-  const renderers={json:renderJSON,yaml:renderYAML,xml:renderXML,toml:renderTOML,ini:renderINI,base64:renderBase64,jwt:renderJWT,hash:renderHash,sql:renderSQL,css:renderCSS};
+  const renderers={json:renderJSON,yaml:renderYAML,xml:renderXML,toml:renderTOML,ini:renderINI,base64:renderBase64,jwt:renderJWT,hash:renderHash,sql:renderSQL,css:renderCSS,uuid:renderUUID,ts:renderTimestamp,color:renderColor,regex:renderRegex,diff:renderDiff,cron:renderCron,lorem:renderLorem,md:renderMarkdown};
   let mountedTool=null; // which tool's DOM is currently mounted
 
   // Pure-ish render: rebuild the main view + chrome for the active tool.
   function paint(){
     const name=Store.getActive();
     const main=$('#main');
+    // run any teardown the outgoing tool registered (e.g. timers) to avoid leaks
+    const prev=main.firstElementChild;
+    if(prev&&typeof prev._cleanup==='function'){try{prev._cleanup();}catch(e){console.warn('cleanup failed',e);}}
     main.innerHTML='';
     const node=renderers[name]();
     node.classList.add('active'); // every tool section becomes visible once mounted
@@ -3261,6 +4711,10 @@ const App = (()=>{
     $('#crumb-sub').textContent=t.sub;
     $('#crumb-icon').className=(t.iconStyle||'fa-solid')+' '+t.icon;
     document.title='DevForge — '+t.title;
+    // a11y: give icon-only buttons an accessible name from their title attribute
+    $$('.tool.active button',main).forEach(b=>{
+      if(!b.getAttribute('aria-label')&&!b.textContent.trim()&&b.title)b.setAttribute('aria-label',b.title);
+    });
   }
 
   return {
@@ -3276,11 +4730,29 @@ const App = (()=>{
 // Navigation → request a tool switch through state (store drives the re-render).
 // Make nav items keyboard-accessible (focusable + Enter/Space activation).
 $$('.nav-item').forEach(it=>{it.setAttribute('role','button');it.tabIndex=0;});
-$('#nav').addEventListener('click',e=>{const it=e.target.closest('.nav-item');if(it)App.show(it.dataset.tool);});
+$('#nav').addEventListener('click',e=>{const it=e.target.closest('.nav-item');if(it){App.show(it.dataset.tool);closeSidebar();}});
 $('#nav').addEventListener('keydown',e=>{
   const it=e.target.closest('.nav-item');if(!it)return;
   if(e.key==='Enter'||e.key===' '){e.preventDefault();App.show(it.dataset.tool);}
 });
+
+/* ---------- Mobile off-canvas sidebar ---------- */
+const sidebarEl=$('.sidebar'), navToggle=$('#nav-toggle'), backdrop=$('#sidebar-backdrop');
+function openSidebar(){
+  sidebarEl.classList.add('is-open');
+  backdrop.hidden=false;
+  navToggle.setAttribute('aria-expanded','true');
+}
+function closeSidebar(){
+  if(!sidebarEl.classList.contains('is-open'))return;
+  sidebarEl.classList.remove('is-open');
+  backdrop.hidden=true;
+  navToggle.setAttribute('aria-expanded','false');
+}
+navToggle.addEventListener('click',()=>{
+  sidebarEl.classList.contains('is-open')?closeSidebar():openSidebar();
+});
+backdrop.addEventListener('click',closeSidebar);
 
 // Open file → load into active tool's input, then re-render to reflect it.
 $('#open-file').addEventListener('click',()=>$('#file-input').click());
@@ -3297,8 +4769,141 @@ $('#file-input').addEventListener('change',e=>{
   e.target.value='';
 });
 
+/* ============================================================
+   COMMAND PALETTE — fuzzy search across tools + global actions
+   ============================================================ */
+const Palette=(()=>{
+  const overlay=$('#cmdk-overlay'), input=$('#cmdk-input'), list=$('#cmdk-list');
+  let items=[], filtered=[], active=0;
+
+  // Tool entries (switch the active tool)
+  const toolCmds=Store.tools.map(t=>({
+    type:'tool', id:t, name:TOOLS[t].title, sub:TOOLS[t].sub.replace(/^—\s*/,''),
+    icon:TOOLS[t].icon, iconStyle:TOOLS[t].iconStyle, run:()=>App.show(t)
+  }));
+  // Global action entries
+  const actionCmds=[
+    {type:'action',id:'open',name:'Open File…',sub:'Load a file into the editor',icon:'fa-folder-open',run:()=>$('#open-file').click()},
+    {type:'action',id:'share',name:'Copy Share Link',sub:'Shareable URL of current content',icon:'fa-share-nodes',run:()=>$('#share-link').click()},
+    {type:'action',id:'run',name:'Run Primary Action',sub:'Format / decode / hash the current tool',icon:'fa-bolt',run:()=>{const b=$('.tool.active .btn.primary');if(b)b.click();}},
+    {type:'action',id:'clear',name:'Clear Input',sub:'Empty the active tool input',icon:'fa-trash',run:()=>{const b=$('.tool.active [data-act=clear]');if(b)b.click();else toast('Nothing to clear','info');}},
+    {type:'action',id:'help',name:'Keyboard Shortcuts',sub:'Show the help dialog',icon:'fa-keyboard',run:()=>HelpModal.open()},
+  ];
+  items=[...toolCmds,...actionCmds];
+
+  function score(q,cmd){
+    if(!q)return 1;
+    const hay=(cmd.name+' '+cmd.sub+' '+cmd.id).toLowerCase();
+    q=q.toLowerCase();
+    if(hay.includes(q))return 2;
+    // simple subsequence (fuzzy) match
+    let i=0;for(const ch of hay){if(ch===q[i])i++;if(i===q.length)return 1;}
+    return 0;
+  }
+  function render(){
+    const q=input.value.trim();
+    filtered=items.map(c=>({c,s:score(q,c)})).filter(o=>o.s>0)
+      .sort((a,b)=>b.s-a.s).map(o=>o.c);
+    active=0;
+    if(!filtered.length){list.innerHTML='<div class="cmdk__empty">No matching commands</div>';return;}
+    const tools=filtered.filter(c=>c.type==='tool');
+    const acts=filtered.filter(c=>c.type==='action');
+    let html='';
+    const itemHtml=(c,idx)=>`<div class="cmdk__item${idx===active?' is-active':''}" role="option" data-idx="${idx}" aria-selected="${idx===active}">
+        <span class="ico"><i class="${c.iconStyle||'fa-solid'} ${c.icon}"></i></span>
+        <span class="name">${esc(c.name)}</span>
+        <span class="sub">${esc(c.sub||'')}</span>
+      </div>`;
+    let idx=0;
+    if(tools.length){html+='<div class="cmdk__group">Tools</div>';tools.forEach(c=>html+=itemHtml(c,idx++));}
+    if(acts.length){html+='<div class="cmdk__group">Actions</div>';acts.forEach(c=>html+=itemHtml(c,idx++));}
+    list.innerHTML=html;
+  }
+  function setActive(i){
+    active=(i+filtered.length)%filtered.length;
+    $$('.cmdk__item',list).forEach((el,k)=>{const on=k===active;el.classList.toggle('is-active',on);el.setAttribute('aria-selected',on);if(on)el.scrollIntoView({block:'nearest'});});
+  }
+  function execute(i){
+    const cmd=filtered[i];if(!cmd)return;
+    close();
+    // defer so overlay close doesn't swallow focus changes
+    setTimeout(()=>cmd.run(),0);
+  }
+  function open(){overlay.hidden=false;input.value='';render();input.focus();}
+  function close(){overlay.hidden=true;}
+  function isOpen(){return !overlay.hidden;}
+  function toggle(){isOpen()?close():open();}
+
+  input.addEventListener('input',render);
+  input.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){e.preventDefault();setActive(active+1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();setActive(active-1);}
+    else if(e.key==='Enter'){e.preventDefault();execute(active);}
+  });
+  list.addEventListener('click',e=>{const it=e.target.closest('.cmdk__item');if(it)execute(+it.dataset.idx);});
+  overlay.addEventListener('mousedown',e=>{if(e.target===overlay)close();});
+
+  return {open,close,toggle,isOpen};
+})();
+$('#cmd-palette-btn').addEventListener('click',()=>Palette.open());
+
+/* ============================================================
+   HELP / KEYBOARD SHORTCUTS MODAL
+   ============================================================ */
+const HelpModal=(()=>{
+  const overlay=$('#help-overlay'), body=$('#help-body');
+  const isMac=/Mac|iPhone|iPad/.test(navigator.platform);
+  const mod=isMac?'⌘':'Ctrl';
+  const shortcuts=[
+    {keys:[mod,'K'],desc:'Open command palette'},
+    {keys:[mod,'↵'],desc:'Run primary action'},
+    {keys:['?'],desc:'Show this help'},
+    {keys:['Esc'],desc:'Close dialogs / menu'},
+    {keys:[isMac?'⌘':'Alt','1–0'],desc:'Switch to the first 10 tools'},
+    {keys:['Tab'],desc:'Insert spaces in editor'},
+  ];
+  const tips=[
+    'Press ⌘/Ctrl+K to jump to any of the 18 tools or run an action.',
+    'Drag & drop a file onto any editor to load it.',
+    'Click any formatted output to copy it instantly.',
+    'Use Share to copy a link that restores your input.',
+    'All processing is 100% local — nothing leaves your browser.',
+  ];
+  function build(){
+    let html='<div class="help-sec-title">Shortcuts</div><div class="kbd-grid">';
+    shortcuts.forEach(s=>{
+      html+=`<div class="kbd-row"><span>${esc(s.desc)}</span><span class="keys">${s.keys.map(k=>`<kbd>${esc(k)}</kbd>`).join('')}</span></div>`;
+    });
+    html+='</div><div class="help-sec-title">Tips</div><ul style="margin:0;padding-left:18px;color:var(--txt-1);font-size:var(--fs-sm);line-height:1.9">';
+    tips.forEach(t=>html+=`<li>${esc(t)}</li>`);
+    html+='</ul>';
+    body.innerHTML=html;
+  }
+  function open(){build();overlay.hidden=false;$('#help-close').focus();}
+  function close(){overlay.hidden=true;}
+  function isOpen(){return !overlay.hidden;}
+  function toggle(){isOpen()?close():open();}
+  $('#help-close').addEventListener('click',close);
+  overlay.addEventListener('mousedown',e=>{if(e.target===overlay)close();});
+  return {open,close,toggle,isOpen};
+})();
+$('#help-btn').addEventListener('click',()=>HelpModal.open());
+
 // keyboard shortcuts
+const isTypingTarget=el=>el&&(/^(input|textarea|select)$/i.test(el.tagName)||el.isContentEditable);
 document.addEventListener('keydown',e=>{
+  // Command palette: Ctrl/Cmd+K
+  if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();Palette.toggle();return;}
+  // Help / shortcuts: "?" (not while typing)
+  if(e.key==='?'&&!isTypingTarget(e.target)){e.preventDefault();HelpModal.toggle();return;}
+  // Escape closes overlays / drawer
+  if(e.key==='Escape'){
+    if(Palette.isOpen()){Palette.close();return;}
+    if(HelpModal.isOpen()){HelpModal.close();return;}
+    closeSidebar();
+  }
+  // Don't fire tool shortcuts while an overlay dialog is open.
+  if(Palette.isOpen()||HelpModal.isOpen())return;
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){
     // Trigger the active tool's PRIMARY action (Format/Run/Decode/Hash/…).
     // Targeting `.btn.primary` works for every tool, not just formatters.
@@ -3308,6 +4913,9 @@ document.addEventListener('keydown',e=>{
     const map={1:'json',2:'yaml',3:'xml',4:'toml',5:'ini',6:'base64',7:'jwt',8:'hash',9:'sql',0:'css'};App.show(map[e.key]);e.preventDefault();
   }
 });
+
+// Close drawer automatically when growing back to desktop width.
+window.addEventListener('resize',debounce(()=>{if(window.innerWidth>820)closeSidebar();},150));
 
 /* Global click-to-copy: clicking any formatted output pane copies its text.
    One delegated handler covers every tool's output (consistent UX) without
@@ -3327,18 +4935,33 @@ document.addEventListener('click',e=>{
    Format: #s=<base64(JSON)>  (Unicode-safe base64)
    Reuses the shared b64encodeUtf8/b64decodeUtf8 helpers (no duplicate impls).
    ============================================================ */
+/* Per-tool list of state keys that are worth restoring from a share link.
+   Tools whose entire output is regenerated (uuid, lorem) are intentionally
+   omitted — there's no meaningful "input" to share. */
+const SHARE_FIELDS={
+  json:['input'],yaml:['input'],xml:['input'],toml:['input'],ini:['input','inputB','mode'],
+  base64:['input','mode','kind'],jwt:['input'],hash:['input','algo'],sql:['input'],css:['input'],
+  ts:['input'],color:['input'],regex:['pattern','flags','input','replace','mode'],
+  diff:['inputA','inputB','ignoreCase','ignoreWs'],cron:['input'],md:['input']
+};
+function shareableState(tool){
+  const cfg=Store.getTool(tool);const fields=SHARE_FIELDS[tool]||['input'];
+  const data={};fields.forEach(k=>{if(cfg[k]!==undefined&&cfg[k]!=='')data[k]=cfg[k];});
+  return data;
+}
+function hasShareContent(tool){
+  const data=shareableState(tool);
+  // require at least one non-empty primary text field
+  return !!(data.input||data.inputA||data.inputB||data.pattern);
+}
 function buildShareHash(){
   const tool=Store.getActive();
-  const cfg=Store.getTool(tool);
-  const payload={t:tool,i:cfg.input||''};
-  if(tool==='ini'&&cfg.mode==='diff'){payload.b=cfg.inputB||'';payload.m='diff';}
-  return 's='+b64encodeUtf8(JSON.stringify(payload));
+  return 's='+b64encodeUtf8(JSON.stringify({t:tool,d:shareableState(tool)}));
 }
 function shareLink(){
   const tool=Store.getActive();
-  if(!Store.getTool(tool).input){toast('Nothing to share — input is empty','info');return;}
-  const hash=buildShareHash();
-  const url=location.origin+location.pathname+location.search+'#'+hash;
+  if(!hasShareContent(tool)){toast('Nothing to share — add some input first','info');return;}
+  const url=location.origin+location.pathname+location.search+'#'+buildShareHash();
   if(url.length>16000){toast('Content too large to share via link','err');return;}
   history.replaceState(null,'',url);
   copy(url); // copy() shows its own success/fallback toast
@@ -3350,8 +4973,13 @@ function loadFromHash(){
   try{
     const data=JSON.parse(b64decodeUtf8(m[1]));
     if(!data||!data.t||!Store.tools.includes(data.t))return false;
-    Store.update(data.t,{input:data.i||''});
-    if(data.t==='ini'&&data.m==='diff')Store.update('ini',{inputB:data.b||'',mode:'diff'});
+    // New format: {t,d:{...fields}} — Legacy format: {t,i,b,m}
+    if(data.d&&typeof data.d==='object'){
+      Store.update(data.t,data.d);
+    }else{
+      Store.update(data.t,{input:data.i||''});
+      if(data.t==='ini'&&data.m==='diff')Store.update('ini',{inputB:data.b||'',mode:'diff'});
+    }
     Store.setActive(data.t);
     toast('Loaded shared content','ok');
     return true;

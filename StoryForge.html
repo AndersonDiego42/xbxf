@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoryForge AI — Story Generator Suite</title>
+<meta name="description" content="AI-powered creative writing suite: story, character, dialogue, world & plot generators. Works with OpenRouter, Gemini and Groq.">
+<meta name="theme-color" content="#09090b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+============================================================ */
+:root{
+  /* surfaces */
+  --bg-0:#09090b; --bg-1:#0e0e11; --bg-2:#141418; --bg-3:#1a1a20;
+  --bg-hover:#1e1e26; --bg-active:#24242e;
+  /* borders */
+  --bd-0:#1c1c22; --bd-1:#26262e; --bd-2:#34343e; --bd-focus:#6366f1;
+  /* text */
+  --tx-0:#f4f4f5; --tx-1:#c8c8d0; --tx-2:#8b8b96; --tx-3:#5c5c66;
+  /* brand */
+  --ac:#8b7cf6; --ac-2:#6366f1; --ac-soft:rgba(139,124,246,.12); --ac-bd:rgba(139,124,246,.35);
+  /* tool accents */
+  --c-story:#8b7cf6; --c-char:#f472b6; --c-dlg:#38bdf8; --c-world:#34d399; --c-plot:#fbbf24;
+  /* semantic */
+  --ok:#34d399; --warn:#fbbf24; --err:#f87171;
+  /* type */
+  --font:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace; --serif:'Source Serif 4',Georgia,serif;
+  --fs-xs:.6875rem; --fs-sm:.775rem; --fs-md:.85rem; --fs-lg:.95rem; --fs-xl:1.15rem; --fs-2xl:1.45rem;
+  /* space */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px; --s-8:32px;
+  /* radius */
+  --r-sm:6px; --r-md:9px; --r-lg:13px; --r-full:999px;
+  /* shadow */
+  --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 4px 16px rgba(0,0,0,.45); --sh-3:0 12px 40px rgba(0,0,0,.55);
+  --sh-glow:0 0 0 3px var(--ac-soft);
+  /* motion */
+  --ease:cubic-bezier(.4,0,.2,1); --t-fast:.15s var(--ease); --t-med:.25s var(--ease);
+  /* layout */
+  --sidebar-w:236px; --header-h:52px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg-0);color:var(--tx-0);font-size:var(--fs-md);line-height:1.55;overflow-x:hidden}
+::selection{background:var(--ac-soft);color:var(--tx-0)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd-2);border-radius:99px;border:2px solid var(--bg-0)}
+::-webkit-scrollbar-thumb:hover{background:var(--tx-3)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--bd-focus);outline-offset:2px;border-radius:var(--r-sm)}
+body.modal-open{overflow:hidden}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+input,select,textarea{font-family:inherit;font-size:var(--fs-md);color:var(--tx-0)}
+svg{flex-shrink:0}
+
+/* ============================================================
+   APP SHELL
+============================================================ */
+#app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+
+/* ---- Sidebar ---- */
+#sidebar{background:var(--bg-1);border-right:1px solid var(--bd-0);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bd-0)}
+.brand-logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--ac) 0%,#4f46e5 100%);display:grid;place-items:center;box-shadow:0 2px 12px rgba(139,124,246,.35)}
+.brand-name{font-weight:700;font-size:var(--fs-lg);letter-spacing:-.02em}
+.brand-name em{font-style:normal;color:var(--ac)}
+.brand-tag{font-size:var(--fs-xs);color:var(--tx-3);display:block;margin-top:-2px}
+.nav{flex:1;overflow-y:auto;padding:10px 8px}
+.nav-label{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--tx-3);padding:14px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:var(--r-md);color:var(--tx-2);font-size:var(--fs-md);font-weight:500;transition:background var(--t-fast),color var(--t-fast);position:relative;text-align:left}
+.nav-item:hover{background:var(--bg-hover);color:var(--tx-0)}
+.nav-item.active{background:var(--bg-active);color:var(--tx-0)}
+.nav-item.active::before{content:'';position:absolute;left:-8px;top:20%;bottom:20%;width:3px;border-radius:99px;background:var(--item-c,var(--ac))}
+.nav-dot{width:7px;height:7px;border-radius:99px;background:var(--item-c,var(--tx-3));box-shadow:0 0 8px var(--item-c,transparent);flex-shrink:0}
+.nav-kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--tx-3);background:var(--bg-3);border:1px solid var(--bd-1);border-radius:4px;padding:1px 5px}
+.sidebar-foot{padding:10px 12px;border-top:1px solid var(--bd-0)}
+.provider-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-2);border:1px solid var(--bd-1);border-radius:var(--r-md);font-size:var(--fs-sm);cursor:pointer;transition:border-color var(--t-fast);width:100%}
+.provider-pill:hover{border-color:var(--bd-2)}
+.status-dot{width:8px;height:8px;border-radius:99px;background:var(--err);transition:background var(--t-med)}
+.status-dot.on{background:var(--ok);box-shadow:0 0 8px rgba(52,211,153,.6)}
+.provider-pill .pv-name{color:var(--tx-1);font-weight:600}
+.provider-pill .pv-model{color:var(--tx-3);font-size:var(--fs-xs);margin-left:auto;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- Main ---- */
+#main{display:flex;flex-direction:column;min-width:0}
+#topbar{height:var(--header-h);display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid var(--bd-0);background:rgba(9,9,11,.8);backdrop-filter:blur(12px);position:sticky;top:0;z-index:40}
+#menu-btn{display:none;padding:6px;border-radius:var(--r-sm);color:var(--tx-2)}
+#menu-btn:hover{background:var(--bg-hover);color:var(--tx-0)}
+.crumb{font-size:var(--fs-sm);color:var(--tx-3)}
+.crumb b{color:var(--tx-0);font-weight:600}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.stat-chip{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--tx-2);background:var(--bg-2);border:1px solid var(--bd-1);padding:4px 10px;border-radius:var(--r-full);font-family:var(--mono)}
+.stat-chip b{color:var(--tx-0)}
+#content{flex:1;padding:22px 24px 60px;max-width:1400px;width:100%;margin:0 auto}
+
+/* ============================================================
+   COMPONENTS
+============================================================ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 15px;border-radius:var(--r-md);font-size:var(--fs-md);font-weight:600;border:1px solid transparent;transition:all var(--t-fast);white-space:nowrap;user-select:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--ac),var(--ac-2));color:#fff;box-shadow:0 2px 14px rgba(99,102,241,.3)}
+.btn-primary:hover:not(:disabled){filter:brightness(1.12);box-shadow:0 4px 20px rgba(99,102,241,.45)}
+.btn-ghost{background:var(--bg-2);border-color:var(--bd-1);color:var(--tx-1)}
+.btn-ghost:hover:not(:disabled){background:var(--bg-hover);border-color:var(--bd-2);color:var(--tx-0)}
+.btn-danger{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--err)}
+.btn-danger:hover{background:rgba(248,113,113,.18)}
+.btn-sm{padding:5px 10px;font-size:var(--fs-sm)}
+.btn-icon{padding:7px;border-radius:var(--r-sm)}
+.btn-lg{padding:11px 22px;font-size:var(--fs-lg)}
+.btn .spinner{display:none}
+.btn.loading .spinner{display:inline-block}
+.btn.loading .btn-txt-icon{display:none}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:99px;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-label{font-size:var(--fs-sm);font-weight:600;color:var(--tx-1);display:flex;align-items:center;justify-content:space-between}
+.field-label .opt{color:var(--tx-3);font-weight:400;font-size:var(--fs-xs)}
+.input,.select,.textarea{background:var(--bg-2);border:1px solid var(--bd-1);border-radius:var(--r-md);padding:8px 12px;transition:border-color var(--t-fast),box-shadow var(--t-fast);width:100%;color:var(--tx-0)}
+.input::placeholder,.textarea::placeholder{color:var(--tx-3)}
+.input:hover,.select:hover,.textarea:hover{border-color:var(--bd-2)}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--bd-focus);box-shadow:var(--sh-glow)}
+.textarea{resize:vertical;min-height:70px;line-height:1.5}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8b96' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:32px;cursor:pointer}
+.select option{background:var(--bg-2)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border-radius:var(--r-full);border:1px solid var(--bd-1);background:var(--bg-2);color:var(--tx-2);font-size:var(--fs-sm);font-weight:500;transition:all var(--t-fast);user-select:none}
+.chip:hover{border-color:var(--bd-2);color:var(--tx-0);transform:translateY(-1px)}
+.chip.on{background:var(--ac-soft);border-color:var(--ac-bd);color:var(--ac)}
+.chip:active{transform:scale(.95)}
+
+/* slider */
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-val{font-family:var(--mono);font-size:var(--fs-sm);color:var(--ac);min-width:44px;text-align:right;background:var(--ac-soft);border-radius:var(--r-sm);padding:2px 6px}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:4px;background:var(--bd-1);border-radius:99px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:99px;background:var(--ac);border:3px solid var(--bg-1);box-shadow:0 0 0 1px var(--ac-bd),0 2px 6px rgba(0,0,0,.5);transition:transform var(--t-fast)}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:99px;background:var(--ac);border:3px solid var(--bg-1)}
+
+/* segmented */
+.seg{display:inline-flex;background:var(--bg-2);border:1px solid var(--bd-1);border-radius:var(--r-md);padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{padding:5px 12px;border-radius:var(--r-sm);font-size:var(--fs-sm);font-weight:500;color:var(--tx-2);transition:all var(--t-fast)}
+.seg button:hover{color:var(--tx-0)}
+.seg button.on{background:var(--bg-active);color:var(--tx-0);box-shadow:var(--sh-1)}
+
+/* card */
+.card{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);overflow:hidden}
+.card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--bd-0)}
+.card-title{font-weight:600;font-size:var(--fs-md)}
+.card-body{padding:16px}
+
+/* toast */
+#toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast{display:flex;align-items:center;gap:10px;background:var(--bg-3);border:1px solid var(--bd-2);border-radius:var(--r-md);padding:10px 15px;font-size:var(--fs-sm);font-weight:500;box-shadow:var(--sh-3);animation:toast-in .3s var(--ease);max-width:min(320px,calc(100vw - 32px));cursor:pointer}
+.toast.out{animation:toast-out .25s var(--ease) forwards}
+@keyframes toast-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@keyframes toast-out{to{opacity:0;transform:translateX(24px)}}
+.toast .t-ic{width:18px;height:18px;border-radius:99px;display:grid;place-items:center;flex-shrink:0;font-size:11px;color:#0a0a0a;font-weight:800}
+.toast.ok .t-ic{background:var(--ok)} .toast.err .t-ic{background:var(--err)} .toast.info .t-ic{background:var(--ac);color:#fff}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:100;display:grid;place-items:center;padding:20px;animation:fade .2s var(--ease)}
+@keyframes fade{from{opacity:0}}
+.modal{background:var(--bg-1);border:1px solid var(--bd-1);border-radius:var(--r-lg);width:100%;max-width:640px;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--sh-3);animation:pop .25s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(10px)}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--bd-0)}
+.modal-body{padding:20px;overflow-y:auto}
+
+/* view transitions */
+.view{display:none;animation:view-in .3s var(--ease)}
+.view.active{display:block}
+@keyframes view-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   TOOL LAYOUT
+============================================================ */
+.tool-hero{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.tool-hero-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 14%,transparent);border:1px solid color-mix(in srgb,var(--tc) 30%,transparent);color:var(--tc);flex-shrink:0}
+.tool-hero h1{font-size:var(--fs-2xl);font-weight:800;letter-spacing:-.03em;line-height:1.2}
+.tool-hero p{color:var(--tx-2);font-size:var(--fs-md);margin-top:2px;max-width:60ch}
+.tool-grid{display:grid;grid-template-columns:minmax(340px,430px) 1fr;gap:18px;align-items:start}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-grid .span-2{grid-column:span 2}
+.gen-bar{display:flex;gap:10px;margin-top:16px;align-items:center}
+.gen-bar .btn-primary{flex:1}
+.surprise-btn{color:var(--tx-2)}
+.surprise-btn:hover{color:var(--warn)}
+
+/* output panel */
+.out-panel{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);min-height:480px;display:flex;flex-direction:column;position:sticky;top:calc(var(--header-h) + 16px)}
+body.wf-active .out-panel{top:calc(var(--header-h) + 60px)} /* leave room for the sticky workflow bar */
+.out-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--bd-0);flex-wrap:wrap}
+.out-status{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--tx-2);font-weight:500}
+.pulse{width:8px;height:8px;border-radius:99px;background:var(--tx-3)}
+.pulse.live{background:var(--ok);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+.out-actions{margin-left:auto;display:flex;gap:5px}
+.out-actions .btn-icon{color:var(--tx-2)}
+.out-actions .btn-icon:hover{background:var(--bg-hover);color:var(--tx-0)}
+.out-actions .btn-icon.done{color:var(--ok)}
+.out-body{flex:1;padding:22px 26px;overflow-y:auto;max-height:calc(100vh - 190px);contain:layout paint;overscroll-behavior:contain}
+.out-empty{height:100%;min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--tx-3);text-align:center;padding:30px}
+.out-empty svg{opacity:.4}
+.out-empty .oe-title{font-weight:600;color:var(--tx-2)}
+.out-empty .oe-sub{font-size:var(--fs-sm);max-width:36ch}
+.refine-bar{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--bd-0);flex-wrap:wrap;align-items:center;animation:view-in .25s var(--ease)}
+.refine-bar .input{flex:1;min-width:160px;padding:6px 11px;font-size:var(--fs-sm)}
+.out-foot{display:flex;gap:14px;padding:8px 16px;border-top:1px solid var(--bd-0);font-family:var(--mono);font-size:var(--fs-xs);color:var(--tx-3)}
+.caret{display:inline-block;width:8px;height:1.1em;background:var(--ac);vertical-align:text-bottom;animation:blink 1s steps(2) infinite;border-radius:2px;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+/* prose (markdown output) */
+.prose{font-family:var(--serif);font-size:1.02rem;line-height:1.75;color:var(--tx-1);overflow-wrap:break-word}
+.prose h1,.prose h2,.prose h3,.prose h4{font-family:var(--font);color:var(--tx-0);letter-spacing:-.02em;margin:1.4em 0 .5em;line-height:1.3}
+.prose h1{font-size:1.5em}.prose h2{font-size:1.25em;padding-bottom:.3em;border-bottom:1px solid var(--bd-1)}.prose h3{font-size:1.08em}.prose h4{font-size:.95em;color:var(--tx-2);text-transform:uppercase;letter-spacing:.05em}
+.prose>:first-child{margin-top:0}
+.prose p{margin:.8em 0}
+.prose strong{color:var(--tx-0);font-weight:600}
+.prose em{color:var(--tx-1)}
+.prose ul,.prose ol{margin:.8em 0;padding-left:1.4em}
+.prose li{margin:.3em 0}
+.prose blockquote{border-left:3px solid var(--ac);padding:2px 0 2px 16px;margin:1em 0;color:var(--tx-2);font-style:italic;background:var(--ac-soft);border-radius:0 var(--r-sm) var(--r-sm) 0}
+.prose code{font-family:var(--mono);font-size:.85em;background:var(--bg-3);border:1px solid var(--bd-1);padding:1px 6px;border-radius:5px;color:var(--c-dlg)}
+.prose hr{border:none;border-top:1px solid var(--bd-1);margin:1.5em 0}
+.prose table{border-collapse:collapse;width:100%;margin:1em 0;font-family:var(--font);font-size:.85em}
+.prose th,.prose td{border:1px solid var(--bd-1);padding:6px 10px;text-align:left}
+.prose th{background:var(--bg-2);color:var(--tx-0)}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+.hero{position:relative;border-radius:var(--r-lg);border:1px solid var(--bd-1);padding:34px 32px;margin-bottom:20px;overflow:hidden;background:radial-gradient(ellipse 90% 130% at 15% -20%,rgba(139,124,246,.18),transparent 55%),radial-gradient(ellipse 60% 120% at 90% 120%,rgba(56,189,248,.09),transparent 55%),var(--bg-1)}
+.hero h1{font-size:1.85rem;font-weight:800;letter-spacing:-.035em;line-height:1.15}
+.hero h1 span{background:linear-gradient(90deg,var(--ac),#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--tx-2);margin-top:8px;max-width:56ch}
+.hero-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);padding:14px 16px;transition:border-color var(--t-fast),transform var(--t-fast)}
+.stat-card:hover{border-color:var(--bd-1);transform:translateY(-2px)}
+.stat-card .sc-label{font-size:var(--fs-xs);color:var(--tx-3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.stat-card .sc-val{font-size:1.5rem;font-weight:800;font-family:var(--mono);margin-top:4px;letter-spacing:-.02em}
+.stat-card .sc-sub{font-size:var(--fs-xs);color:var(--tx-3);margin-top:2px}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:24px}
+.tool-card{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);padding:18px;text-align:left;transition:all var(--t-med);position:relative;overflow:hidden;display:block;width:100%}
+.tool-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,color-mix(in srgb,var(--tc) 10%,transparent),transparent 60%);opacity:0;transition:opacity var(--t-med)}
+.tool-card:hover{border-color:color-mix(in srgb,var(--tc) 40%,var(--bd-1));transform:translateY(-3px);box-shadow:var(--sh-2)}
+.tool-card:hover::after{opacity:1}
+.tc-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 13%,transparent);color:var(--tc);margin-bottom:12px;border:1px solid color-mix(in srgb,var(--tc) 25%,transparent)}
+.tool-card h3{font-size:var(--fs-lg);font-weight:700;letter-spacing:-.01em}
+.tool-card p{color:var(--tx-2);font-size:var(--fs-sm);margin-top:4px;line-height:1.5}
+.tc-go{display:flex;align-items:center;gap:5px;color:var(--tc);font-size:var(--fs-sm);font-weight:600;margin-top:12px;opacity:.85}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
+.section-title h2{font-size:var(--fs-xl);font-weight:700;letter-spacing:-.02em}
+.section-title a,.section-title button{color:var(--ac);font-size:var(--fs-sm);font-weight:600;text-decoration:none}
+
+/* ============================================================
+   LIBRARY
+============================================================ */
+.lib-toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.lib-toolbar .input{max-width:280px}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.lib-card{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);padding:15px;cursor:pointer;transition:all var(--t-fast);display:flex;flex-direction:column;gap:8px;content-visibility:auto;contain-intrinsic-size:auto 150px}
+.lib-card:hover{border-color:var(--bd-2);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.lib-badge{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);font-weight:600;padding:3px 9px;border-radius:var(--r-full);background:color-mix(in srgb,var(--tc) 12%,transparent);color:var(--tc);width:fit-content}
+.lib-card h4{font-size:var(--fs-md);font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lib-card .lc-preview{font-size:var(--fs-sm);color:var(--tx-3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;flex:1}
+.lib-card .lc-meta{display:flex;align-items:center;justify-content:space-between;font-size:var(--fs-xs);color:var(--tx-3);font-family:var(--mono)}
+.empty-state{text-align:center;padding:70px 20px;color:var(--tx-3)}
+.empty-state svg{opacity:.35;margin-bottom:14px}
+.empty-state h3{color:var(--tx-2);font-weight:600;margin-bottom:6px}
+
+/* recent list */
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-md);cursor:pointer;transition:all var(--t-fast);text-align:left;width:100%}
+.recent-row:hover{border-color:var(--bd-2);background:var(--bg-2)}
+.recent-row .rr-dot{width:8px;height:8px;border-radius:99px;background:var(--tc)}
+.recent-row .rr-title{font-weight:500;font-size:var(--fs-md);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.recent-row .rr-time{font-size:var(--fs-xs);color:var(--tx-3);font-family:var(--mono)}
+
+/* ============================================================
+   SETTINGS
+============================================================ */
+.settings-grid{display:grid;grid-template-columns:1fr;gap:16px;max-width:760px}
+.provider-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pv-tab{border:1px solid var(--bd-1);background:var(--bg-2);border-radius:var(--r-lg);padding:14px;text-align:left;transition:all var(--t-fast);position:relative}
+.pv-tab:hover{border-color:var(--bd-2)}
+.pv-tab.on{border-color:var(--ac-bd);background:var(--ac-soft)}
+.pv-tab .pv-t-name{font-weight:700;font-size:var(--fs-md);display:flex;align-items:center;gap:8px}
+.pv-tab .pv-t-sub{font-size:var(--fs-xs);color:var(--tx-3);margin-top:3px}
+.pv-tab .check{position:absolute;top:10px;right:10px;width:16px;height:16px;border-radius:99px;background:var(--ac);display:none;place-items:center;color:#fff;font-size:9px;font-weight:800}
+.pv-tab.on .check{display:grid}
+.hint{font-size:var(--fs-xs);color:var(--tx-3);line-height:1.5}
+.hint a{color:var(--ac);text-decoration:none}
+.hint a:hover{text-decoration:underline}
+.adv-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* tool presets */
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.preset-chip{padding:6px 12px;border-radius:var(--r-md);border:1px solid var(--bd-1);background:var(--bg-2);color:var(--tx-2);font-size:var(--fs-sm);font-weight:500;transition:all var(--t-fast)}
+.preset-chip:hover{border-color:color-mix(in srgb,var(--tc) 45%,var(--bd-1));color:var(--tx-0);transform:translateY(-1px);background:color-mix(in srgb,var(--tc) 8%,var(--bg-2))}
+.preset-chip:active{transform:scale(.96)}
+.preset-chip.on{border-color:color-mix(in srgb,var(--tc) 55%,transparent);background:color-mix(in srgb,var(--tc) 12%,var(--bg-2));color:var(--tx-0)}
+/* studio expansion bar */
+.studio-bar{display:none;gap:8px;padding:10px 14px;border-top:1px solid var(--bd-0);align-items:center;flex-wrap:wrap;animation:view-in .25s var(--ease)}
+.studio-bar.show{display:flex}
+.studio-bar .studio-label{font-size:var(--fs-xs);font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px}
+.studio-bar .select{flex:1;min-width:170px;padding:6px 32px 6px 11px;font-size:var(--fs-sm)}
+/* key manager */
+.key-list{display:flex;flex-direction:column;gap:8px}
+.key-item{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--bd-1);border-radius:var(--r-md);padding:8px 10px;transition:border-color var(--t-fast)}
+.key-item:hover{border-color:var(--bd-2)}
+.key-item.cooling{border-color:rgba(248,113,113,.3)}
+.ki-prio{font-family:var(--mono);font-size:var(--fs-xs);color:var(--tx-3);width:16px;text-align:center;flex-shrink:0}
+.ki-main{flex:1;min-width:0}
+.ki-label{font-weight:600;font-size:var(--fs-sm);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ki-status{font-size:10px;font-weight:600;padding:1px 8px;border-radius:var(--r-full);border:1px solid currentColor;opacity:.9}
+.ki-key{font-family:var(--mono);font-size:var(--fs-xs);color:var(--tx-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ki-uses{font-family:var(--mono);font-size:var(--fs-xs);color:var(--tx-3);flex-shrink:0}
+.ki-actions{display:flex;gap:2px;flex-shrink:0}
+.ki-actions .btn-icon{padding:5px;color:var(--tx-3)}
+.ki-actions .btn-icon:hover{color:var(--tx-0);background:var(--bg-hover)}
+.ki-actions .btn-icon:disabled{opacity:.25}
+.key-add-row{display:grid;grid-template-columns:110px 1fr auto;gap:8px;margin-top:10px}
+@media (max-width:560px){.key-add-row{grid-template-columns:1fr}}
+/* model browser */
+.model-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.model-count{font-size:var(--fs-xs);color:var(--tx-3);font-family:var(--mono)}
+.model-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:4px;background:var(--bg-3);border:1px solid var(--bd-1);color:var(--tx-3)}
+.model-tag.incompat{color:var(--warn);border-color:rgba(251,191,36,.35)}
+.rot-desc{font-size:var(--fs-xs);color:var(--tx-3);margin-top:6px;line-height:1.5}
+
+/* pipe bar — send output to another tool */
+.pipe-bar{display:none;gap:6px;padding:10px 14px;border-top:1px solid var(--bd-0);align-items:center;flex-wrap:wrap;animation:view-in .25s var(--ease)}
+.pipe-bar.show{display:flex}
+.pipe-bar .btn{--pc:var(--ac)}
+.pipe-bar .btn:hover{border-color:color-mix(in srgb,var(--pc) 45%,var(--bd-1));color:var(--tx-0)}
+/* workflow banner */
+#wf-bar{display:none;align-items:center;gap:10px;padding:8px 20px;background:linear-gradient(90deg,var(--ac-soft),transparent 70%),var(--bg-1);border-bottom:1px solid var(--bd-0);font-size:var(--fs-sm);flex-wrap:wrap;position:sticky;top:var(--header-h);z-index:35}
+#wf-bar.show{display:flex}
+.wf-name{font-weight:700;color:var(--tx-0);display:flex;align-items:center;gap:7px}
+.wf-steps{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.wf-step{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--r-full);border:1px solid var(--bd-1);color:var(--tx-3);font-size:var(--fs-xs);font-weight:600;cursor:pointer;background:none;transition:all var(--t-fast)}
+.wf-step.cur{border-color:var(--wc,var(--ac));color:var(--tx-0);background:color-mix(in srgb,var(--wc,var(--ac)) 13%,transparent)}
+.wf-step.done{color:var(--ok);border-color:rgba(52,211,153,.4)}
+.wf-arrow{color:var(--tx-3);font-size:10px}
+.wf-actions{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* dashboard pipeline cards */
+.flows-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:24px}
+.flow-card{background:var(--bg-1);border:1px solid var(--bd-0);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left;transition:transform var(--t-fast),border-color var(--t-fast),box-shadow var(--t-fast)}
+.flow-card:hover{transform:translateY(-2px);border-color:var(--bd-2);box-shadow:var(--sh-2)}
+.flow-card h3{font-size:var(--fs-md);font-weight:700}
+.flow-card p{font-size:var(--fs-sm);color:var(--tx-2);line-height:1.5;flex:1}
+.flow-chain{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.flow-node{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--nc) 14%,var(--bg-2));color:var(--nc);border:1px solid color-mix(in srgb,var(--nc) 35%,transparent);flex-shrink:0}
+.flow-chain .wf-arrow{margin:0 1px}
+
+/* skeleton shimmer while waiting for first token */
+.skel{display:flex;flex-direction:column;gap:10px}
+.skel div{height:13px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2) 25%,var(--bg-3) 50%,var(--bg-2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (max-width:1080px){
+  .tool-grid{grid-template-columns:1fr}
+  .out-panel{position:static}
+  .out-body{max-height:none}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:768px){
+  #app{grid-template-columns:1fr}
+  .out-panel{min-height:300px}
+  .out-body{padding:16px 18px}
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:min(280px,84vw);transform:translateX(-100%);transition:transform var(--t-med);box-shadow:var(--sh-3)}
+  #sidebar.open{transform:none}
+  #menu-btn{display:inline-flex}
+  #content{padding:16px 14px 60px}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid .span-2{grid-column:span 1}
+  .provider-tabs{grid-template-columns:1fr}
+  .adv-row{grid-template-columns:1fr}
+  .hero{padding:24px 20px}
+  .topbar-right .stat-chip{display:none}
+}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:45;display:none}
+#scrim.show{display:block}
+/* keyboard-shortcut hints are noise on touch-only devices */
+@media (hover:none) and (pointer:coarse){.nav-kbd,.gen-bar kbd{display:none}}
+@media (max-width:560px){
+  .lib-toolbar{flex-direction:column;align-items:stretch}
+  .lib-toolbar .input{max-width:none}
+  .lib-toolbar>div[style*="margin-left"]{margin-left:0!important}
+  .refine-bar .input{min-width:0}
+  .wf-actions{margin-left:0;width:100%}
+  .wf-actions .btn-primary{flex:1}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 14.6 8.6 21 9.3 16.2 13.6 17.6 20 12 16.7 6.4 20 7.8 13.6 3 9.3 9.4 8.6z"/></svg>
+      </div>
+      <div>
+        <span class="brand-name">Story<em>Forge</em></span>
+        <span class="brand-tag">AI Writing Suite</span>
+      </div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Main navigation"></nav>
+    <div class="sidebar-foot">
+      <button class="provider-pill" data-nav="settings" title="Provider settings">
+        <span class="status-dot" id="pv-status"></span>
+        <span class="pv-name" id="pv-name">No provider</span>
+        <span class="pv-model" id="pv-model"></span>
+      </button>
+    </div>
+  </aside>
+  <div id="scrim"></div>
+
+  <!-- ================= MAIN ================= -->
+  <div id="main">
+    <header id="topbar">
+      <button id="menu-btn" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <span class="crumb">StoryForge / <b id="crumb-page">Dashboard</b></span>
+      <div class="topbar-right">
+        <span class="stat-chip" title="Total words generated (all time)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg><b id="chip-words">0</b> words</span>
+        <span class="stat-chip"><b id="chip-gens">0</b> runs</span>
+        <button class="btn btn-ghost btn-sm" data-nav="settings"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>API Keys</button>
+      </div>
+    </header>
+    <div id="wf-bar" aria-live="polite"></div>
+    <main id="content"></main>
+  </div>
+</div>
+<div id="toasts"></div>
+<div id="modal-root"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   ICONS
+============================================================ */
+const I = {
+  story:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg>',
+  char:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  dlg:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 12.5h5"/></svg>',
+  world:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  plot:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/><circle cx="6" cy="12" r="0.5" fill="currentColor"/></svg>',
+  home:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+  lib:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  set:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  copy:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  dl:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+  save:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>',
+  redo:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+  stop:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+  dice:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+  spark:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>',
+  trash:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+  x:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  arrow:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+  key:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+  feather:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22M17.5 15H9"/></svg>',
+};
+const ic = (name,s=16)=>I[name].replaceAll('__S',s);
+
+/* ============================================================
+   CONFIG — all tunable constants in one place
+============================================================ */
+const CONFIG = Object.freeze({
+  STORAGE_KEY:'storyforge.v1',
+  KEY_COOLDOWN_MS:90_000,      // rest period after a rate-limit / auth failure
+  BAD_KEY_COOLDOWN_X:10,       // invalid keys cool down 10× longer
+  MODEL_CACHE_TTL:24*3600*1000,
+  LIBRARY_CAP:300,             // max saved items
+  PAINT_INTERVAL_MS:120,       // streaming markdown re-render throttle (~8fps)
+  TOAST_MS:3200,
+  KEY_TEST_TIMEOUT_MS:20_000,
+  AUTOSAVE_DEBOUNCE_MS:600,
+});
+
+/* ============================================================
+   STATE MANAGEMENT — tiny reactive store persisted to localStorage
+============================================================ */
+const Store = (()=>{
+  const KEY=CONFIG.STORAGE_KEY;
+  const defaults = {
+    provider:'openrouter',
+    /* keyring: multiple keys per provider, each with rotation metadata */
+    keyring:{openrouter:[],gemini:[],groq:[]},
+    rotation:'failover', // 'failover' = stick to first healthy key | 'roundrobin' = alternate every request
+    rrCursor:{openrouter:0,gemini:0,groq:0},
+    models:{openrouter:'openai/gpt-4o-mini',gemini:'gemini-2.0-flash',groq:'llama-3.3-70b-versatile'},
+    modelCache:{}, // {pv:{ts,models:[{id,label,ctx,tag,compatible}]}}
+    temperature:0.9, maxTokens:2048,
+    library:[], stats:{gens:0,words:0},
+    forms:{},
+    wf:null // active workflow: {id, step, done:[]}
+  };
+  let state;
+  try{ state = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY)||'{}')); }
+  catch(e){ state = {...defaults}; }
+  /* migrate v1 single-key format → keyring */
+  if(state.keys){
+    state.keyring = state.keyring||{...defaults.keyring};
+    for(const pv of ['openrouter','gemini','groq']){
+      state.keyring[pv]=state.keyring[pv]||[];
+      const old=(state.keys[pv]||'').trim();
+      if(old && !state.keyring[pv].some(k=>k.key===old))
+        state.keyring[pv].unshift({id:'k_'+Math.random().toString(36).slice(2,9),label:'Key 1',key:old,status:'ok',failCount:0,cooldownUntil:0,lastUsed:0,uses:0});
+    }
+    delete state.keys;
+  }
+  state.keyring = {...defaults.keyring, ...state.keyring};
+  state.rrCursor = {...defaults.rrCursor, ...state.rrCursor};
+  state.models = {...defaults.models, ...state.models};
+  state.modelCache = state.modelCache||{};
+  const subs = new Set();
+  let warnedPersist=false;
+  const write = ()=>{
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch(e){
+      /* quota exceeded / private mode — warn once instead of failing silently */
+      if(!warnedPersist && typeof toast==='function'){ warnedPersist=true; toast('Storage full — changes may not persist. Export your library as backup.','err'); }
+    }
+  };
+  /* coalesce writes: serializing the full state (incl. library) on every
+     set() is wasteful — during streaming, set() fires per request for
+     rrCursor/stats. Batch to one write per 300ms + flush on page hide. */
+  let writeTimer=null;
+  const persist = ()=>{
+    if(writeTimer) return;
+    writeTimer=setTimeout(()=>{ writeTimer=null; write(); },300);
+  };
+  const flush = ()=>{ if(writeTimer){ clearTimeout(writeTimer); writeTimer=null; } write(); };
+  addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flush(); });
+  addEventListener('pagehide',flush);
+  return {
+    get: ()=>state,
+    set(patch){ Object.assign(state, typeof patch==='function'?patch(state):patch); persist(); subs.forEach(f=>f(state)); },
+    sub(f){ subs.add(f); return ()=>subs.delete(f); },
+    persist, flush
+  };
+})();
+
+/* ============================================================
+   KEY MANAGER — multi-key per provider with rotation & failover
+============================================================ */
+const KeyManager = {
+  COOLDOWN_MS: CONFIG.KEY_COOLDOWN_MS,
+  list(pv){ return Store.get().keyring[pv]||[]; },
+  /* keys currently eligible (not cooling down) */
+  healthy(pv){
+    const now=Date.now();
+    return this.list(pv).filter(k=>k.key && k.cooldownUntil<=now);
+  },
+  hasAny(pv){ return this.list(pv).some(k=>k.key); },
+  add(pv,keyStr,label){
+    const ring=[...this.list(pv)];
+    keyStr=keyStr.trim();
+    if(!keyStr) return {ok:false,msg:'Key is empty'};
+    if(ring.some(k=>k.key===keyStr)) return {ok:false,msg:'This key is already added'};
+    ring.push({id:'k_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      label:label?.trim()||`Key ${ring.length+1}`,key:keyStr,status:'untested',failCount:0,cooldownUntil:0,lastUsed:0,uses:0});
+    Store.set(prev=>({keyring:{...prev.keyring,[pv]:ring}}));
+    return {ok:true};
+  },
+  remove(pv,id){
+    Store.set(prev=>({keyring:{...prev.keyring,[pv]:prev.keyring[pv].filter(k=>k.id!==id)}}));
+  },
+  update(pv,id,patch){
+    Store.set(prev=>({keyring:{...prev.keyring,[pv]:prev.keyring[pv].map(k=>k.id===id?{...k,...patch}:k)}}));
+  },
+  move(pv,id,dir){ /* reorder priority for failover mode */
+    const ring=[...this.list(pv)];
+    const i=ring.findIndex(k=>k.id===id);
+    const j=i+dir;
+    if(i<0||j<0||j>=ring.length) return;
+    [ring[i],ring[j]]=[ring[j],ring[i]];
+    Store.set(prev=>({keyring:{...prev.keyring,[pv]:ring}}));
+  },
+  /* pick next key according to rotation strategy */
+  pick(pv){
+    const s=Store.get();
+    let pool=this.healthy(pv);
+    if(!pool.length){
+      /* all cooling down — fall back to the one that recovers soonest */
+      pool=this.list(pv).filter(k=>k.key).sort((a,b)=>a.cooldownUntil-b.cooldownUntil).slice(0,1);
+    }
+    if(!pool.length) return null;
+    let chosen;
+    if(s.rotation==='roundrobin'){
+      const cur=s.rrCursor[pv]||0;
+      chosen=pool[cur%pool.length];
+      Store.set(prev=>({rrCursor:{...prev.rrCursor,[pv]:(cur+1)%Math.max(1,pool.length)}}));
+    }else{
+      chosen=pool[0]; // failover: highest-priority healthy key
+    }
+    return chosen;
+  },
+  /* read-only key lookup for non-generation uses (model listing, tests) —
+     unlike pick(), this never advances the round-robin cursor */
+  peek(pv){ return this.healthy(pv)[0] || this.list(pv).find(k=>k.key) || null; },
+  markSuccess(pv,id){
+    this.update(pv,id,{status:'ok',failCount:0,cooldownUntil:0,lastUsed:Date.now(),
+      uses:(this.list(pv).find(k=>k.id===id)?.uses||0)+1});
+  },
+  markFailure(pv,id,err){
+    const k=this.list(pv).find(x=>x.id===id); if(!k) return;
+    const rateLimited=/429|rate limit/i.test(err.message||'');
+    const badKey=/401|403|invalid|missing api key/i.test(err.message||'');
+    const fails=k.failCount+1;
+    this.update(pv,id,{
+      status:badKey?'invalid':rateLimited?'ratelimited':'error',
+      failCount:fails,
+      cooldownUntil:(rateLimited||badKey||fails>=2)?Date.now()+this.COOLDOWN_MS*(badKey?CONFIG.BAD_KEY_COOLDOWN_X:1):0,
+      lastUsed:Date.now()
+    });
+    return {rateLimited,badKey};
+  },
+  statusInfo(k){
+    if(!k.key) return {txt:'empty',c:'var(--tx-3)'};
+    if(k.cooldownUntil>Date.now()){
+      const s=Math.ceil((k.cooldownUntil-Date.now())/1000);
+      return {txt:k.status==='invalid'?'invalid':`cooling ${s>=60?Math.ceil(s/60)+'m':s+'s'}`,c:'var(--err)'};
+    }
+    if(k.status==='ok') return {txt:'healthy',c:'var(--ok)'};
+    if(k.status==='ratelimited'||k.status==='error') return {txt:'recovered',c:'var(--warn)'};
+    return {txt:'untested',c:'var(--tx-3)'};
+  }
+};
+
+/* ============================================================
+   PROVIDERS — OpenRouter / Gemini / Groq (all streamed via SSE)
+============================================================ */
+const PROVIDERS = {
+  openrouter:{
+    name:'OpenRouter', keyUrl:'https://openrouter.ai/keys', keyHint:'sk-or-v1-…',
+    desc:'Gateway to 300+ models (GPT, Claude, Gemini, Llama…)',
+    models:[
+      ['openai/gpt-4o-mini','GPT-4o mini · fast & cheap'],
+      ['openai/gpt-4o','GPT-4o'],
+      ['anthropic/claude-3.5-sonnet','Claude 3.5 Sonnet'],
+      ['anthropic/claude-3.5-haiku','Claude 3.5 Haiku'],
+      ['google/gemini-2.0-flash-001','Gemini 2.0 Flash'],
+      ['meta-llama/llama-3.3-70b-instruct','Llama 3.3 70B'],
+      ['deepseek/deepseek-chat','DeepSeek V3'],
+      ['mistralai/mistral-large-2411','Mistral Large'],
+    ],
+    async *stream(model,sys,user,opts,signal){
+      yield* sseOpenAI('https://openrouter.ai/api/v1/chat/completions', {
+        'Authorization':`Bearer ${opts.key}`,'Content-Type':'application/json',
+        'HTTP-Referer':location.origin,'X-Title':'StoryForge AI'
+      }, model, sys, user, opts, signal);
+    }
+  },
+  gemini:{
+    name:'Google Gemini', keyUrl:'https://aistudio.google.com/apikey', keyHint:'AIza…',
+    desc:'Google AI Studio — generous free tier',
+    models:[
+      ['gemini-2.0-flash','Gemini 2.0 Flash · fast'],
+      ['gemini-2.0-flash-lite','Gemini 2.0 Flash Lite'],
+      ['gemini-2.5-flash','Gemini 2.5 Flash'],
+      ['gemini-2.5-pro','Gemini 2.5 Pro'],
+      ['gemini-1.5-pro','Gemini 1.5 Pro'],
+      ['gemini-1.5-flash','Gemini 1.5 Flash'],
+    ],
+    async *stream(model,sys,user,opts,signal){
+      const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(opts.key)}`;
+      const res = await fetch(url,{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        systemInstruction:{parts:[{text:sys}]},
+        contents:[{role:'user',parts:[{text:user}]}],
+        generationConfig:{temperature:opts.temperature,maxOutputTokens:opts.maxTokens}
+      })});
+      if(!res.ok){ throw new Error(await apiError(res)); }
+      for await(const data of sseLines(res)){
+        try{
+          const j=JSON.parse(data);
+          const t=j.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('');
+          if(t) yield t;
+        }catch(e){}
+      }
+    }
+  },
+  groq:{
+    name:'Groq', keyUrl:'https://console.groq.com/keys', keyHint:'gsk_…',
+    desc:'Blazing-fast LPU inference — free tier available',
+    models:[
+      ['llama-3.3-70b-versatile','Llama 3.3 70B Versatile'],
+      ['llama-3.1-8b-instant','Llama 3.1 8B Instant'],
+      ['openai/gpt-oss-120b','GPT-OSS 120B'],
+      ['openai/gpt-oss-20b','GPT-OSS 20B'],
+      ['qwen/qwen3-32b','Qwen3 32B'],
+      ['gemma2-9b-it','Gemma2 9B'],
+    ],
+    async *stream(model,sys,user,opts,signal){
+      yield* sseOpenAI('https://api.groq.com/openai/v1/chat/completions',
+        {'Authorization':`Bearer ${opts.key}`,'Content-Type':'application/json'}, model, sys, user, opts, signal);
+    }
+  }
+};
+
+/* ============================================================
+   MODEL HUB — live model listing, cache & compatibility filter
+   Compatible = text-in → text-out chat models.
+   Filtered out: image/video/audio generation, embeddings, TTS,
+   transcription, moderation, guard/safety models.
+============================================================ */
+const ModelHub = {
+  CACHE_TTL: CONFIG.MODEL_CACHE_TTL,
+  INCOMPATIBLE_RX: /(dall-e|midjourney|stable-diffusion|sdxl|flux|imagen|image-gen|img2|text-to-image|video|veo|sora|kling|runway|audio|tts|speech|voice|whisper|transcri|music|embed|embedding|rerank|moderation|guard|safety|clip\b|vision-only|ocr)/i,
+  classify(id,extra=''){
+    const hay=(id+' '+extra).toLowerCase();
+    if(/whisper|transcri/.test(hay)) return {compatible:false,tag:'audio-in'};
+    if(/tts|speech|audio.?gen|voice/.test(hay)) return {compatible:false,tag:'audio'};
+    if(/video|veo|sora|kling/.test(hay)) return {compatible:false,tag:'video'};
+    if(/dall-e|diffusion|sdxl|flux|imagen|img|image/.test(hay)&&/gen|create|diffusion|dall|flux|imagen/.test(hay)) return {compatible:false,tag:'image'};
+    if(/embed|rerank/.test(hay)) return {compatible:false,tag:'embedding'};
+    if(/moderation|guard|safety/.test(hay)) return {compatible:false,tag:'moderation'};
+    if(this.INCOMPATIBLE_RX.test(hay)) return {compatible:false,tag:'other'};
+    return {compatible:true,tag:'text'};
+  },
+  cached(pv){
+    const c=Store.get().modelCache[pv];
+    return c&&Array.isArray(c.models)?c:null;
+  },
+  isStale(pv){
+    const c=this.cached(pv);
+    return !c || (Date.now()-c.ts)>this.CACHE_TTL;
+  },
+  saveCache(pv,models){
+    Store.set(prev=>({modelCache:{...prev.modelCache,[pv]:{ts:Date.now(),models}}}));
+  },
+  fmtCtx(n){ return n?(n>=1e6?(n/1e6)+'M':Math.round(n/1024)+'k'):''; },
+  async fetch(pv,key){
+    let models=[];
+    if(pv==='openrouter'){
+      const res=await fetch('https://openrouter.ai/api/v1/models',{headers:key?{'Authorization':`Bearer ${key}`}:{}});
+      if(!res.ok) throw new Error(await apiError(res));
+      const j=await res.json();
+      models=(j.data||[]).map(m=>{
+        const outMods=m.architecture?.output_modalities||[];
+        const inMods=m.architecture?.input_modalities||[];
+        let cls;
+        if(outMods.length){ // authoritative modality data
+          cls = outMods.includes('text') && !outMods.some(x=>['image','video','audio'].includes(x))
+            ? {compatible:true,tag:inMods.some(x=>x!=='text')?'multimodal-in':'text'}
+            : {compatible:false,tag:outMods.find(x=>x!=='text')||'other'};
+        } else cls=this.classify(m.id,m.name||'');
+        return {id:m.id,label:m.name||m.id,ctx:m.context_length||0,...cls};
+      });
+    }else if(pv==='gemini'){
+      if(!key) throw new Error('Add a Gemini API key first to list models.');
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`);
+      if(!res.ok) throw new Error(await apiError(res));
+      const j=await res.json();
+      models=(j.models||[]).map(m=>{
+        const id=m.name.replace(/^models\//,'');
+        const methods=m.supportedGenerationMethods||[];
+        const canChat=methods.includes('generateContent')||methods.includes('streamGenerateContent');
+        let cls=this.classify(id,m.displayName||'');
+        if(!canChat) cls={compatible:false,tag:/embed/.test(id)?'embedding':/imagen|image/.test(id)?'image':/veo/.test(id)?'video':/tts|audio/.test(id)?'audio':'other'};
+        return {id,label:m.displayName||id,ctx:m.inputTokenLimit||0,...cls};
+      });
+    }else if(pv==='groq'){
+      if(!key) throw new Error('Add a Groq API key first to list models.');
+      const res=await fetch('https://api.groq.com/openai/v1/models',{headers:{'Authorization':`Bearer ${key}`}});
+      if(!res.ok) throw new Error(await apiError(res));
+      const j=await res.json();
+      models=(j.data||[]).map(m=>({id:m.id,label:m.id,ctx:m.context_window||0,...this.classify(m.id)}));
+    }
+    models.sort((a,b)=>a.id.localeCompare(b.id));
+    this.saveCache(pv,models);
+    return models;
+  },
+  /* merged list for dropdowns: live cache if present, else curated fallback */
+  options(pv,onlyCompatible=true){
+    const c=this.cached(pv);
+    if(c){
+      let list=c.models;
+      if(onlyCompatible) list=list.filter(m=>m.compatible);
+      return list.map(m=>({id:m.id,label:m.label+(m.ctx?` · ${this.fmtCtx(m.ctx)}`:''),tag:m.tag,compatible:m.compatible}));
+    }
+    return PROVIDERS[pv].models.map(([id,label])=>({id,label,tag:'text',compatible:true}));
+  }
+};
+
+async function apiError(res){
+  let msg=`HTTP ${res.status}`;
+  try{ const j=await res.json(); msg=j.error?.message||j.message||JSON.stringify(j).slice(0,200); }catch(e){}
+  if(res.status===401||res.status===403) msg='Invalid or missing API key — check Settings. ('+msg+')';
+  if(res.status===429) msg='Rate limited — wait a moment or switch provider. ('+msg+')';
+  return msg;
+}
+/* generic SSE line reader */
+async function* sseLines(res){
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let buf='';
+  while(true){
+    const {done,value}=await reader.read();
+    if(done) break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop();
+    for(const line of lines){
+      const l=line.trim();
+      if(l.startsWith('data:')){
+        const d=l.slice(5).trim();
+        if(d && d!=='[DONE]') yield d;
+      }
+    }
+  }
+}
+/* OpenAI-compatible chat completions stream */
+async function* sseOpenAI(url,headers,model,sys,user,opts,signal){
+  const res=await fetch(url,{method:'POST',signal,headers,body:JSON.stringify({
+    model, stream:true, temperature:opts.temperature, max_tokens:opts.maxTokens,
+    messages:[{role:'system',content:sys},{role:'user',content:user}]
+  })});
+  if(!res.ok){ throw new Error(await apiError(res)); }
+  for await(const data of sseLines(res)){
+    try{ const t=JSON.parse(data).choices?.[0]?.delta?.content; if(t) yield t; }catch(e){}
+  }
+}
+
+/* ============================================================
+   MARKDOWN RENDERER (lightweight, safe)
+============================================================ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function mdInline(s){
+  return s
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^\w*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>');
+}
+function renderMD(src){
+  const lines = esc(src).split('\n');
+  let html='', inList=null, inTable=false, tbl=[];
+  const closeList=()=>{ if(inList){ html+=`</${inList}>`; inList=null; } };
+  const flushTable=()=>{
+    if(!inTable) return;
+    const rows=tbl.filter(r=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(r));
+    if(rows.length){
+      html+='<table>';
+      rows.forEach((r,i)=>{
+        const cells=r.replace(/^\||\|$/g,'').split('|');
+        html+='<tr>'+cells.map(c=>`<${i===0?'th':'td'}>${mdInline(c.trim())}</${i===0?'th':'td'}>`).join('')+'</tr>';
+      });
+      html+='</table>';
+    }
+    inTable=false; tbl=[];
+  };
+  for(const raw of lines){
+    const line=raw;
+    if(/^\s*\|.*\|\s*$/.test(line)){ closeList(); inTable=true; tbl.push(line.trim()); continue; }
+    flushTable();
+    const h=line.match(/^(#{1,4})\s+(.*)/);
+    if(h){ closeList(); html+=`<h${h[1].length+0}>${mdInline(h[2])}</h${h[1].length}>`; continue; }
+    if(/^\s*(-{3,}|\*{3,})\s*$/.test(line)){ closeList(); html+='<hr>'; continue; }
+    const bq=line.match(/^>\s?(.*)/);
+    if(bq){ closeList(); html+=`<blockquote>${mdInline(bq[1])}</blockquote>`; continue; }
+    const ul=line.match(/^\s*[-*•]\s+(.*)/);
+    if(ul){ if(inList!=='ul'){ closeList(); html+='<ul>'; inList='ul'; } html+=`<li>${mdInline(ul[1])}</li>`; continue; }
+    const ol=line.match(/^\s*\d+[.)]\s+(.*)/);
+    if(ol){ if(inList!=='ol'){ closeList(); html+='<ol>'; inList='ol'; } html+=`<li>${mdInline(ol[1])}</li>`; continue; }
+    closeList();
+    if(line.trim()==='') continue;
+    html+=`<p>${mdInline(line)}</p>`;
+  }
+  closeList(); flushTable();
+  return html;
+}
+
+/* ============================================================
+   UI HELPERS
+============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function toast(msg,type='ok'){
+  /* cap simultaneous toasts — rapid actions shouldn't stack a wall of them */
+  const host=$('#toasts');
+  while(host.children.length>=4) host.firstChild.remove();
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.setAttribute('role',type==='err'?'alert':'status');
+  el.innerHTML=`<span class="t-ic">${type==='err'?'!':type==='info'?'i':'✓'}</span><span>${esc(msg)}</span>`;
+  const dismiss=()=>{ if(!el.isConnected) return; el.classList.add('out'); setTimeout(()=>el.remove(),260); };
+  el.addEventListener('click',dismiss); /* click to dismiss */
+  host.appendChild(el);
+  setTimeout(dismiss,type==='err'?CONFIG.TOAST_MS*1.8:CONFIG.TOAST_MS); /* errors linger longer */
+}
+function fmtNum(n){ return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'k':String(n); }
+function timeAgo(t){
+  const s=(Date.now()-t)/1000;
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+/* word count without allocating an array of every word (runs on each streamed paint) */
+function wc(s){ let n=0; const re=/\S+/g; while(re.test(s)) n++; return n; }
+function download(name,content,type='text/markdown'){
+  const a=document.createElement('a');
+  if(!name||name==='.md') name='storyforge-output.md';
+  const url=URL.createObjectURL(new Blob([content],{type}));
+  a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),4000); /* deferred — immediate revoke can cancel the download */
+}
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function copyText(t){
+  return navigator.clipboard?.writeText(t).catch(()=>fallbackCopy(t)) ?? fallbackCopy(t);
+  function fallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); return Promise.resolve(); }
+}
+
+/* ============================================================
+   TOOL DEFINITIONS
+============================================================ */
+const GENRES=['Fantasy','Urban Fantasy','Sci-Fi','Mystery','Thriller','Horror','Romance','Adventure','Historical','Literary','Comedy','Dystopian','Noir','Western','Cyberpunk','Fairy Tale','Mythology'];
+const TONES=['Dark','Whimsical','Suspenseful','Melancholic','Hopeful','Satirical','Epic','Cozy','Gritty','Surreal','Romantic','Tense'];
+
+const SYS_BASE = 'You are StoryForge, a master creative-writing assistant. Produce vivid, original, publication-quality output. Format your answer in clean Markdown with clear headings where appropriate. Never break character, never add meta commentary or disclaimers — output only the requested creative content.';
+
+const TOOLS = {
+  story:{
+    name:'AI Story Generator', short:'Story Generator', color:'var(--c-story)', icon:'story',
+    tagline:'Generate complete short stories with fine-grained craft controls — then rework, extend and polish them in the Story Studio.',
+    empty:'Describe a premise (or pick a preset / roll the dice), tune the craft dials, then Generate a complete story.',
+    presets:[
+      {name:'👻 Gothic Horror',vals:{premise:'A restorer hired to clean a family portrait realizes the figures in it are arranged differently every morning — and one of them is starting to look like her.',genre:'Horror',tone:'Dark',pov:'First person',tense:'Present',pacing:'Slow burn',narrator:'Unreliable',audience:'Adult',elements:['Foreshadowing','Unreliable narrator','Open ending','Rich description'],style:'Shirley Jackson meets Daphne du Maurier'}},
+      {name:'🕵️ Noir Mystery',vals:{premise:'A washed-up insurance investigator takes one last case: prove a dead man committed his own murder.',genre:'Noir',tone:'Gritty',pov:'First person',tense:'Past',pacing:'Steady build',narrator:'Cynical & wry',audience:'Adult',elements:['Plot twist','Red herring','Dialogue-heavy','Tragic ending'],style:'Raymond Chandler'}},
+      {name:'🌸 Cozy Slice-of-Life',vals:{premise:'The new owner of a failing seaside tea shop discovers the previous owner left behind a recipe book — and a note asking her to finish what the recipes started.',genre:'Literary',tone:'Cozy',pov:'Third limited',tense:'Past',pacing:'Slow burn',narrator:'Warm & gentle',audience:'All ages',elements:['Happy ending','Rich description','Quiet epiphany'],style:'Becky Chambers'}},
+      {name:'🚀 Hard Sci-Fi',vals:{premise:'The engineer of a relay station at the edge of the solar system receives a maintenance request — filed from a station that was decommissioned forty years ago.',genre:'Sci-Fi',tone:'Suspenseful',pov:'Third limited',tense:'Present',pacing:'Steady build',narrator:'Precise & clinical',audience:'Adult',elements:['Plot twist','Foreshadowing','Ticking clock','Open ending'],style:'Ted Chiang'}},
+      {name:'⚔️ Epic Fantasy',vals:{premise:'The last oath-keeper of a fallen kingdom must deliver the crown to an heir who doesn\'t know they exist — through lands where speaking the kingdom\'s name is death.',genre:'Fantasy',tone:'Epic',pov:'Third limited',tense:'Past',pacing:'Fast & propulsive',narrator:'Mythic & formal',audience:'Adult',elements:['Foreshadowing','Flashback','Bittersweet ending','Rich description'],style:'Guy Gavriel Kay'}},
+      {name:'😂 Absurdist Comedy',vals:{premise:'Middle management at the Department of Miracles must explain why this quarter\'s miracles are 40% under target.',genre:'Comedy',tone:'Satirical',pov:'Third omniscient',tense:'Present',pacing:'Fast & propulsive',narrator:'Deadpan',audience:'Adult',elements:['Dialogue-heavy','Comic escalation','Twist ending'],style:'Terry Pratchett meets Douglas Adams'}},
+    ],
+    fields:[
+      {id:'premise',type:'textarea',label:'Story Premise',ph:'A lighthouse keeper discovers the light attracts something other than ships…',span:2,rows:3},
+      {id:'genre',type:'select',label:'Genre',opts:GENRES},
+      {id:'tone',type:'select',label:'Tone',opts:TONES},
+      {id:'pov',type:'seg',label:'Point of View',opts:['First person','Third limited','Third omniscient','Second person'],def:'Third limited'},
+      {id:'tense',type:'seg',label:'Tense',opts:['Past','Present'],def:'Past'},
+      {id:'length',type:'seg',label:'Length',opts:['Flash (~500w)','Short (~1000w)','Full (~2000w)','Long (~3500w)'],def:'Short (~1000w)'},
+      {id:'pacing',type:'seg',label:'Pacing',opts:['Slow burn','Steady build','Fast & propulsive'],def:'Steady build'},
+      {id:'narrator',type:'select',label:'Narrative Voice',opts:['','Warm & gentle','Cynical & wry','Precise & clinical','Mythic & formal','Deadpan','Lyrical & poetic','Breathless & urgent','Detached observer','Unreliable','Confessional']},
+      {id:'audience',type:'select',label:'Audience',opts:['Adult','Young Adult','Middle grade','All ages']},
+      {id:'elements',type:'chips',label:'Include Elements',opts:['Plot twist','Twist ending','Cliffhanger','Flashback','Unreliable narrator','Foreshadowing','Red herring','Ticking clock','Frame story','Quiet epiphany','Comic escalation','Happy ending','Tragic ending','Bittersweet ending','Open ending','Dialogue-heavy','Rich description','Minimal dialogue'],span:2},
+      {id:'protagonist',type:'text',label:'Protagonist (optional)',ph:'e.g. a retired thief with one last debt'},
+      {id:'setting',type:'text',label:'Setting (optional)',ph:'e.g. a floating city above the storm line'},
+      {id:'opening',type:'select',label:'Opening Strategy',opts:['','In medias res (mid-action)','Striking first line','Quiet scene that turns','Dialogue opening','Arrival of a stranger','Discovery of an object','Direct address to reader']},
+      {id:'theme',type:'text',label:'Theme (optional)',ph:'e.g. grief as inheritance, the price of belonging'},
+      {id:'mustInclude',type:'text',label:'Must Include (optional)',ph:'e.g. a broken watch, the phrase “not yet”'},
+      {id:'style',type:'text',label:'Style Inspiration (optional)',ph:'e.g. in the style of Ursula K. Le Guin'},
+    ],
+    /* combinatorial surprise engine: character × inciting event × complication */
+    surprise:()=>{
+      const who=pick(['A retired assassin turned baker','The last librarian on Earth','A night-shift radio host','A cartographer of impossible places','An obituary-writing AI','A lighthouse keeper on her final week','A funeral musician who hears the dead\'s last thoughts','A customs officer at the border between seasons','An insomniac city planner','A child who collects lost shadows','A translator for extinct languages','A repairman for haunted appliances']);
+      const event=pick(['receives a letter addressed to who they used to be','finds a door that wasn\'t there yesterday','is offered their old life back — at a price','discovers their memories belong to someone else','wakes to find everyone else one day ahead','inherits an enemy\'s estate','is hired for a job that was finished decades ago','catches their reflection acting independently','answers a phone call meant for the dead','is followed home by a myth']);
+      const but=pick(['but accepting means erasing someone they love','but they are the only one who remembers the truth','but the deadline is tonight','but their helper is lying about everything','but they\'ve done all this before and forgotten','but the reward is the thing they\'ve been running from','but saying no was never really an option','but the small print is written in their own handwriting']);
+      return {
+        premise:`${who} ${event} — ${but}.`,
+        genre:pick(GENRES), tone:pick(TONES),
+        pov:pick(['First person','Third limited','Third limited','Third omniscient']),
+        tense:pick(['Past','Past','Present']),
+        pacing:pick(['Slow burn','Steady build','Fast & propulsive']),
+        opening:pick(['In medias res (mid-action)','Striking first line','Quiet scene that turns','Dialogue opening','Discovery of an object'])
+      };
+    },
+    sys:SYS_BASE+' You specialize in complete, structurally sound short fiction: a hook within the first two sentences, escalating complications with cause-and-effect logic, a turn the reader feels but does not predict, and a resonant final image that echoes the opening. Show, don\'t tell. Every scene must move plot or character — cut anything that does neither. Sensory grounding in every scene; distinct voice per speaking character.',
+    prompt:v=>[
+      `Write a complete ${v.genre||'fiction'} short story.`,
+      v.premise&&`Premise: ${v.premise}`,
+      v.tone&&`Tone: ${v.tone}`,
+      `Point of view: ${v.pov} · Tense: ${v.tense.toLowerCase()} tense`,
+      `Target length: ${v.length}`,
+      `Pacing: ${v.pacing}`,
+      v.narrator&&`Narrative voice: ${v.narrator}`,
+      v.audience&&v.audience!=='Adult'&&`Audience: ${v.audience} — keep content and vocabulary appropriate.`,
+      v.opening&&`Opening strategy: ${v.opening}`,
+      v.protagonist&&`Protagonist: ${v.protagonist}`,
+      v.setting&&`Setting: ${v.setting}`,
+      v.theme&&`Theme to explore (through action and image, never stated outright): ${v.theme}`,
+      v.mustInclude&&`Must organically include: ${v.mustInclude}`,
+      v.elements?.length&&`Craft elements to use: ${v.elements.join(', ')}`,
+      v.style&&`Stylistic inspiration: ${v.style}`,
+      'Begin with a compelling title as an H1 heading, then the story. No section headings inside the story itself; use scene breaks (***) if needed.'
+    ].filter(Boolean).join('\n'),
+    /* Story Studio — post-generation craft operations on the finished story */
+    studio:[
+      {v:'nextchapter',label:'📖 Sequel scene / next chapter',instr:'Write the next scene or chapter continuing after this story\'s ending, preserving voice, tense and POV. Give it a ## heading with a scene title.'},
+      {v:'epilogue',label:'🕰 Epilogue (years later)',instr:'Write an epilogue set significantly later, showing the long echo of the story\'s events through one quiet, concrete scene. Heading: "## Epilogue".'},
+      {v:'prequel',label:'⏪ Prequel scene',instr:'Write a prequel scene set before the story begins, revealing something that recontextualizes it without contradicting it. Heading: "## Before".'},
+      {v:'altpov',label:'👁 Retell from another POV',instr:'Retell the story\'s most pivotal scene from a different character\'s point of view, revealing what the original narration could not see. Give it a ## heading naming that character.'},
+      {v:'altending',label:'🔀 Alternate ending',instr:'Write an alternate ending: branch from the story\'s climax and take it somewhere different but equally earned. Heading: "## Alternate Ending".'},
+      {v:'darker',label:'🌑 Darker variation of ending',instr:'Rewrite just the ending sequence as a darker, more tragic variation that still pays off the story\'s setups. Heading: "## The Darker Road".'},
+      {v:'missing',label:'🧩 The missing scene',instr:'Identify a moment the story skips over or summarizes, and write it as a full dramatized scene. Heading: "## The Missing Scene" plus a one-line note of where it slots in.'},
+      {v:'interview',label:'🎙 Interview the protagonist',instr:'Write a post-story interview with the protagonist (interviewer questions in bold), in the character\'s authentic voice, revealing their feelings about the events and one thing the story never showed. Heading: "## The Interview".'},
+      {v:'critique',label:'🔍 Craft critique & notes',instr:'Switch to editor mode: write a constructive craft critique of this story — 3 strengths, 3 specific improvement suggestions with line-level examples, and an assessment of pacing, voice and ending. Heading: "## Editor\'s Notes".'},
+      {v:'blurb',label:'📣 Blurb, logline & titles',instr:'Write marketing material for this story: a 2-sentence back-cover blurb, a one-line logline, 5 alternative titles with a word on each, and 3 comp titles ("for readers of…"). Heading: "## Story Package".'},
+      {v:'expand',label:'📚 Novel expansion outline',instr:'Outline how this short story could expand into a novel: what becomes Act I/II/III, which elements deepen into subplots, 3 new characters it would need, and what new complication sustains a longer arc. Heading: "## Novel Expansion".'},
+    ]
+  },
+
+  character:{
+    name:'AI Character Generator', short:'Character Generator', color:'var(--c-char)', icon:'char',
+    tagline:'Create deep, believable fictional characters — psychology, backstory, voice, flaws and arcs. Then interrogate, stress-test and grow them in the Character Studio.',
+    empty:'Sketch a concept (or pick a preset / roll the dice), tune the psychology dials, then Generate a fully-realized character.',
+    presets:[
+      {name:'🗡 Tormented Anti-hero',vals:{concept:'A former holy knight who broke her sacred oath to save one unworthy life, and now hunts the order that made her — using everything they taught her.',role:'Anti-hero',genre:'Fantasy',age:'late 30s',depth:'Deep dive',archetype:'The Outlaw',moral:'Chaotic good',arc:'Redemption (earning back self-worth)',wound:'Betrayed by the institution she gave everything to',want:'To tear down the order',need:'To forgive herself for still loving it',traits:['Backstory','Flaws & fears','Motivations','Voice & speech','Character arc']}},
+      {name:'😈 Sympathetic Villain',vals:{concept:'A plague doctor who discovered the cure decades ago — and rations it, because the last time humanity was healthy, it burned his city for practicing medicine.',role:'Villain',genre:'Historical',age:'60s',depth:'Deep dive',archetype:'The Caregiver',moral:'Lawful evil',arc:'Corruption (good intentions curdling)',wound:'Saved everyone once and was punished for it',want:'Control over who deserves saving',need:'To trust people with their own choices',traits:['Backstory','Motivations','Secrets','Personality','Relationships']}},
+      {name:'🎭 Charming Trickster',vals:{concept:'A con artist who can only lie about unimportant things — every significant lie he tells comes true within a week, which is why he\'s terrified of the big score.',role:'Morally grey',genre:'Urban Fantasy',age:'20s',depth:'Standard',archetype:'The Trickster',moral:'Chaotic neutral',arc:'Growth (positive change)',wound:'His first big lie came true and someone died',want:'One last effortless score',need:'To say one true important thing out loud',traits:['Voice & speech','Secrets','Personality','Skills & habits']}},
+      {name:'🕯 Weary Mentor',vals:{concept:'The last surviving member of a legendary company, now a village innkeeper who keeps refusing the call — because everyone she ever trained is on the memorial wall behind the bar.',role:'Mentor',genre:'Fantasy',age:'50s',depth:'Standard',archetype:'The Sage',moral:'Neutral good',arc:'Static (changes others, not herself)',wound:'Outlived every student she ever taught',want:'To be left alone with her ghosts',need:'To train one more and watch them live',traits:['Backstory','Relationships','Voice & speech','Flaws & fears']}},
+      {name:'🚀 Reluctant Chosen One',vals:{concept:'A maintenance tech on a colony ship who discovers the "prophecy AI" selected him at random — and must decide whether to reveal the fraud or become the leader the desperate crew believes he is.',role:'Protagonist',genre:'Sci-Fi',age:'early 30s',depth:'Standard',archetype:'The Everyman',moral:'True neutral',arc:'Growth (positive change)',wound:'A lifetime of being told he was nothing special',want:'To confess the truth and step down',need:'To realize chosen-ness is a choice',traits:['Personality','Motivations','Flaws & fears','Character arc']}},
+      {name:'🌹 Complicated Love Interest',vals:{concept:'A royal food-taster who fell for the person she\'s sworn to die for — and has been secretly poisoning herself for years to build immunity, hiding a terminal side effect.',role:'Love interest',genre:'Romance',age:'late 20s',depth:'Deep dive',archetype:'The Caregiver',moral:'Lawful good',arc:'Tragic (sacrifice reframed)',wound:'Raised to believe her life was worth less than her duty',want:'One honest day with no titles between them',need:'To let herself be protected for once',traits:['Relationships','Secrets','Voice & speech','Appearance','Character arc']}},
+    ],
+    fields:[
+      {id:'concept',type:'textarea',label:'Character Concept',ph:'A disgraced court physician who secretly practices forbidden alchemy…',span:2,rows:3},
+      {id:'role',type:'select',label:'Story Role',opts:['Protagonist','Antagonist','Anti-hero','Mentor','Sidekick','Love interest','Villain','Comic relief','Morally grey','Ensemble member']},
+      {id:'genre',type:'select',label:'Genre',opts:GENRES},
+      {id:'age',type:'text',label:'Age Range (optional)',ph:'e.g. late 30s'},
+      {id:'gender',type:'text',label:'Gender (optional)',ph:'any / female / male / nonbinary…'},
+      {id:'depth',type:'seg',label:'Profile Depth',opts:['Quick sketch','Standard','Deep dive'],def:'Standard'},
+      {id:'archetype',type:'select',label:'Archetype (optional)',opts:['','The Hero','The Rebel','The Sage','The Explorer','The Creator','The Caregiver','The Trickster','The Ruler','The Innocent','The Outlaw','The Magician','The Everyman']},
+      {id:'moral',type:'select',label:'Moral Alignment (optional)',opts:['','Lawful good','Neutral good','Chaotic good','Lawful neutral','True neutral','Chaotic neutral','Lawful evil','Neutral evil','Chaotic evil']},
+      {id:'arc',type:'select',label:'Arc Type (optional)',opts:['','Growth (positive change)','Redemption (earning back self-worth)','Corruption (good intentions curdling)','Fall (tragedy of a flaw)','Disillusionment (comforting lie to hard truth)','Static (changes others, not herself)','Tragic (sacrifice reframed)','Rebirth (identity rebuilt from zero)']},
+      {id:'wound',type:'text',label:'Core Wound (optional)',ph:'the past injury that shaped them, e.g. abandoned as the "spare" heir'},
+      {id:'want',type:'text',label:'Want — conscious goal (optional)',ph:'what they chase, e.g. to win back the family estate'},
+      {id:'need',type:'text',label:'Need — real lesson (optional)',ph:'what would actually heal them, e.g. to stop measuring worth in inheritance'},
+      {id:'quirk',type:'text',label:'Quirk / Signature Detail (optional)',ph:'e.g. counts exits in every room; never finishes a cup of tea'},
+      {id:'traits',type:'chips',label:'Emphasize Sections',opts:['Backstory','Personality','Appearance','Motivations','Flaws & fears','Relationships','Voice & speech','Secrets','Character arc','Skills & habits','Daily routine','Possessions & attire'],span:2},
+    ],
+    /* combinatorial surprise engine: identity × contradiction × secret */
+    surprise:()=>{
+      const who=pick(['A gravedigger','A lighthouse keeper','A court poison-taster','A demon-turned-schoolteacher','A retired monster hunter','A ship\'s navigator','A back-alley miracle surgeon','A disgraced royal cartographer','A prizefighting nun','A funeral pianist','A smuggler of extinct seeds','A war-crimes translator','A celebrity ghostwriter','A lightning-rod salesman']);
+      const twist=pick(['who remembers every life of everyone they bury','who can hear lies ticking like clocks','who is allergic to being thanked','feared across three seas for their devastating politeness','who has died twice and won\'t say what came back','who keeps a list of everyone they\'ve failed and reads it nightly','whose shadow arrives places a few seconds early','who cannot enter a room without knowing how to burn it down','who taught the villain everything, and knows it','who has never once been believed when telling the truth']);
+      const secret=pick(['They are the person they claim to be hunting.','They gave up their name in a bargain and wear a borrowed one.','The skill they\'re famous for is their sibling\'s, stolen.','They\'ve been paying someone else\'s debt for twenty years.','They can undo one moment of their past — and haven\'t.','Their greatest kindness was actually their worst crime.','They know the exact day they will die and have planned around it.','They are far, far older than they look.']);
+      return {
+        concept:`${who} ${twist}. Secret: ${secret}`,
+        role:pick(['Protagonist','Antagonist','Anti-hero','Mentor','Morally grey','Villain']),
+        genre:pick(GENRES),
+        archetype:pick(['The Hero','The Rebel','The Sage','The Trickster','The Outlaw','The Caregiver','The Magician','The Everyman']),
+        moral:pick(['Chaotic good','Neutral good','Lawful neutral','Chaotic neutral','True neutral','Lawful evil']),
+        arc:pick(['Growth (positive change)','Redemption (earning back self-worth)','Corruption (good intentions curdling)','Fall (tragedy of a flaw)','Disillusionment (comforting lie to hard truth)','Rebirth (identity rebuilt from zero)'])
+      };
+    },
+    sys:SYS_BASE+' You specialize in character design: psychologically consistent, specific, flawed, memorable people. Avoid clichés; ground every trait in cause and effect — the wound explains the flaw, the flaw sabotages the want, the need is what the wound made unthinkable. Include concrete sensory details and at least one contradiction that makes the character human. Voice samples must be distinct enough to identify the character blind.',
+    prompt:v=>[
+      'Create a detailed fictional character profile.',
+      v.concept&&`Concept: ${v.concept}`,
+      `Story role: ${v.role||'Protagonist'}`,
+      v.genre&&`Genre: ${v.genre}`,
+      v.age&&`Age: ${v.age}`, v.gender&&`Gender: ${v.gender}`,
+      v.archetype&&`Archetype: ${v.archetype}`,
+      v.moral&&`Moral alignment: ${v.moral} — expressed through decisions, never labeled in-text.`,
+      v.arc&&`Character arc type: ${v.arc}`,
+      v.wound&&`Core wound: ${v.wound}`,
+      v.want&&`Want (conscious goal): ${v.want}`,
+      v.need&&`Need (the real lesson): ${v.need}`,
+      (v.wound||v.want||v.need)&&'Weave wound → flaw → want → need into one coherent psychology: the flaw grows from the wound, protects them, and blocks the need.',
+      v.quirk&&`Signature quirk to weave through multiple sections: ${v.quirk}`,
+      `Depth: ${v.depth}`,
+      v.traits?.length&&`Give extra weight to: ${v.traits.join(', ')}`,
+      'Structure: H1 with the character\'s full name and a one-line epithet, then sections (## headings) covering identity basics, appearance, personality (with contradictions), backstory, motivations & goals (want vs need), flaws & fears, relationships, voice (with 2–3 sample lines of dialogue), secrets, and suggested character arc. Use a table for quick-reference stats (name, age, occupation, alignment, defining trait, fatal flaw, core wound).'
+    ].filter(Boolean).join('\n'),
+    /* Character Studio — post-generation deep-dives on the finished character */
+    studio:[
+      {v:'interview',label:'🎙 In-character interview',instr:'Conduct a probing 10-question interview with this character (questions in bold). Answers must be fully in their established voice — including deflections, lies and tells where the questions hit the wound or secrets. Heading: "## The Interview".'},
+      {v:'monologue',label:'🎭 Defining monologue',instr:'Write the character\'s defining monologue — the speech they\'d give at their lowest or highest moment, in their exact voice, revealing the want/need collision without naming it. Include a one-line scene setting in italics. Heading: "## The Monologue".'},
+      {v:'scene',label:'🎬 Introduce them in a scene',instr:'Write the perfect introduction scene for this character in a story — showing (not telling) their defining trait, quirk and flaw through action in under 500 words. Heading: "## First Appearance".'},
+      {v:'stress',label:'💥 Stress test (worst day)',instr:'Stress-test this character: put them through their worst possible day in a short scene sequence and show exactly how the flaw sabotages them and where the need almost breaks through. Heading: "## The Worst Day".'},
+      {v:'moral',label:'⚖️ Moral dilemma test',instr:'Design the cruelest moral dilemma specifically for this character — one where both options violate something core to them. Present the situation, walk through their reasoning in their voice, and commit to their choice and its cost. Heading: "## The Dilemma".'},
+      {v:'relationships',label:'👥 Relationship web',instr:'Build this character\'s relationship web: 5–6 named connections (ally, rival, family, debt, temptation, ghost from the past), each with the relationship\'s history, current tension, and what the character would never admit about it. Include a summary table. Heading: "## Relationship Web".'},
+      {v:'nemesis',label:'🗡 Generate their nemesis',instr:'Create this character\'s perfect nemesis: someone whose psychology weaponizes this character\'s specific wound and flaw. Give the nemesis a compact profile (name, epithet, mirror-logic, method, one line of their voice) and the history between them. Heading: "## The Nemesis".'},
+      {v:'past',label:'⏪ The wound, dramatized',instr:'Dramatize the core wound: write the actual scene from the character\'s past where the wound happened, in vivid present tense, ending on the exact moment their worldview changed. Heading: "## The Wound".'},
+      {v:'voice',label:'💬 Voice pack (20 lines)',instr:'Generate a voice pack: 20 lines of dialogue from this character across contexts (greeting, threat, apology, lie, joke, grief, love, dying words…), each labeled, all unmistakably theirs. Heading: "## Voice Pack".'},
+      {v:'evolution',label:'📈 Arc in five scenes',instr:'Map the character\'s full arc in five key scenes (beginning, first crack, midpoint reversal, dark night, resolution): a short paragraph each showing the flaw loosening and the need winning or failing per the arc type. Heading: "## The Arc in Five Scenes".'},
+      {v:'sheet',label:'🎲 RPG stat sheet',instr:'Convert this character into a system-neutral RPG character sheet: attributes (rated 1–10 with one-line justifications), 3 skills, 2 special abilities derived from their story, 1 burden/hindrance from their flaw, gear, and a GM note on how to play them. Use tables. Heading: "## Character Sheet".'},
+    ]
+  },
+
+  dialogue:{
+    name:'AI Dialogue Generator', short:'Dialogue Generator', color:'var(--c-dlg)', icon:'dlg',
+    tagline:'Write realistic, screenplay-quality dialogue with subtext, distinct voices and beats — then punch it up, cut it down and remix it in the Dialogue Studio.',
+    empty:'Describe the scene and speakers (or pick a preset / roll the dice), choose a format, then Generate natural dialogue.',
+    presets:[
+      {name:'🔥 Interrogation Room',vals:{scene:'A detective has 20 minutes before the lawyer arrives to break a suspect who is clearly protecting someone — and the detective slowly realizes the suspect wants to be convicted.',charA:'Detective Ash Okafor — patient, chess-player calm, personally invested and hiding it',charB:'Ren Valle — suspect, polite, answers every question with perfect uselessness',format:'Screenplay',mood:'Tense',dynamic:'Interrogator vs stonewaller',setting:'Windowless interview room, 2 AM, coffee gone cold',goal:'Ash needs the accomplice\'s name; Ren needs to run out the clock',stakes:'An innocent person is arrested at dawn if Ash fails',lengthLines:'Medium (20–30 lines)',flavor:['Heavy subtext','Power shift mid-scene','One-word replies','Unspoken tension']}},
+      {name:'💔 The Breakup That Isn\'t',vals:{scene:'Two people meet to officially end it and return each other\'s things — but every object in the box has a history that keeps derailing the script they both rehearsed.',charA:'Jo — initiated the breakup, over-prepared, crumbling by the minute',charB:'Sam — agreed too quickly, weaponizes nonchalance, keeps almost saying it',format:'Prose (with tags)',mood:'Bittersweet',dynamic:'Both want the same thing, neither will say it',setting:'A café closing around them, chairs going up on tables',goal:'Officially: exchange boxes. Actually: get the other to fight for it',stakes:'If neither breaks the script, it really is over',lengthLines:'Medium (20–30 lines)',flavor:['Heavy subtext','Callbacks','Unspoken tension','Object as prop','Emotional whiplash']}},
+      {name:'😂 Partners in Chaos',vals:{scene:'Two getaway drivers argue over the correct escape route while the heist is still audibly going wrong inside the bank behind them.',charA:'Dot — by-the-book planner, has laminated the route, allergic to improvisation',charB:'Miko — pure vibes, has never once read the plan, is somehow always right',format:'Prose (with tags)',mood:'Comedic',dynamic:'Bickering duo under pressure',setting:'Idling car outside a bank, alarms starting, radio playing something inappropriate',goal:'Agree on a route before their crew comes out — or before the police do',stakes:'The crew\'s freedom vs Dot\'s laminated dignity',lengthLines:'Medium (20–30 lines)',flavor:['Comic beats','Interruptions','Callbacks','Rapid-fire exchanges','Emotional whiplash']}},
+      {name:'⚔️ Villain & Hero Truce',vals:{scene:'The hero and villain are trapped together waiting out a threat bigger than both of them, and for one hour there\'s nothing to fight over — except everything they\'ve never said.',charA:'Commander Elia Voss — hero, exhausted by her own legend, off the record for once',charB:'The Ashen King — villain, courteous, disturbingly good company, was her mentor',format:'Prose (with tags)',mood:'Philosophical',dynamic:'Enemies with unfinished history',setting:'A collapsed shrine, one fire between them, weapons in reach of neither',goal:'Each wants the other to admit they were right; neither will',stakes:'Whoever is more honest tonight loses the war tomorrow',lengthLines:'Long (40+ lines)',flavor:['Heavy subtext','Power shift mid-scene','Monologue moment','Verbal chess','Loaded silences']}},
+      {name:'👨‍👧 Parent & Child Reckoning',vals:{scene:'An adult child teaches their aging parent to use a phone so they can call each other — and the tech lesson keeps turning into the conversation they\'ve avoided for thirty years.',charA:'Nadia — daughter, patient with everyone except him, keeps hiding hurt as helpfulness',charB:'Emil — father, deflects with jokes, terrible with buttons, worse with apologies',format:'Prose (with tags)',mood:'Heartfelt',dynamic:'Love with a language barrier',setting:'His kitchen table, tea going cold, the phone between them like a chessboard',goal:'Officially: save her number. Actually: say the sorry / hear the sorry',stakes:'His memory is starting to go; the window is closing',lengthLines:'Medium (20–30 lines)',flavor:['Heavy subtext','Object as prop','Loaded silences','Callbacks','Trailing off']}},
+      {name:'🕶 Spy Double-Cross',vals:{scene:'Two spies exchange pleasantries at an embassy bar, each certain the other has been sent to kill them, each waiting for the other to confirm it first.',charA:'Vesper — veteran, charm as armor, three exits mapped, genuinely likes their rival',charB:'Cole — rising star, quotes Vesper\'s own old missions back at them, poison ring or cufflink?',format:'Screenplay',mood:'Menacing',dynamic:'Mutual predators, perfect manners',setting:'Embassy reception, string quartet, too many mirrors',goal:'Extract the other\'s orders without revealing their own',stakes:'First one to be sure, wins; first one to be wrong, dies',lengthLines:'Medium (20–30 lines)',flavor:['Verbal chess','Heavy subtext','Double meanings','Loaded silences','Power shift mid-scene']}},
+    ],
+    fields:[
+      {id:'scene',type:'textarea',label:'Scene / Situation',ph:'Two estranged siblings meet at their mother\'s estate sale and both want the same broken watch…',span:2,rows:3},
+      {id:'charA',type:'text',label:'Character A',ph:'e.g. Mara — blunt, guilt-ridden surgeon'},
+      {id:'charB',type:'text',label:'Character B',ph:'e.g. Theo — charming, evasive gambler'},
+      {id:'charC',type:'text',label:'Character C (optional)',ph:'name — brief description',span:2},
+      {id:'format',type:'seg',label:'Format',opts:['Prose (with tags)','Screenplay','Stage play','Raw lines'],def:'Prose (with tags)'},
+      {id:'mood',type:'select',label:'Mood',opts:['Tense','Comedic','Romantic','Confrontational','Bittersweet','Casual','Menacing','Heartfelt','Awkward','Philosophical']},
+      {id:'dynamic',type:'select',label:'Power Dynamic (optional)',opts:['','Equals colliding','Interrogator vs stonewaller','Boss vs subordinate','Mentor vs student','Enemies with unfinished history','Both want the same thing, neither will say it','Bickering duo under pressure','One knows a secret the other needs','Mutual predators, perfect manners','Love with a language barrier','Stranger who knows too much']},
+      {id:'setting',type:'text',label:'Setting / Staging (optional)',ph:'e.g. stuck elevator; graveside in the rain; idling getaway car'},
+      {id:'goal',type:'text',label:'Scene Goal / Conflict',ph:'What does each character want?'},
+      {id:'stakes',type:'text',label:'Stakes — cost of failure (optional)',ph:'e.g. if this call ends, so does the ceasefire'},
+      {id:'subtextLevel',type:'seg',label:'Subtext Level',opts:['On the nose','Balanced','Iceberg (90% unsaid)'],def:'Balanced'},
+      {id:'tempo',type:'seg',label:'Tempo',opts:['Slow & loaded','Natural','Rapid-fire'],def:'Natural'},
+      {id:'lengthLines',type:'seg',label:'Length',opts:['Short (10–15 lines)','Medium (20–30 lines)','Long (40+ lines)'],def:'Medium (20–30 lines)'},
+      {id:'ending',type:'select',label:'Scene Ending (optional)',opts:['','Door-slam exit','Unexpected confession','Interrupted at the worst moment','Quiet mutual understanding','Threat delivered smiling','Punchline that lands wrong','Someone finally says it','Nothing resolved, everything changed','Cliffhanger line']},
+      {id:'flavor',type:'chips',label:'Techniques',opts:['Heavy subtext','Interruptions','Distinct dialects','Power shift mid-scene','Comic beats','Unspoken tension','Callbacks','One-word replies','Monologue moment','Verbal chess','Double meanings','Loaded silences','Object as prop','Rapid-fire exchanges','Trailing off','Emotional whiplash','Talking past each other'],span:2},
+    ],
+    /* combinatorial surprise engine: pairing × situation × complication */
+    surprise:()=>{
+      const pair=pick(['A hostage negotiator and their ex','Two immortals','A knight and the dragon','A ghost and the new tenant','Two rival food critics','An angel and a demon on shared custody of a soul','A time traveler and their younger self','The world\'s best forger and the detective who never caught her','Two retired supervillains','A priest and a hitman','An AI and its original programmer','Two funeral directors from rival family firms']);
+      const situation=pick(['negotiating over a phone that keeps cutting out','trapped in a stuck elevator','splitting the bill after a disastrous dinner','waiting out a storm in a broken-down car','meeting at the reading of a will','stuck in adjacent airplane seats for nine hours','dividing belongings after decades together','sharing the last table at a crowded café','locked in an evidence room overnight','standing in line for something neither will admit they want']);
+      const complication=pick(['one of them is lying about who they are','both received the same anonymous letter','one of them is saying goodbye forever and hiding it','they used to be partners and never discussed the ending','one owes the other an unpayable debt','each thinks the other called the meeting','one of them knows tonight is the other\'s last night','neither can leave until one of them apologizes','one has rehearsed this conversation for years; the other forgot it entirely']);
+      return {
+        scene:`${pair}, ${situation} — and ${complication}.`,
+        mood:pick(['Tense','Comedic','Bittersweet','Awkward','Menacing','Heartfelt','Philosophical']),
+        dynamic:pick(['Equals colliding','Enemies with unfinished history','Both want the same thing, neither will say it','One knows a secret the other needs','Bickering duo under pressure','Stranger who knows too much']),
+        subtextLevel:pick(['Balanced','Balanced','Iceberg (90% unsaid)']),
+        tempo:pick(['Slow & loaded','Natural','Rapid-fire']),
+        ending:pick(['Unexpected confession','Interrupted at the worst moment','Quiet mutual understanding','Nothing resolved, everything changed','Someone finally says it','Cliffhanger line']),
+        charA:'',charB:''
+      };
+    },
+    sys:SYS_BASE+' You specialize in dialogue craft: every line reveals character or advances conflict, voices are instantly distinguishable (rhythm, vocabulary, deflection style), and subtext does the heavy lifting. People interrupt, deflect, and rarely say exactly what they mean. Give each character a verbal fingerprint and one tell that appears when they lie or hurt. Track objects and physical space — hands need things to do. Keep action beats lean and purposeful; never use dialogue to deliver exposition both characters already know.',
+    prompt:v=>[
+      'Write a dialogue scene.',
+      v.scene&&`Situation: ${v.scene}`,
+      v.charA&&`Character A: ${v.charA}`,
+      v.charB&&`Character B: ${v.charB}`,
+      v.charC&&`Character C: ${v.charC}`,
+      `Format: ${v.format}`,
+      v.mood&&`Mood: ${v.mood}`,
+      v.dynamic&&`Power dynamic: ${v.dynamic}`,
+      v.setting&&`Setting/staging: ${v.setting} — use the physical space and objects in the scene.`,
+      v.goal&&`Scene goal/conflict: ${v.goal}`,
+      v.stakes&&`Stakes if this goes wrong: ${v.stakes}`,
+      v.subtextLevel==='Iceberg (90% unsaid)'?'Subtext: iceberg mode — the real conversation happens entirely beneath a mundane surface topic; no one names the true subject.':v.subtextLevel==='On the nose'?'Subtext: direct — characters say what they mean; tension comes from the collision, not concealment.':'Subtext: balanced — meaningful things surface, but the deepest one stays implied.',
+      `Tempo: ${v.tempo==='Slow & loaded'?'slow and loaded — pauses, silences and beats carry weight':v.tempo==='Rapid-fire'?'rapid-fire — short lines, overlaps, momentum':'natural conversational rhythm'}`,
+      `Length: ${v.lengthLines}`,
+      v.ending&&`End the scene on: ${v.ending}`,
+      v.flavor?.length&&`Techniques to use: ${v.flavor.join(', ')}`,
+      'Start with an H1 scene title and a one-line scene setting in italics, then the dialogue. End the scene on a meaningful beat.'
+    ].filter(Boolean).join('\n'),
+    /* Dialogue Studio — post-generation scene operations */
+    studio:[
+      {v:'nextbeat',label:'▶️ Next scene between them',instr:'Write the next scene between these characters — later, somewhere else, with the fallout of this conversation hanging over every line. Same format and voices. Give it a ## heading with a scene title.'},
+      {v:'subtext',label:'🫥 Annotate the subtext',instr:'Reprint the scene\'s 10 most loaded lines, each followed by an indented blockquote revealing what the character actually meant, wanted, or was hiding in that moment. Heading: "## The Real Conversation".'},
+      {v:'flip',label:'🔄 Flip the power dynamic',instr:'Rewrite this scene with the power dynamic inverted — whoever was winning is now losing, cornered is now cornering — while keeping the same situation, setting and voices. Heading: "## The Flip".'},
+      {v:'moodshift',label:'🎭 Same scene, opposite mood',instr:'Rewrite this scene in the opposite emotional register (tense→comedic, heartfelt→menacing, etc.) with the same characters, setting and goal. Keep their voices recognizable. Heading: "## Tonal Inversion".'},
+      {v:'interior',label:'💭 Add interior monologue',instr:'Rewrite the scene interleaving one character\'s private thoughts in italics between their lines — the gap between what they think and what they say should ache. Choose the character with more to hide. Heading: "## Inside the Silence".'},
+      {v:'silent',label:'🤐 The same scene, wordless',instr:'Retell this exact confrontation as a wordless scene — only action, gesture, objects and space communicate everything the dialogue did. Prose, present tense. Heading: "## Without Words".'},
+      {v:'punchup',label:'✨ Punch-up pass',instr:'Do a professional punch-up pass: tighten every line, sharpen the wit, kill on-the-nose phrasing, strengthen the button. Output the full revised scene, then a short "### What changed" list of the 5 biggest fixes. Heading: "## Punch-Up".'},
+      {v:'trim',label:'✂️ Cut to the bone (50%)',instr:'Cut this scene to half its length while keeping every essential beat and making it hit harder — what survives should feel inevitable. Output the full trimmed scene. Heading: "## The Cut".'},
+      {v:'thirdparty',label:'🚪 A third person walks in',instr:'Continue the scene from its final beat: a third character (invent someone with maximal disruptive potential to BOTH speakers) walks in at the worst possible moment. Heading: "## The Interruption".'},
+      {v:'aftermath',label:'📱 Aftermath in texts',instr:'Write the aftermath as a text-message exchange between the two characters hours later — typos, timing gaps, messages typed and deleted (shown as *deleted: "…"*), read receipts weaponized. Heading: "## The Aftermath, in Texts".'},
+      {v:'table',label:'🎬 Director\'s table read',instr:'Write director\'s notes for this scene as if prepping actors for a table read: each character\'s objective, obstacle and tactic shifts beat-by-beat, where the emotional turn lands, what must stay unsaid, and the one line the whole scene pivots on. Heading: "## Director\'s Notes".'},
+    ]
+  },
+
+  world:{
+    name:'AI World Builder', short:'World Builder', color:'var(--c-world)', icon:'world',
+    tagline:'Construct rich fictional worlds — geography, cultures, magic or tech, politics, history and conflicts. Then expand any corner of it in the World Studio.',
+    empty:'Seed a concept (or pick a preset / roll the dice), tune the systems, then Generate a living, internally-consistent world.',
+    presets:[
+      {name:'🏰 Epic Fantasy Realm',vals:{concept:'A vast realm where dragon-bond bloodlines rule feuding kingdoms, and an ancient ward that keeps an old evil sealed is beginning to crack.',genre:'High Fantasy',scope:'Continent',tech:'Medieval',magic:'Common',tone:'Wondrous',era:'Long peace about to end',aspects:['Geography & climate','History & timeline','Politics & factions','Magic/tech system','Religion & myth','Central conflicts'],naming:'Old-European / Norse'}},
+      {name:'🌃 Cyberpunk Megacity',vals:{concept:'A vertical megacity owned floor-by-floor by rival corporations, where memory is currency and the weather below level 40 is artificial.',genre:'Cyberpunk',scope:'Single city',tech:'Near-future',magic:'None',tone:'Grim & gritty',era:'Peak decadence before collapse',aspects:['Geography & climate','Politics & factions','Economy & trade','Daily life','Underworld & crime','Central conflicts'],naming:'Corporate / techno-brand'}},
+      {name:'🚀 Dying Space Colony',vals:{concept:'Humanity\'s last generation-ship colony on a tidally-locked world, rationing light on the terminator line while the ship AI slowly forgets its purpose.',genre:'Science Fiction',scope:'Planet',tech:'Far-future',magic:'None',tone:'Melancholic',era:'Slow decline / aftermath',aspects:['Geography & climate','History & timeline','Cultures & peoples','Magic/tech system','Daily life','Legends & secrets'],naming:'Utilitarian / ship-registry'}},
+      {name:'🏝 Floating Archipelago',vals:{concept:'Sky-islands drift on seasonal wind-currents; whole nations migrate with them, and falling is both execution and pilgrimage.',genre:'Mythic',scope:'Region',tech:'Renaissance',magic:'Subtle',tone:'Wondrous',era:'Golden age of exploration',aspects:['Geography & climate','Cultures & peoples','Economy & trade','Flora & fauna','Religion & myth','Central conflicts'],naming:'Polynesian-inspired'}},
+      {name:'☢️ Post-Apocalyptic Wastes',vals:{concept:'Three centuries after the sky burned, scavenger clans war over pre-Fall vaults while a new religion worships the satellites still blinking overhead.',genre:'Post-Apocalyptic',scope:'Region',tech:'Mixed/Anachronistic',magic:'None',tone:'Grim & gritty',era:'Rebuilding from ruin',aspects:['Geography & climate','History & timeline','Cultures & peoples','Religion & myth','Underworld & crime','Central conflicts'],naming:'Corrupted modern-English'}},
+      {name:'🌊 Abyssal Civilization',vals:{concept:'An empire of bioluminescent cities in ocean trenches, where light is language, currency and law — and something in the deeper dark has started answering.',genre:'Weird Fiction',scope:'Planet',tech:'Bronze/Iron age',magic:'Dominant',tone:'Eerie & mysterious',era:'First contact / discovery',aspects:['Geography & climate','Cultures & peoples','Magic/tech system','Flora & fauna','Languages & names','Legends & secrets'],naming:'Invented / alien phonology'}},
+    ],
+    fields:[
+      {id:'concept',type:'textarea',label:'World Concept',ph:'An archipelago where each island obeys different laws of physics…',span:2,rows:3},
+      {id:'genre',type:'select',label:'Genre',opts:['High Fantasy','Low Fantasy','Science Fiction','Space Opera','Cyberpunk','Steampunk','Post-Apocalyptic','Urban Fantasy','Historical Fantasy','Solarpunk','Grimdark','Weird Fiction','Mythic']},
+      {id:'tone',type:'select',label:'Tone / Mood',opts:['','Wondrous','Grim & gritty','Melancholic','Hopeful','Eerie & mysterious','Savage & primal','Decadent','Cozy & pastoral','Absurdist']},
+      {id:'scope',type:'seg',label:'Scope',opts:['Single city','Region','Continent','Planet','Multiverse'],def:'Region'},
+      {id:'detail',type:'seg',label:'Detail Level',opts:['Overview','Standard','Encyclopedic'],def:'Standard'},
+      {id:'tech',type:'select',label:'Technology Level',opts:['Stone age','Bronze/Iron age','Medieval','Renaissance','Industrial','Modern','Near-future','Far-future','Mixed/Anachronistic']},
+      {id:'era',type:'select',label:'Current Era',opts:['','Age of myth / dawn','Golden age of exploration','Long peace about to end','Height of empire','Revolution brewing','Great war raging','Slow decline / aftermath','Rebuilding from ruin','Peak decadence before collapse','First contact / discovery']},
+      {id:'magic',type:'seg',label:'Magic Prevalence',opts:['None','Subtle','Common','Dominant'],def:'Subtle'},
+      {id:'conflictScale',type:'seg',label:'Conflict Scale',opts:['Personal','Factional','World-shaking'],def:'Factional'},
+      {id:'aspects',type:'chips',label:'Sections to Build',opts:['Geography & climate','History & timeline','Cultures & peoples','Politics & factions','Religion & myth','Economy & trade','Magic/tech system','Flora & fauna','Languages & names','Central conflicts','Daily life','Underworld & crime','Notable locations','Legends & secrets'],span:2},
+      {id:'naming',type:'select',label:'Naming Flavor',opts:['','Old-European / Norse','Latinate / Imperial','Slavic-inspired','Arabic-inspired','East-Asian-inspired','Polynesian-inspired','Corporate / techno-brand','Utilitarian / ship-registry','Corrupted modern-English','Invented / alien phonology']},
+      {id:'inspiration',type:'text',label:'Inspirations (optional)',ph:'e.g. Byzantine empire meets deep-sea ecology'},
+      {id:'taboo',type:'text',label:'Avoid / Taboos (optional)',ph:'e.g. no elves, no chosen-one prophecy',span:2},
+    ],
+    /* combinatorial surprise engine — thousands of unique seeds */
+    surprise:()=>{
+      const place=pick(['An archipelago of sky-islands','A city carved inside a dead god\'s ribcage','A tidally-locked world with one eternal sunset strip','A continent-sized library','An ocean of breathable mist above a lost surface','A ring-shaped canyon civilization','A world stitched together from fragments of other realities','A desert where the dunes are ground glass from a shattered moon','A megastructure orbiting a dying star','A rainforest that grows one mile per year in every direction']);
+      const twist=pick(['where memory can be inherited but never recorded','where the seasons are political appointments','where gravity obeys social rank','where every lie becomes a small physical object','where the dead continue working night shifts','where music is the only legal form of contract','where maps rewrite the territory','where children are born speaking a language no adult remembers','where shadows can be traded and stolen','where sleep is taxed']);
+      const tension=pick(['The old pact that made it possible is expiring.','A newcomer has just broken its one unbreakable rule.','Its founding myth has been discovered to be a cover-up.','Two of its great powers have both claimed the same heir.','The resource everything runs on has begun to think.','A frontier expedition has returned wrong.','The lower classes have learned the elite\'s secret.','Something is eating it from the edges inward.']);
+      return {
+        concept:`${place} ${twist}. ${tension}`,
+        genre:pick(['High Fantasy','Science Fiction','Weird Fiction','Post-Apocalyptic','Mythic','Steampunk','Solarpunk']),
+        tone:pick(['Wondrous','Grim & gritty','Eerie & mysterious','Melancholic','Hopeful','Decadent']),
+        scope:pick(['Single city','Region','Continent','Planet']),
+        era:pick(['Golden age of exploration','Long peace about to end','Revolution brewing','Slow decline / aftermath','First contact / discovery']),
+        magic:pick(['None','Subtle','Common','Dominant'])
+      };
+    },
+    sys:SYS_BASE+' You specialize in worldbuilding: internally consistent systems where geography shapes culture, culture shapes politics, and every rule has consequences. Prefer the specific over the generic; every section must include at least one concrete sensory detail and one proper noun. Follow the requested naming flavor consistently for ALL proper nouns. Seed story hooks throughout, and make each section connect causally to at least one other section.',
+    prompt:v=>[
+      'Build a detailed fictional world bible.',
+      v.concept&&`Core concept: ${v.concept}`,
+      `Genre: ${v.genre||'Fantasy'}`,
+      v.tone&&`Tone/mood: ${v.tone}`,
+      `Scope: ${v.scope}`,
+      `Technology level: ${v.tech||'Medieval'}`, `Magic prevalence: ${v.magic}`,
+      v.era&&`Current era: ${v.era} — write the world as it stands at this moment in its history.`,
+      `Central conflict scale: ${v.conflictScale}`,
+      v.detail==='Overview'?'Detail level: concise overview — 2–4 sentences per section.':v.detail==='Encyclopedic'?'Detail level: encyclopedic — rich, exhaustive sections with sub-headings, named examples and specifics.':'Detail level: standard — a solid paragraph or two per section.',
+      v.aspects?.length?`Sections to cover (## headings): ${v.aspects.join(', ')}`:'Cover: geography, history, cultures, politics, magic/tech system, conflicts.',
+      v.naming&&`Naming flavor for all proper nouns: ${v.naming}`,
+      v.inspiration&&`Inspirations: ${v.inspiration}`,
+      v.taboo&&`Strictly avoid: ${v.taboo}`,
+      'Start with an H1 world name and an evocative one-paragraph overview, then a quick-reference table (world name, scope, dominant species/cultures, tech level, magic level, current era, central tension). Then the sections. End with an H2 "Story Hooks" section containing 3 numbered hooks tied to specific named people/places from the sections above.'
+    ].filter(Boolean).join('\n'),
+    /* World Studio — post-generation canon-consistent expansions */
+    studio:[
+      {v:'faction',label:'⚔️ New faction / organization',instr:'Invent one new faction or organization for this world: name, symbol, goals, methods, leadership, resources, rivals, and a secret. Tie it to at least two existing named elements of the canon.'},
+      {v:'location',label:'📍 Notable location deep-dive',instr:'Pick or invent one specific location in this world and write a rich gazetteer entry: layout, atmosphere, who holds power there, dangers, rumors, and what a visitor sees/hears/smells on arrival.'},
+      {v:'character',label:'👤 Local character sketch',instr:'Create one memorable inhabitant of this world: name (matching the naming flavor), role, appearance, motivation, a contradiction, and how they connect to the central tension.'},
+      {v:'timeline',label:'📜 Historical timeline',instr:'Write a chronological timeline of 8–12 key events in this world\'s history, from its founding myth to the present moment, each with a date/era label and one-line consequence.'},
+      {v:'culture',label:'🎭 Culture deep-dive',instr:'Choose one culture or people of this world and expand it: values, customs, dress, food, coming-of-age rites, view of outsiders, taboos, and an idiom or proverb in their voice.'},
+      {v:'creature',label:'🐉 Flora / fauna entry',instr:'Invent one creature or plant native to this world: name, habitat, behavior, ecological role, how locals use or fear it, and one myth about it.'},
+      {v:'language',label:'🔤 Name & phrase forge',instr:'Generate a naming toolkit for this world matching its naming flavor: 10 person names (with meanings), 8 place names, 5 faction/ship/artifact names, and 5 common phrases or oaths with translations.'},
+      {v:'conflict',label:'🔥 Escalate the conflict',instr:'Write a "Current Crisis" section: escalate the world\'s central tension into an immediate crisis happening NOW, with named actors on each side, stakes, a ticking clock, and three possible outcomes.'},
+      {v:'daily',label:'🌅 A day in the life',instr:'Write "A Day in the Life" of an ordinary inhabitant, dawn to dusk, in vivid present tense — showing how this world\'s systems (economy, magic/tech, politics) shape mundane moments.'},
+      {v:'hooks',label:'🪝 5 more story hooks',instr:'Add 5 more numbered story hooks, each one paragraph, each anchored to different named elements of the canon, spanning different scales (personal, factional, world-level).'},
+      {v:'map',label:'🗺 Map description',instr:'Write a detailed cartographer\'s description of this world/region as if annotating a map: compass orientation, major features with distances, borders, trade routes, danger zones, and three "here be dragons" unmapped areas.'},
+    ]
+  },
+
+  plot:{
+    name:'AI Plot Generator', short:'Plot Generator', color:'var(--c-plot)', icon:'plot',
+    tagline:'Generate structured story plots — outlines, beats, twists and arcs using proven frameworks. Then pressure-test, twist and expand them in the Plot Studio.',
+    empty:'Give a spark (or pick a preset / roll the dice), choose a framework, then Generate a beat-by-beat plot.',
+    presets:[
+      {name:'💎 Heist Gone Wrong',vals:{idea:'A legendary crew reunites for one final job: stealing back the evidence that framed them — from the vault of the crew member who sold them out.',genre:'Thriller',structure:'Save the Cat (15 beats)',medium:'Screenplay',conflict:'Person vs Person',stakesLevel:'Life & death',ending:'Twist',protType:'Reluctant expert dragged back in',antType:'Former ally who chose the other side',engine:'Everyone has a hidden agenda',extras:['Subplot (betrayal)','Ticking clock','Midpoint reversal','Chekhov\'s gun','Ensemble cast'],themes:'loyalty, whether people can change'}},
+      {name:'🔍 Small-Town Mystery',vals:{idea:'A big-city detective returns to her hometown for a funeral — and recognizes the "accidental death" as the signature of a killer she put away fifteen years ago. Who is still in prison.',genre:'Mystery',structure:'Fichtean Curve',medium:'Novel',conflict:'Person vs Person',stakesLevel:'Personal & intimate',ending:'Bittersweet',protType:'Investigator with a buried connection to the case',antType:'Hidden in plain sight all along',engine:'Every answer opens two questions',extras:['Red herring','Dual timeline','Foil character','Dark secret revealed'],themes:'the past never stays buried, who a town protects'}},
+      {name:'🚀 First Contact Crisis',vals:{idea:'The signal humanity has awaited for a century finally arrives — and it\'s a distress call, from something fleeing toward Earth, with its pursuer close behind.',genre:'Sci-Fi',structure:'Seven-Point Structure',medium:'Novel',conflict:'Person vs Fate',stakesLevel:'Civilizational',ending:'Bittersweet',protType:'Expert nobody believes until it\'s late',antType:'Not evil — just following older orders',engine:'The clock and the unknown',extras:['Ticking clock','Ensemble cast','Moral point of no return','False victory'],themes:'what we owe strangers, fear vs hope as policy'}},
+      {name:'👑 Succession War',vals:{idea:'The dying ruler names all four heirs as co-successors — a final act of love or sabotage — and the realm\'s enemies arrive before the siblings stop negotiating.',genre:'Fantasy',structure:'Three-Act Structure',medium:'TV season',conflict:'Person vs Society',stakesLevel:'Kingdom-scale',ending:'Tragic',protType:'The heir who never wanted it',antType:'The sibling who deserves it most',engine:'Alliances shift every act',extras:['Ensemble cast','Subplot (betrayal)','Subplot (romance)','Moral point of no return','Foil character'],themes:'inheritance as wound, love expressed as strategy'}},
+      {name:'💘 Enemies to Allies',vals:{idea:'Two rival wedding planners are forced to co-plan the mayor\'s wedding — which each secretly needs to fail, for completely different reasons.',genre:'Romance',structure:'Three-Act Structure',medium:'Novel',conflict:'Person vs Self',stakesLevel:'Personal & intimate',ending:'Happy',protType:'Control freak whose plan is a shield',antType:'Not a villain — a mirror',engine:'Forced proximity with opposing goals',extras:['Subplot (romance)','Midpoint reversal','False defeat','Comic set-pieces'],themes:'perfection as armor, letting someone see the mess'}},
+      {name:'🌫 Psychological Descent',vals:{idea:'A sleep-study researcher begins appearing in her subjects\' dreams — giving them instructions she has no memory of issuing, all counting down to the same date.',genre:'Horror',structure:'Kishōtenketsu',medium:'Novel',conflict:'Person vs Self',stakesLevel:'Sanity & identity',ending:'Open',protType:'Rational mind meeting the irrational',antType:'Possibly the protagonist themselves',engine:'Reality erodes one rule at a time',extras:['Unreliable narration','Dual timeline','Dark secret revealed','Recurring motif'],themes:'the self as stranger, what sleep protects us from'}},
+    ],
+    fields:[
+      {id:'idea',type:'textarea',label:'Story Idea / Seed',ph:'A heist crew discovers the vault they\'re robbing contains their own memories…',span:2,rows:3},
+      {id:'genre',type:'select',label:'Genre',opts:GENRES},
+      {id:'structure',type:'select',label:'Structure Framework',opts:['Three-Act Structure',"Hero's Journey",'Save the Cat (15 beats)','Freytag\'s Pyramid','Kishōtenketsu','Seven-Point Structure','Fichtean Curve','In Medias Res','Story Circle (Harmon)','Snowflake (progressive)']},
+      {id:'medium',type:'seg',label:'Medium',opts:['Novel','Short story','Screenplay','TV season','Game narrative'],def:'Novel'},
+      {id:'detail',type:'seg',label:'Outline Detail',opts:['Skeleton','Standard','Scene-by-scene'],def:'Standard'},
+      {id:'conflict',type:'select',label:'Core Conflict',opts:['Person vs Person','Person vs Self','Person vs Society','Person vs Nature','Person vs Technology','Person vs Fate','Person vs Supernatural']},
+      {id:'stakesLevel',type:'select',label:'Stakes Level (optional)',opts:['','Personal & intimate','Family / found family','Community','Kingdom-scale','Civilizational','Cosmic / existential','Sanity & identity','Life & death']},
+      {id:'ending',type:'seg',label:'Ending',opts:['Happy','Bittersweet','Tragic','Twist','Open'],def:'Bittersweet'},
+      {id:'protType',type:'text',label:'Protagonist Type (optional)',ph:'e.g. reluctant expert dragged back in'},
+      {id:'antType',type:'text',label:'Antagonist Type (optional)',ph:'e.g. believes they\'re the hero; a mirror of the lead'},
+      {id:'engine',type:'select',label:'Narrative Engine (optional)',opts:['','The clock and the unknown','Everyone has a hidden agenda','Every answer opens two questions','Alliances shift every act','Forced proximity with opposing goals','Reality erodes one rule at a time','A lie that grows too big to maintain','Each victory costs something irreplaceable','Two timelines racing toward one moment']},
+      {id:'pacingShape',type:'select',label:'Pacing Shape (optional)',opts:['','Slow burn → avalanche','Cold open bang → simmer → boil','Relentless escalation','Breathe-crisis-breathe rhythm','Quiet dread throughout','Rollercoaster (whiplash reversals)']},
+      {id:'extras',type:'chips',label:'Include',opts:['Subplot (romance)','Subplot (betrayal)','Midpoint reversal','Red herring','Ticking clock','Dual timeline','Ensemble cast','MacGuffin','Chekhov\'s gun','Foil character','False victory','False defeat','Moral point of no return','Dark secret revealed','Unreliable narration','Recurring motif','Comic set-pieces','Bottle episode / chamber piece'],span:2},
+      {id:'themes',type:'text',label:'Themes (optional)',ph:'e.g. memory, forgiveness, the cost of ambition'},
+      {id:'avoid',type:'text',label:'Avoid / Clichés to Skip (optional)',ph:'e.g. no chosen one, no love triangle, villain isn\'t a twin'},
+    ],
+    /* combinatorial surprise engine: hook × discovery × escalation */
+    surprise:()=>{
+      const hook=pick(['The moon goes missing','A small town wins a lottery no one entered','Every mirror in the city starts running eight seconds late','The first colony ship arrives to find Earth got there first','A chef\'s food makes people taste memories','All the world\'s missing persons return on the same day','A translator for the dead starts receiving messages addressed to herself','An insurance company begins denying claims for events that haven\'t happened yet','The tide stops','A censored word starts disappearing from every book, sign and memory']);
+      const discovery=pick(['and only insomniacs remember the truth','and the protagonist\'s signature is on the paperwork','and it has happened before, exactly a century ago','and the authorities are relieved instead of alarmed','and one child predicted it in a school essay','and the protagonist\'s late parent left instructions for this exact event','and whoever investigates starts forgetting their own name','and the phenomenon is spreading along old trade routes','and someone is selling tickets']);
+      const escalation=pick(['Solving it requires trusting the person who caused it.','The cure is worse, and the protagonist must prove it in time.','Each attempt to fix it transfers the cost to someone they love.','The protagonist realizes they are the second attempt, not the first.','Stopping it means erasing the only good thing it brought.','The world adapts faster than it heals — and adaptation has a lobby.','The one witness who understands it is lying about why.']);
+      return {
+        idea:`${hook} — ${discovery}. ${escalation}`,
+        genre:pick(GENRES),
+        structure:pick(['Three-Act Structure',"Hero's Journey",'Save the Cat (15 beats)','Seven-Point Structure','Fichtean Curve','Kishōtenketsu','Story Circle (Harmon)']),
+        conflict:pick(['Person vs Person','Person vs Self','Person vs Society','Person vs Fate','Person vs Technology','Person vs Supernatural']),
+        stakesLevel:pick(['Personal & intimate','Community','Civilizational','Sanity & identity','Life & death']),
+        engine:pick(['The clock and the unknown','Everyone has a hidden agenda','Every answer opens two questions','A lie that grows too big to maintain','Each victory costs something irreplaceable']),
+        ending:pick(['Happy','Bittersweet','Bittersweet','Tragic','Twist','Open'])
+      };
+    },
+    sys:SYS_BASE+' You specialize in narrative architecture: causally-linked beats (therefore/but, never and-then), escalating stakes, and setups that pay off. Label each beat with the framework\'s terminology and keep every beat concrete and filmable — name who acts, what changes, and what it costs. Every subplot must collide with the main plot at least twice. The midpoint must genuinely reverse something. Track each setup to its payoff.',
+    prompt:v=>[
+      'Generate a complete story plot outline.',
+      v.idea&&`Seed idea: ${v.idea}`,
+      `Genre: ${v.genre||'Fiction'}`,
+      `Framework: ${v.structure}`,
+      `Medium: ${v.medium}`,
+      v.detail==='Skeleton'?'Detail level: skeleton — one tight sentence per beat.':v.detail==='Scene-by-scene'?'Detail level: scene-by-scene — expand each beat into its component scenes with location, characters present, and the scene-level turn.':'Detail level: standard — a solid paragraph per beat.',
+      v.conflict&&`Core conflict: ${v.conflict}`,
+      v.stakesLevel&&`Stakes level: ${v.stakesLevel} — calibrate every escalation to this scale.`,
+      `Ending type: ${v.ending}`,
+      v.protType&&`Protagonist type: ${v.protType}`,
+      v.antType&&`Antagonist type: ${v.antType}`,
+      v.engine&&`Narrative engine (the mechanism that keeps pages turning): ${v.engine}`,
+      v.pacingShape&&`Pacing shape: ${v.pacingShape}`,
+      v.extras?.length&&`Include: ${v.extras.join(', ')}`,
+      v.themes&&`Themes: ${v.themes}`,
+      v.avoid&&`Strictly avoid: ${v.avoid}`,
+      'Structure: H1 working title + logline in bold, ## Premise paragraph, ## Main Characters (brief list with each character\'s want and function), then the full beat-by-beat outline using the framework\'s named beats as ### headings, ## Setups & Payoffs (table: setup → where planted → where paid), ## Key Twist(s), and ## Theme Resonance. Keep beats causally linked.'
+    ].filter(Boolean).join('\n'),
+    /* Plot Studio — post-generation structural operations */
+    studio:[
+      {v:'scenes',label:'🎬 Expand act into scenes',instr:'Take the outline\'s middle act (or central section) and expand it into a full scene-by-scene breakdown: for each scene give location, characters present, goal, obstacle, and the turn that ends it. Heading: "## Act Two, Scene by Scene".'},
+      {v:'stress',label:'🔨 Stress-test the plot',instr:'Attack this plot like a hostile script editor: find every plot hole, coincidence, unmotivated decision, sagging stretch and unearned beat. For each problem, quote the beat, explain the break, and propose a concrete fix. End with the 3 highest-priority repairs. Heading: "## Stress Test".'},
+      {v:'twist',label:'🌀 Add a deeper twist',instr:'Design one additional major twist that recontextualizes the existing plot without contradicting any beat. Specify: the twist, where it detonates, the 3 places to plant its clues retroactively, and how it changes the ending\'s meaning. Heading: "## The Deeper Twist".'},
+      {v:'villain',label:'😈 Antagonist\'s hidden outline',instr:'Write the antagonist\'s side of this plot: their own beat-by-beat outline running parallel to the hero\'s, showing what they were doing during each act, why their plan makes sense to them, and the beat where they nearly won. Heading: "## The Antagonist\'s Outline".'},
+      {v:'subplot',label:'🧵 Weave in a subplot',instr:'Design one new subplot that thematically mirrors the main plot: its own mini-arc (5 beats), the exact main-plot beats it intersects, and how its resolution feeds the climax. Heading: "## The New Thread".'},
+      {v:'openings',label:'🚪 Five opening scenes',instr:'Pitch five different opening scenes for this plot, each using a different strategy (in medias res, quiet character intro, framing device, antagonist cold open, arrival of the strange). One paragraph each plus the first line of each version. Heading: "## Five Doors In".'},
+      {v:'altstructure',label:'🔁 Re-map to another framework',instr:'Re-map this same story onto a different structural framework than the one used (choose the most interesting alternative and name it). Keep the events; show how the re-framing changes emphasis, order and reveals. Heading: "## Restructured".'},
+      {v:'endings',label:'🎯 Three alternate endings',instr:'Design three alternate endings (one darker, one lighter, one stranger) branching from the same climax. For each: the final beats, what it costs, which theme it crowns, and which setups it pays differently. Heading: "## Three Endings".'},
+      {v:'chapters',label:'📚 Chapter-by-chapter map',instr:'Convert this outline into a numbered chapter map appropriate to the medium (chapters/episodes/levels): 1–2 lines per chapter with its beat, POV (if multiple), and the hook that ends it. Heading: "## Chapter Map".'},
+      {v:'pitch',label:'📣 Pitch package',instr:'Write the pitch package: one-line logline (refined), 3-sentence elevator pitch, one-page synopsis with the ending included, 3 comp titles ("X meets Y"), and target audience. Heading: "## Pitch Package".'},
+      {v:'firstscene',label:'✍️ Write the opening scene',instr:'Write the actual opening scene of this story as finished prose (or screenplay if that\'s the medium) — 400–600 words, establishing protagonist, tone and the first domino of the plot. Heading: "## Opening Scene".'},
+    ]
+  }
+};
+const TOOL_IDS = Object.keys(TOOLS);
+
+/* ============================================================
+   PIPELINES — cross-tool piping + guided multi-step workflows
+============================================================ */
+/* strip markdown noise and trim content for use as context in another tool */
+function excerptOf(md,maxLen=1000){
+  return md.replace(/^#\s.+$/m,'').replace(/[#*>`|]/g,'').replace(/\n{3,}/g,'\n\n').trim().slice(0,maxLen);
+}
+/* smart field mapping per (from → to) pair: which extra fields to prefill
+   beyond dropping the context into the target's main textarea */
+const PIPE_MAP={
+  'character>dialogue':{extra:(title)=>({charA:title})},
+  'character>story':{extra:(title)=>({protagonist:title})},
+  'character>plot':{extra:(title)=>({protType:title})},
+  'world>story':{extra:(title)=>({setting:title})},
+  'world>dialogue':{extra:(title)=>({setting:title})},
+};
+const Pipe={
+  /* load content from one tool into another with field-aware mapping */
+  send(fromTool,toTool,content,title){
+    const target=TOOLS[toTool];
+    const mainField=target.fields.find(f=>f.type==='textarea');
+    const label=TOOLS[fromTool]?.short.toLowerCase()||'material';
+    if(mainField){
+      const el=$(`#f-${toTool}-${mainField.id}`);
+      const ctx=`Using this existing ${label} as canon:\n“${title}” — ${excerptOf(content)}…`;
+      el.value=el.value?el.value+'\n\n'+ctx:ctx;
+    }
+    const map=PIPE_MAP[`${fromTool}>${toTool}`];
+    if(map?.extra) setFormValues(toTool,map.extra(title.slice(0,80)));
+    saveFormValues(toTool);
+    navigate(toTool);
+    toast(`“${title.slice(0,40)}” piped into ${target.short}`,'info');
+  },
+  /* pipe the live output of a tool */
+  sendOutput(fromTool,toTool){
+    const st=toolState[fromTool];
+    if(!st.raw.trim()){ toast('Nothing to send yet','err'); return; }
+    this.send(fromTool,toTool,st.raw,extractTitle(st.raw,TOOLS[fromTool].short+' output'));
+    Flow.maybeAdvance(fromTool,toTool);
+  }
+};
+
+/* guided multi-step workflows */
+const WORKFLOWS={
+  worldfirst:{name:'World-First Saga',icon:'world',color:'var(--c-world)',steps:['world','character','plot','story'],
+    desc:'Build a world, cast a character born from it, structure the plot, then write the story — each step feeds the next as canon.'},
+  scenelab:{name:'Scene Lab',icon:'dlg',color:'var(--c-dlg)',steps:['character','dialogue','story'],
+    desc:'Create a character, hear their voice in a dialogue scene, then grow that scene into a complete story.'},
+  plotfirst:{name:'Plot-First Draft',icon:'plot',color:'var(--c-plot)',steps:['plot','character','story'],
+    desc:'Architect the beats first, generate the protagonist the structure demands, then draft the story from both.'},
+};
+const Flow={
+  get state(){
+    const s=Store.get().wf;
+    return (s && WORKFLOWS[s.id] && s.step<WORKFLOWS[s.id].steps.length)?s:null;
+  },
+  start(wfId){
+    const wf=WORKFLOWS[wfId]; if(!wf) return;
+    Store.set({wf:{id:wfId,step:0,done:[]}});
+    this.render();
+    navigate(wf.steps[0]);
+    toast(`Workflow started: ${wf.name} — step 1 of ${wf.steps.length}`,'info');
+  },
+  cancel(){
+    Store.set({wf:null});
+    this.render();
+    toast('Workflow ended','info');
+  },
+  /* advance when the user pipes from the current step's tool to the next step's tool */
+  maybeAdvance(fromTool,toTool){
+    const s=this.state; if(!s) return;
+    const wf=WORKFLOWS[s.id];
+    if(wf.steps[s.step]===fromTool && wf.steps[s.step+1]===toTool){
+      Store.set({wf:{...s,step:s.step+1,done:[...s.done,fromTool]}});
+      this.render();
+      const last=s.step+1===wf.steps.length-1;
+      toast(`Step ${s.step+2} of ${wf.steps.length}${last?' — final step!':''}`,'ok');
+    }
+  },
+  /* pipe current step output into the next step */
+  next(){
+    const s=this.state; if(!s) return;
+    const wf=WORKFLOWS[s.id];
+    const cur=wf.steps[s.step], nxt=wf.steps[s.step+1];
+    if(!nxt){ this.finish(); return; }
+    if(!toolState[cur].raw.trim()){ toast(`Generate with ${TOOLS[cur].short} first`,'err'); navigate(cur); return; }
+    Pipe.sendOutput(cur,nxt);
+  },
+  finish(){
+    const s=this.state; if(!s) return;
+    Store.set({wf:null});
+    this.render();
+    toast(`${WORKFLOWS[s.id].name} complete 🎉 — save your story to the library!`,'ok');
+  },
+  render(){
+    const bar=$('#wf-bar');
+    const s=this.state;
+    if(!s){ bar.classList.remove('show'); bar.innerHTML=''; document.body.classList.remove('wf-active'); return; }
+    const wf=WORKFLOWS[s.id];
+    const isLast=s.step===wf.steps.length-1;
+    bar.innerHTML=`
+      <span class="wf-name" style="color:${wf.color}">${ic(wf.icon,14)} ${wf.name}</span>
+      <div class="wf-steps">
+        ${wf.steps.map((t,i)=>`
+          ${i>0?'<span class="wf-arrow">→</span>':''}
+          <button class="wf-step ${i===s.step?'cur':''} ${i<s.step?'done':''}" data-nav="${t}" style="--wc:${TOOLS[t].color}" title="Go to ${TOOLS[t].short}">
+            ${i<s.step?'✓':i+1} ${TOOLS[t].short.replace(' Generator','').replace(' Builder','')}
+          </button>`).join('')}
+      </div>
+      <div class="wf-actions">
+        <button class="btn btn-primary btn-sm" data-wf-next>${isLast?'Finish workflow ✓':`Send to ${TOOLS[wf.steps[s.step+1]].short.replace(' Generator','').replace(' Builder','')} →`}</button>
+        <button class="btn btn-ghost btn-icon" data-wf-cancel title="End workflow">${ic('x',13)}</button>
+      </div>`;
+    bar.classList.add('show');
+    document.body.classList.add('wf-active');
+  }
+};
+
+/* ============================================================
+   ROUTER + NAV
+============================================================ */
+const ROUTES=['dashboard',...TOOL_IDS,'library','settings'];
+let currentRoute='dashboard';
+
+function buildNav(){
+  const nav=$('#nav');
+  nav.innerHTML=`
+    <button class="nav-item" data-nav="dashboard"><span style="color:var(--tx-3)">${ic('home',15)}</span> Dashboard <span class="nav-kbd">1</span></button>
+    <div class="nav-label">AI Tools</div>
+    ${TOOL_IDS.map((id,i)=>`<button class="nav-item" data-nav="${id}" style="--item-c:${TOOLS[id].color}"><span class="nav-dot"></span> ${TOOLS[id].short} <span class="nav-kbd">${i+2}</span></button>`).join('')}
+    <div class="nav-label">Workspace</div>
+    <button class="nav-item" data-nav="library"><span style="color:var(--tx-3)">${ic('lib',15)}</span> Library <span class="nav-kbd">7</span></button>
+    <button class="nav-item" data-nav="settings"><span style="color:var(--tx-3)">${ic('set',15)}</span> Settings <span class="nav-kbd">8</span></button>`;
+}
+function navigate(route,fromHash=false){
+  if(!ROUTES.includes(route)) route='dashboard';
+  currentRoute=route;
+  /* always keep the hash in sync — also corrects invalid deep-link hashes */
+  if(location.hash!=='#'+route){ history.replaceState(null,'','#'+route); }
+  $$('.nav-item').forEach(b=>{ const on=b.dataset.nav===route; b.classList.toggle('active',on); b.setAttribute('aria-current',on?'page':'false'); });
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+route));
+  const names={dashboard:'Dashboard',library:'Library',settings:'Settings'};
+  $('#crumb-page').textContent = names[route]||TOOLS[route]?.short||route;
+  if(route==='dashboard') renderDashboard();
+  if(route==='library') renderLibrary();
+  if(route==='settings') autoUpdateModels();
+  /* contextual no-key hint on tool pages (and clear it once a key exists) */
+  if(TOOLS[route]){
+    const sub=$(`#body-${route} .out-empty .oe-sub`);
+    if(sub) sub.innerHTML = KeyManager.hasAny(Store.get().provider)
+      ? esc(TOOLS[route].empty)
+      : `⚠️ No API key configured for <b>${PROVIDERS[Store.get().provider].name}</b> — <a href="#" data-nav="settings" style="color:var(--ac)">add one in Settings</a> to start generating.`;
+  }
+  closeDrawer();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================================================
+   VIEW SCAFFOLD
+============================================================ */
+function buildViews(){
+  const c=$('#content');
+  c.innerHTML=`
+    <section class="view" id="view-dashboard"></section>
+    ${TOOL_IDS.map(id=>`<section class="view" id="view-${id}" style="--tc:${TOOLS[id].color}">${toolViewHTML(id)}</section>`).join('')}
+    <section class="view" id="view-library"></section>
+    <section class="view" id="view-settings">${settingsHTML()}</section>`;
+  TOOL_IDS.forEach(initTool);
+  initSettings();
+}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+function renderDashboard(){
+  const s=Store.get();
+  const recent=s.library.slice(0,6);
+  $('#view-dashboard').innerHTML=`
+    <div class="hero">
+      <h1>Forge worlds, characters &amp; stories<br>with <span>AI-powered</span> precision.</h1>
+      <p>Five specialized creative-writing engines backed by OpenRouter, Google Gemini and Groq. Stream results live, refine, and build your personal story library.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" data-nav="story">${ic('feather',16)} Start writing</button>
+        <button class="btn btn-ghost btn-lg" data-nav="settings">${ic('key',15)} ${KeyManager.hasAny(s.provider)?'Manage providers':'Connect a provider'}</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="sc-label">Generations</div><div class="sc-val">${fmtNum(s.stats.gens)}</div><div class="sc-sub">all time</div></div>
+      <div class="stat-card"><div class="sc-label">Words generated</div><div class="sc-val">${fmtNum(s.stats.words)}</div><div class="sc-sub">≈ ${Math.max(1,Math.round(s.stats.words/250))} pages</div></div>
+      <div class="stat-card"><div class="sc-label">Library items</div><div class="sc-val">${s.library.length}</div><div class="sc-sub">saved locally</div></div>
+      <div class="stat-card"><div class="sc-label">Provider</div><div class="sc-val" style="font-size:1.05rem;padding-top:6px;display:flex;align-items:center;gap:8px"><span class="status-dot ${KeyManager.hasAny(s.provider)?'on':''}"></span>${PROVIDERS[s.provider].name}</div><div class="sc-sub">${KeyManager.hasAny(s.provider)?esc(s.models[s.provider])+' · '+KeyManager.list(s.provider).filter(k=>k.key).length+' key(s)':'no API key — open Settings'}</div></div>
+    </div>
+    <div class="section-title"><h2>Guided Workflows</h2></div>
+    <div class="flows-grid">
+      ${Object.entries(WORKFLOWS).map(([k,wf])=>`
+        <div class="flow-card">
+          <div class="flow-chain">
+            ${wf.steps.map((t,i)=>`${i>0?'<span class="wf-arrow">→</span>':''}<span class="flow-node" style="--nc:${TOOLS[t].color}" title="${TOOLS[t].short}">${ic(TOOLS[t].icon,13)}</span>`).join('')}
+          </div>
+          <h3>${wf.name}</h3>
+          <p>${wf.desc}</p>
+          <button class="btn btn-primary btn-sm" data-wf-start="${k}" style="align-self:flex-start">${ic('arrow',12)} Start workflow</button>
+        </div>`).join('')}
+    </div>
+    <div class="section-title"><h2>Creative Tools</h2></div>
+    <div class="tools-grid">
+      ${TOOL_IDS.map(id=>`
+        <button class="tool-card" data-nav="${id}" style="--tc:${TOOLS[id].color}">
+          <div class="tc-icon">${ic(TOOLS[id].icon,18)}</div>
+          <h3>${TOOLS[id].short}</h3>
+          <p>${TOOLS[id].tagline}</p>
+          <span class="tc-go">Open tool ${ic('arrow',13)}</span>
+        </button>`).join('')}
+    </div>
+    ${recent.length?`
+    <div class="section-title"><h2>Recent Creations</h2><button data-nav="library">View library →</button></div>
+    <div class="recent-list">
+      ${recent.map(item=>`
+        <button class="recent-row" data-open-item="${item.id}" style="--tc:${TOOLS[item.tool]?.color||'var(--ac)'}">
+          <span class="rr-dot"></span>
+          <span class="rr-title">${esc(item.title)}</span>
+          <span class="lib-badge" style="--tc:${TOOLS[item.tool]?.color||'var(--ac)'}">${TOOLS[item.tool]?.short||item.tool}</span>
+          <span class="rr-time">${timeAgo(item.created)}</span>
+        </button>`).join('')}
+    </div>`:''}`;
+}
+
+/* ============================================================
+   TOOL VIEWS
+============================================================ */
+function fieldHTML(t,f){
+  const key=`${t}.${f.id}`;
+  const saved=Store.get().forms[key];
+  const span=f.span===2?' class="field span-2"':' class="field"';
+  let ctrl='';
+  if(f.type==='text') ctrl=`<input class="input" id="f-${t}-${f.id}" placeholder="${esc(f.ph||'')}" value="${esc(saved??'')}">`;
+  else if(f.type==='textarea') ctrl=`<textarea class="textarea" id="f-${t}-${f.id}" rows="${f.rows||3}" placeholder="${esc(f.ph||'')}">${esc(saved??'')}</textarea>`;
+  else if(f.type==='select') ctrl=`<select class="select" id="f-${t}-${f.id}">${f.opts.map(o=>`<option value="${esc(o)}"${saved===o?' selected':''}>${o||'— any —'}</option>`).join('')}</select>`;
+  else if(f.type==='seg'){
+    const cur=saved??f.def;
+    ctrl=`<div class="seg" id="f-${t}-${f.id}" data-val="${esc(cur)}">${f.opts.map(o=>`<button type="button" data-v="${esc(o)}" class="${o===cur?'on':''}">${o}</button>`).join('')}</div>`;
+  }
+  else if(f.type==='chips'){
+    const cur=new Set(saved||[]);
+    ctrl=`<div class="chips" id="f-${t}-${f.id}">${f.opts.map(o=>`<button type="button" class="chip ${cur.has(o)?'on':''}" data-v="${esc(o)}">${o}</button>`).join('')}</div>`;
+  }
+  return `<div${span}><label class="field-label">${f.label.replace(' (optional)','')} ${f.label.includes('optional')?'<span class="opt">optional</span>':''}</label>${ctrl}</div>`;
+}
+
+function toolViewHTML(id){
+  const t=TOOLS[id];
+  return `
+  <div class="tool-hero">
+    <div class="tool-hero-icon">${ic(t.icon,20)}</div>
+    <div><h1>${t.name}</h1><p>${t.tagline}</p></div>
+  </div>
+  <div class="tool-grid">
+    <div class="card">
+      <div class="card-head">
+        <span style="color:var(--tc)">${ic('spark',15)}</span><span class="card-title">Configuration</span>
+        <button class="btn btn-ghost btn-sm surprise-btn" data-surprise="${id}" title="Surprise me — random inputs" style="margin-left:auto">${ic('dice',14)} Surprise me</button>
+      </div>
+      <div class="card-body">
+        ${t.presets?`<div class="preset-row" id="presets-${id}" role="group" aria-label="Quick-start presets">${t.presets.map((p,i)=>`<button type="button" class="preset-chip" data-preset="${i}" title="Load this preset into the form">${p.name}</button>`).join('')}</div>`:''}
+        <div class="form-grid">${t.fields.map(f=>fieldHTML(id,f)).join('')}</div>
+        <div class="gen-bar">
+          <button class="btn btn-primary btn-lg" id="gen-${id}">
+            <span class="spinner"></span><span class="btn-txt-icon">${ic('spark',15)}</span> Generate <kbd style="font-family:var(--mono);font-size:10px;opacity:.7;background:rgba(255,255,255,.15);padding:1px 5px;border-radius:4px">⌘↵</kbd>
+          </button>
+          <button class="btn btn-ghost btn-lg" id="stop-${id}" style="display:none" title="Stop generation">${ic('stop',14)} Stop</button>
+          <button class="btn btn-ghost btn-icon" data-clear="${id}" title="Clear form">${ic('trash',15)}</button>
+        </div>
+      </div>
+    </div>
+    <div class="out-panel" id="out-${id}">
+      <div class="out-head">
+        <span class="out-status"><span class="pulse" id="pulse-${id}"></span><span id="status-${id}">Ready</span></span>
+        <div class="out-actions">
+          <button class="btn btn-icon" data-act="copy" data-tool="${id}" title="Copy markdown">${ic('copy',15)}</button>
+          <button class="btn btn-icon" data-act="download" data-tool="${id}" title="Download .md">${ic('dl',15)}</button>
+          <button class="btn btn-icon" data-act="save" data-tool="${id}" title="Save to library">${ic('save',15)}</button>
+          <button class="btn btn-icon" data-act="regen" data-tool="${id}" title="Regenerate">${ic('redo',15)}</button>
+        </div>
+      </div>
+      <div class="out-body" id="body-${id}">
+        <div class="out-empty">
+          <span style="color:var(--tc)">${ic(t.icon,40)}</span>
+          <span class="oe-title">${t.short}</span>
+          <span class="oe-sub">${t.empty}</span>
+        </div>
+      </div>
+      ${t.studio?`<div class="studio-bar" id="studio-${id}">
+        <span class="studio-label">${ic('spark',12)} Studio · expand canon</span>
+        <select class="select" id="studio-sel-${id}" aria-label="Choose expansion type">${t.studio.map(o=>`<option value="${o.v}">${o.label}</option>`).join('')}</select>
+        <button class="btn btn-primary btn-sm" data-studio="${id}">${ic('feather',13)} Expand</button>
+      </div>`:''}
+      <div class="pipe-bar" id="pipe-${id}">
+        <span class="studio-label" title="Load this output into another tool as canon">${ic('arrow',12)} Send to</span>
+        ${TOOL_IDS.filter(x=>x!==id).map(x=>`<button class="btn btn-ghost btn-sm" data-pipe="${x}" style="--pc:${TOOLS[x].color}"><span style="color:${TOOLS[x].color}">${ic(TOOLS[x].icon,12)}</span> ${TOOLS[x].short.replace(' Generator','').replace(' Builder','')}</button>`).join('')}
+      </div>
+      <div class="refine-bar" id="refine-${id}" style="display:none">
+        <button class="btn btn-ghost btn-sm" data-refine="undo" data-tool="${id}" id="undo-${id}" style="display:none" title="Restore the version before the last rewrite">↩ Undo</button>
+        <button class="btn btn-ghost btn-sm" data-refine="continue" data-tool="${id}" title="Continue writing from where it stopped">${ic('feather',13)} Continue</button>
+        <input class="input" id="refine-input-${id}" placeholder="Refine… e.g. make the ending darker, add more dialogue" aria-label="Refinement instruction">
+        <button class="btn btn-primary btn-sm" data-refine="custom" data-tool="${id}">${ic('spark',13)} Apply</button>
+      </div>
+      <div class="out-foot">
+        <span id="meta-words-${id}">0 words</span><span id="meta-chars-${id}">0 chars</span>
+        <span id="meta-time-${id}" style="margin-left:auto"></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* per-tool runtime state */
+const toolState = {};
+TOOL_IDS.forEach(id=>toolState[id]={raw:'',running:false,abort:null,t0:0,savedId:null,undo:null});
+
+function getFormValues(id){
+  const v={};
+  for(const f of TOOLS[id].fields){
+    const el=$(`#f-${id}-${f.id}`);
+    if(!el) continue;
+    if(f.type==='chips') v[f.id]=$$('.chip.on',el).map(c=>c.dataset.v);
+    else if(f.type==='seg') v[f.id]=el.dataset.val;
+    else v[f.id]=el.value.trim();
+  }
+  return v;
+}
+function saveFormValues(id){
+  const v=getFormValues(id);
+  const forms=Store.get().forms;
+  for(const k in v) forms[`${id}.${k}`]=v[k];
+  Store.persist();
+}
+function setFormValues(id,vals){
+  for(const f of TOOLS[id].fields){
+    if(!(f.id in vals)) continue;
+    const el=$(`#f-${id}-${f.id}`); if(!el) continue;
+    const val=vals[f.id];
+    if(f.type==='chips'){ $$('.chip',el).forEach(c=>c.classList.toggle('on',(val||[]).includes(c.dataset.v))); }
+    else if(f.type==='seg'){
+      const v=f.opts.includes(val)?val:f.def; /* never leave a seg with no active option */
+      el.dataset.val=v; $$('button',el).forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+    }
+    else if(f.type==='select'){
+      /* guard: assigning a value not in the option list would silently keep the old selection */
+      el.value = f.opts.includes(val)?val:'';
+      if(el.selectedIndex<0) el.selectedIndex=0;
+    }
+    else el.value=val??'';
+  }
+}
+
+/* ---- tool actions, split out of the event wiring for testability ---- */
+function markPreset(id,index){ /* highlight which preset the form came from; -1 clears */
+  $$(`#presets-${id} .preset-chip`).forEach((b,i)=>b.classList.toggle('on',i===index));
+}
+function loadSurprise(id){
+  setFormValues(id,TOOLS[id].surprise());
+  saveFormValues(id);
+  markPreset(id,-1);
+  toast('Random inspiration loaded','info');
+}
+function loadPreset(id,index){
+  const preset=TOOLS[id].presets?.[index]; if(!preset) return;
+  setFormValues(id,preset.vals);
+  saveFormValues(id);
+  markPreset(id,index);
+  toast(`Preset loaded: ${preset.name.replace(/^\S+\s/,'')}`,'info');
+}
+function clearForm(id){
+  const blank={};
+  TOOLS[id].fields.forEach(f=>blank[f.id]=f.type==='chips'?[]:f.type==='seg'?f.def:'');
+  setFormValues(id,blank);
+  TOOLS[id].fields.filter(f=>f.type==='select').forEach(f=>{ $(`#f-${id}-${f.id}`).selectedIndex=0; });
+  saveFormValues(id);
+  markPreset(id,-1);
+  toast('Form cleared','info');
+}
+function runStudio(id){
+  if(toolState[id].running) return;
+  const opt=TOOLS[id].studio.find(o=>o.v===$(`#studio-sel-${id}`).value);
+  if(opt) generate(id,'studio',opt.instr);
+}
+function undoRewrite(id){
+  const st=toolState[id];
+  if(st.undo==null) return;
+  [st.raw,st.undo]=[st.undo,st.raw]; /* swap — undo is redo-able */
+  st.savedId=null;
+  $(`#body-${id}`).innerHTML=`<div class="prose">${renderMD(st.raw)}</div>`;
+  updateMeta(id);
+  toast('Swapped with previous version','info');
+}
+function applyRefinement(id){
+  if(toolState[id].running) return;
+  const input=$(`#refine-input-${id}`);
+  const instr=input.value.trim();
+  if(!instr){ toast('Type a refinement instruction first','err'); input.focus(); return; }
+  generate(id,'custom',instr);
+  input.value='';
+}
+
+function initTool(id){
+  const view=$(`#view-${id}`);
+  const autosave=debounce(()=>saveFormValues(id),CONFIG.AUTOSAVE_DEBOUNCE_MS);
+
+  /* single delegated click handler for the whole tool view */
+  view.addEventListener('click',e=>{
+    const segBtn=e.target.closest('.seg button');
+    if(segBtn){
+      const seg=segBtn.parentElement;
+      seg.dataset.val=segBtn.dataset.v;
+      $$('button',seg).forEach(b=>b.classList.toggle('on',b===segBtn));
+      autosave(); return;
+    }
+    const chip=e.target.closest('.chip');
+    if(chip){ chip.classList.toggle('on'); autosave(); return; }
+    const preset=e.target.closest('[data-preset]');
+    if(preset){ loadPreset(id,Number(preset.dataset.preset)); return; }
+    if(e.target.closest('[data-surprise]')){ loadSurprise(id); return; }
+    if(e.target.closest('[data-clear]')){ clearForm(id); return; }
+    if(e.target.closest(`[data-studio="${id}"]`)){ runStudio(id); return; }
+    const pipe=e.target.closest('[data-pipe]');
+    if(pipe){ Pipe.sendOutput(id,pipe.dataset.pipe); return; }
+    const r=e.target.closest('[data-refine]');
+    if(r){
+      if(toolState[id].running) return;
+      if(r.dataset.refine==='undo') undoRewrite(id);
+      else if(r.dataset.refine==='continue') generate(id,'continue');
+      else applyRefinement(id);
+      return;
+    }
+  });
+  $(`#gen-${id}`).addEventListener('click',()=>generate(id));
+  $(`#stop-${id}`).addEventListener('click',()=>toolState[id].abort?.abort());
+  // ⌘/Ctrl+Enter generates; Enter in refine input applies
+  view.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); generate(id); }
+    else if(e.key==='Enter'&&e.target.id===`refine-input-${id}`){ e.preventDefault(); applyRefinement(id); }
+  });
+  // autosave typed input (debounced) so nothing is lost on reload;
+  // manual edits also mean the form no longer matches a loaded preset
+  view.addEventListener('input',e=>{ if(e.target.closest('.form-grid')) markPreset(id,-1); autosave(); });
+}
+
+/* ============================================================
+   GENERATION ENGINE
+============================================================ */
+function setRunning(id,on){
+  const st=toolState[id];
+  st.running=on;
+  $(`#gen-${id}`).classList.toggle('loading',on);
+  $(`#gen-${id}`).disabled=on;
+  $(`#stop-${id}`).style.display=on?'inline-flex':'none';
+  $(`#pulse-${id}`).classList.toggle('live',on);
+}
+/* cached per-tool DOM refs — these are queried on every streamed paint (~8/s),
+   so resolve them once instead of hitting querySelector each time */
+const toolEls={};
+function els(id){
+  return toolEls[id]||(toolEls[id]={
+    words:$(`#meta-words-${id}`), chars:$(`#meta-chars-${id}`),
+    status:$(`#status-${id}`), body:$(`#body-${id}`)
+  });
+}
+function updateMeta(id){
+  const st=toolState[id], e=els(id);
+  const words=wc(st.raw);
+  e.words.textContent=`${words} words`;
+  e.chars.textContent=words?`~${Math.max(1,Math.round(words/230))} min read`:'0 chars';
+}
+
+/* Compose the user prompt for each generation mode.
+   fresh    — the tool's own prompt from form values
+   continue — seamless continuation of existing text
+   custom   — full rewrite applying a user instruction
+   studio   — canon-consistent new section appended to existing text */
+function buildUserPrompt(id,mode,instruction,raw){
+  const base=TOOLS[id].prompt(getFormValues(id));
+  switch(mode){
+    case 'continue':
+      return `${base}\n\n---\nHere is the text so far:\n\n${raw}\n\n---\nContinue this text seamlessly from exactly where it stops. Do not repeat any existing text, do not add a new title, do not summarize — just keep writing in the same voice and format.`;
+    case 'custom':
+      return `${base}\n\n---\nHere is the previous version:\n\n${raw}\n\n---\nRewrite/revise the full piece applying this instruction: "${instruction}". Output the complete revised piece (with title), not just the changed parts.`;
+    case 'studio':
+      return `Here is the established canon so far — treat every named person, place, faction and rule in it as fixed truth:\n\n${raw}\n\n---\nTask: ${instruction}\nOutput ONLY the new section, starting with an appropriate ## heading. Stay rigorously consistent with the canon above (names, naming flavor, tone, tech/magic rules). Do not repeat or summarize existing sections.`;
+    default:
+      return base;
+  }
+}
+
+/* Stream a completion, rotating to the next healthy key on key-level
+   failures (401/403/429) as long as nothing has streamed yet.
+   Calls onChunk per token batch; returns {usedKey}. Throws on failure. */
+async function streamWithFailover(pv,{sys,user,signal,onChunk,onRetry}){
+  const s=Store.get();
+  const maxAttempts=Math.max(1,KeyManager.list(pv).filter(k=>k.key).length);
+  const tried=new Set();
+  let lastErr=null, usedKey=null, streamed=false;
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    const keyEntry=KeyManager.pick(pv);
+    if(!keyEntry||tried.has(keyEntry.id)) break;
+    tried.add(keyEntry.id);
+    usedKey=keyEntry;
+    if(attempt>0) onRetry?.(keyEntry);
+    try{
+      for await(const chunk of PROVIDERS[pv].stream(s.models[pv],sys,user,{key:keyEntry.key,temperature:s.temperature,maxTokens:s.maxTokens},signal)){
+        streamed=true;
+        onChunk(chunk);
+      }
+      lastErr=null;
+      break;
+    }catch(err){
+      if(err.name==='AbortError') throw err;
+      lastErr=err;
+      const info=KeyManager.markFailure(pv,keyEntry.id,err)||{};
+      /* only fail over if nothing streamed yet AND it's a key-level problem */
+      if(streamed || !(info.rateLimited||info.badKey)) throw err;
+    }
+  }
+  if(lastErr) throw lastErr;
+  return {usedKey};
+}
+
+async function generate(id,mode='fresh',instruction=''){
+  const st=toolState[id];
+  if(st.running) return;
+  const s=Store.get();
+  const pv=s.provider;
+  if(!KeyManager.hasAny(pv)){ toast(`Add a ${PROVIDERS[pv].name} API key first`,'err'); navigate('settings'); return; }
+
+  saveFormValues(id);
+  const isAppend = mode==='continue'||mode==='studio';
+  const user=buildUserPrompt(id,mode,instruction,st.raw);
+  const body=els(id).body;
+  const base=isAppend?st.raw+'\n\n':'';
+  const prevRaw=st.raw; /* kept so a failed refine/rewrite never destroys the current output */
+  st.raw=base; st.t0=performance.now(); st.savedId=null;
+  $(`#meta-time-${id}`).textContent='';
+  updateMeta(id); /* reset word/char counters immediately, not at first paint */
+  st.abort=new AbortController();
+  setRunning(id,true);
+  $(`#refine-${id}`).style.display='none';
+  $(`#studio-${id}`)?.classList.remove('show');
+  $(`#pipe-${id}`).classList.remove('show');
+  $(`#status-${id}`).textContent=`Contacting ${PROVIDERS[pv].name}…`;
+  if(!isAppend) body.innerHTML='<div class="skel"><div style="width:45%"></div><div style="width:92%"></div><div style="width:88%"></div><div style="width:95%"></div><div style="width:60%"></div></div>';
+
+  /* throttled + incremental paint: blocks before the last blank line are
+     stable in this renderer (blank lines close lists/tables), so parse them
+     once and only re-parse the small streaming tail on each frame.
+     Keeps paint cost O(tail) instead of O(document) on long outputs. */
+  let lastPaint=0, paintTimer=null, stableLen=0, stableHTML='';
+  const doPaint=(final)=>{
+    lastPaint=performance.now();
+    if(!final && document.hidden) return; /* don't burn CPU painting a hidden tab */
+    let html;
+    if(final){
+      html=renderMD(st.raw); /* authoritative full parse at the end */
+    }else{
+      if(stableLen>st.raw.length){ stableLen=0; stableHTML=''; } /* raw shrank (retry) — invalidate cache */
+      const cut=st.raw.lastIndexOf('\n\n');
+      if(cut>stableLen){ stableHTML+=renderMD(st.raw.slice(stableLen,cut)); stableLen=cut; }
+      html=stableHTML+renderMD(st.raw.slice(stableLen));
+    }
+    const stick = body.scrollHeight-body.scrollTop-body.clientHeight<80;
+    body.innerHTML=`<div class="prose">${html}${final?'':'<span class="caret"></span>'}</div>`;
+    if(stick) body.scrollTop=body.scrollHeight;
+    updateMeta(id);
+  };
+  const paint=(final=false)=>{
+    if(final){ clearTimeout(paintTimer); paintTimer=null; doPaint(true); return; }
+    const wait=Math.max(0,CONFIG.PAINT_INTERVAL_MS-(performance.now()-lastPaint));
+    if(paintTimer) return;
+    paintTimer=setTimeout(()=>{ paintTimer=null; doPaint(false); },wait);
+  };
+
+  try{
+    let first=true;
+    const {usedKey}=await streamWithFailover(pv,{
+      sys:TOOLS[id].sys, user, signal:st.abort.signal,
+      onChunk:chunk=>{
+        if(first){ first=false; $(`#status-${id}`).textContent='Streaming…'; }
+        st.raw+=chunk;
+        paint();
+      },
+      onRetry:keyEntry=>{
+        $(`#status-${id}`).textContent=`Retrying with “${keyEntry.label}”…`;
+        toast(`Switched to key “${keyEntry.label}”`,'info');
+      }
+    });
+    if(st.raw===base||!st.raw.trim()) throw new Error('Empty response from model.');
+    if(usedKey) KeyManager.markSuccess(pv,usedKey.id);
+    /* rewrites are undoable — keep the version they replaced */
+    st.undo = mode==='custom' ? prevRaw : null;
+    const undoBtn=$(`#undo-${id}`); if(undoBtn) undoBtn.style.display=st.undo!=null?'inline-flex':'none';
+    paint(true);
+    const secs=Math.max(0.1,(performance.now()-st.t0)/1000);
+    const newWords=wc(st.raw.slice(base.length));
+    $(`#status-${id}`).textContent='Done';
+    $(`#meta-time-${id}`).textContent=`${secs.toFixed(1)}s · ${Math.round(newWords/secs)} w/s · ${s.models[pv]}${usedKey&&KeyManager.list(pv).filter(k=>k.key).length>1?` · ${usedKey.label}`:''}`;
+    $(`#refine-${id}`).style.display='flex';
+    $(`#studio-${id}`)?.classList.add('show');
+    $(`#pipe-${id}`).classList.add('show');
+    Store.set(prev=>({stats:{gens:prev.stats.gens+1,words:prev.stats.words+newWords}}));
+    updateChips();
+    updateProviderPill();
+    toast('Generation complete');
+  }catch(err){
+    const showOutput=()=>{ paint(true); $(`#refine-${id}`).style.display='flex'; $(`#studio-${id}`)?.classList.add('show'); $(`#pipe-${id}`).classList.add('show'); };
+    if(err.name==='AbortError'){
+      $(`#status-${id}`).textContent='Stopped';
+      if(st.raw.trim()) showOutput();
+      else if(prevRaw.trim()){ st.raw=prevRaw; showOutput(); } /* stopped before anything streamed — restore previous */
+      else body.innerHTML=`<div class="out-empty"><span class="oe-title">Generation stopped</span></div>`;
+      toast('Generation stopped','info');
+    }else{
+      $(`#status-${id}`).textContent='Error';
+      if(st.raw===base && prevRaw.trim()){
+        /* failed before any new content — restore previous output instead of wiping it */
+        st.raw=prevRaw; showOutput();
+        toast('Failed — previous output kept: '+err.message.slice(0,70),'err');
+      }else if(st.raw.trim()){
+        /* failed mid-stream — keep the partial text visible */
+        showOutput();
+        toast('Stream interrupted: '+err.message.slice(0,70),'err');
+      }else{
+        body.innerHTML=`<div class="out-empty"><span style="color:var(--err)">${ic('x',34)}</span><span class="oe-title" style="color:var(--err)">Generation failed</span><span class="oe-sub">${esc(err.message)}</span></div>`;
+        toast(err.message.slice(0,90),'err');
+      }
+    }
+  }finally{
+    setRunning(id,false);
+  }
+}
+
+/* output actions */
+function extractTitle(md,fallback){
+  const m=md.match(/^#\s+(.+)$/m);
+  return (m?m[1]:'').replace(/[*_`]/g,'').trim()||fallback;
+}
+function flashBtn(btn){ if(!btn) return; btn.classList.add('done'); setTimeout(()=>btn.classList.remove('done'),1200); }
+function handleOutputAction(act,id,btn){
+  const st=toolState[id];
+  if(act==='regen'){
+    if(st.running){ toast('Already generating…','info'); return; }
+    generate(id); return;
+  }
+  if(!st.raw){ toast('Nothing to '+act+' yet','err'); return; }
+  const title=extractTitle(st.raw,TOOLS[id].short+' output');
+  if(act==='copy'){ copyText(st.raw).then(()=>{ toast('Copied to clipboard'); flashBtn(btn); }); }
+  if(act==='download'){ download(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50)+'.md',st.raw); toast('Downloaded .md'); flashBtn(btn); }
+  if(act==='save'){
+    /* prevent accidental duplicate saves of the same output */
+    if(st.savedId && Store.get().library.some(i=>i.id===st.savedId && i.content===st.raw)){
+      toast('Already saved to library','info'); flashBtn(btn); return;
+    }
+    const item={id:'sf_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),tool:id,title,content:st.raw,words:wc(st.raw),created:Date.now(),model:Store.get().models[Store.get().provider]};
+    Store.set(prev=>({library:[item,...prev.library].slice(0,CONFIG.LIBRARY_CAP)}));
+    st.savedId=item.id;
+    toast('Saved to library'); flashBtn(btn);
+  }
+}
+
+/* ============================================================
+   LIBRARY
+============================================================ */
+let libFilter='all', libQuery='', libSort='new';
+function renderLibrary(){
+  const s=Store.get();
+  $('#view-library').innerHTML=`
+    <div class="tool-hero">
+      <div class="tool-hero-icon" style="--tc:var(--ac)">${ic('lib',20)}</div>
+      <div><h1>Library</h1><p>Everything you save lives here — stored locally in your browser. ${s.library.length} item${s.library.length===1?'':'s'}, ${fmtNum(s.library.reduce((a,i)=>a+(i.words||0),0))} words.</p></div>
+    </div>
+    <div class="lib-toolbar">
+      <input class="input" id="lib-search" type="search" placeholder="Search library…" value="${esc(libQuery)}" aria-label="Search library">
+      <select class="select" id="lib-sort" aria-label="Sort library" style="width:auto;font-size:var(--fs-sm);padding:6px 30px 6px 10px">
+        <option value="new"${libSort==='new'?' selected':''}>Newest first</option>
+        <option value="old"${libSort==='old'?' selected':''}>Oldest first</option>
+        <option value="words"${libSort==='words'?' selected':''}>Longest first</option>
+        <option value="title"${libSort==='title'?' selected':''}>Title A–Z</option>
+      </select>
+      <div class="seg" id="lib-filter">
+        <button data-f="all" class="${libFilter==='all'?'on':''}">All</button>
+        ${TOOL_IDS.map(id=>`<button data-f="${id}" class="${libFilter===id?'on':''}">${TOOLS[id].short.replace(' Generator','').replace(' Builder','')}</button>`).join('')}
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" id="lib-export" title="Export library as JSON backup" ${s.library.length?'':'disabled'}>${ic('dl',13)} Export</button>
+        <button class="btn btn-ghost btn-sm" id="lib-import" title="Import a JSON backup">${ic('save',13)} Import</button>
+        ${s.library.length?`<button class="btn btn-danger btn-sm" id="lib-clear">${ic('trash',13)} Clear all</button>`:''}
+      </div>
+    </div>
+    <div id="lib-results"></div>
+    <input type="file" id="lib-file" accept="application/json,.json" style="display:none">`;
+
+  renderLibraryGrid();
+  /* re-render only the grid on search/filter so the input never loses focus;
+     debounced so fast typing does one render, not one per keystroke */
+  const debouncedGrid=debounce(renderLibraryGrid,150);
+  $('#lib-search').addEventListener('input',e=>{ libQuery=e.target.value; debouncedGrid(); });
+  $('#lib-sort').addEventListener('change',e=>{ libSort=e.target.value; renderLibraryGrid(); });
+  $('#lib-filter').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    libFilter=b.dataset.f;
+    $$('#lib-filter button').forEach(x=>x.classList.toggle('on',x===b));
+    renderLibraryGrid();
+  });
+  $('#lib-clear')?.addEventListener('click',()=>{
+    if(confirm('Delete ALL saved items? This cannot be undone.')){ Store.set({library:[]}); libCache.clear(); renderLibrary(); toast('Library cleared','info'); }
+  });
+  $('#lib-export').addEventListener('click',()=>{
+    const lib=Store.get().library;
+    if(!lib.length) return;
+    download(`storyforge-library-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({app:'storyforge',version:1,exported:Date.now(),items:lib},null,2),'application/json');
+    toast(`Exported ${lib.length} items`);
+  });
+  $('#lib-import').addEventListener('click',()=>$('#lib-file').click());
+  $('#lib-file').addEventListener('change',e=>{
+    const file=e.target.files?.[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const j=JSON.parse(reader.result);
+        /* sanitize: only accept well-formed items and coerce fields to expected types */
+        const items=(Array.isArray(j)?j:j.items||[])
+          .filter(i=>i && typeof i.id==='string' && typeof i.content==='string' && typeof i.tool==='string')
+          .map(i=>({
+            id:i.id, tool:i.tool,
+            title:String(i.title||'Untitled').slice(0,200),
+            content:i.content,
+            words:Number(i.words)||wc(i.content),
+            created:Number(i.created)||Date.now(),
+            model:typeof i.model==='string'?i.model:''
+          }));
+        if(!items.length) throw new Error('No valid items found');
+        Store.set(prev=>{
+          const have=new Set(prev.library.map(i=>i.id));
+          const added=items.filter(i=>!have.has(i.id));
+          return {library:[...added,...prev.library].slice(0,CONFIG.LIBRARY_CAP)};
+        });
+        renderLibrary();
+        toast('Import complete');
+      }catch(err){ toast('Import failed: '+err.message,'err'); }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  });
+}
+
+/* per-item derived-data cache (search haystack + preview) so filtering and
+   re-renders don't re-run regex/toLowerCase over full contents every keystroke */
+const libCache=new Map(); // id -> {hay, preview}
+function libDerived(item){
+  let d=libCache.get(item.id);
+  if(!d){
+    d={
+      hay:(item.title+' '+item.content).toLowerCase(),
+      preview:esc(item.content.replace(/^#.+$/m,'').replace(/[#*>`|-]/g,'').trim().slice(0,180))
+    };
+    libCache.set(item.id,d);
+    /* keep the cache bounded to the library cap */
+    if(libCache.size>CONFIG.LIBRARY_CAP+50){ libCache.delete(libCache.keys().next().value); }
+  }
+  return d;
+}
+function renderLibraryGrid(){
+  const s=Store.get();
+  let items=s.library;
+  if(libFilter!=='all') items=items.filter(i=>i.tool===libFilter);
+  if(libQuery){ const q=libQuery.toLowerCase(); items=items.filter(i=>libDerived(i).hay.includes(q)); }
+  if(libSort!=='new'){
+    items=[...items].sort(
+      libSort==='old'?(a,b)=>a.created-b.created
+      :libSort==='words'?(a,b)=>(b.words||0)-(a.words||0)
+      :(a,b)=>a.title.localeCompare(b.title));
+  }
+  $('#lib-results').innerHTML=items.length?`<div class="lib-grid">${items.map(item=>`
+      <article class="lib-card" data-open-item="${item.id}" style="--tc:${TOOLS[item.tool]?.color||'var(--ac)'}" tabindex="0" role="button" aria-label="Open ${esc(item.title)}">
+        <span class="lib-badge">${ic(TOOLS[item.tool]?.icon||'story',11)} ${TOOLS[item.tool]?.short||item.tool}</span>
+        <h4>${esc(item.title)}</h4>
+        <p class="lc-preview">${libDerived(item).preview}</p>
+        <div class="lc-meta"><span>${item.words||0} words</span><span>${timeAgo(item.created)}</span></div>
+      </article>`).join('')}</div>`
+    :`<div class="empty-state">${ic('lib',44)}<h3>${s.library.length?'No matches':'Your library is empty'}</h3><p>${s.library.length?'Try a different search or filter.':'Generate something with any tool, then hit the save icon.'}</p></div>`;
+}
+
+function openItem(itemId){
+  const item=Store.get().library.find(i=>i.id===itemId);
+  if(!item) return;
+  const t=TOOLS[item.tool];
+  const root=$('#modal-root');
+  root.innerHTML=`
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <span class="lib-badge" style="--tc:${t?.color||'var(--ac)'}">${ic(t?.icon||'story',11)} ${t?.short||item.tool}</span>
+          <b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.title)}</b>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-icon btn-ghost" id="m-copy" title="Copy">${ic('copy',14)}</button>
+          <button class="btn btn-icon btn-ghost" id="m-dl" title="Download">${ic('dl',14)}</button>
+          <button class="btn btn-icon btn-danger" id="m-del" title="Delete">${ic('trash',14)}</button>
+          <button class="btn btn-icon btn-ghost" id="m-close" title="Close">${ic('x',14)}</button>
+        </div>
+      </div>
+      <div class="modal-body"><div class="prose">${renderMD(item.content)}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-top:1px solid var(--bd-0);flex-wrap:wrap">
+        <span class="hint" style="margin-right:2px">Use as context in:</span>
+        ${TOOL_IDS.filter(x=>x!==item.tool).map(x=>`<button class="btn btn-ghost btn-sm" data-use-in="${x}" style="--tc:${TOOLS[x].color}"><span style="color:var(--tc)">${ic(TOOLS[x].icon,12)}</span> ${TOOLS[x].short.replace(' Generator','').replace(' Builder','')}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+  document.body.classList.add('modal-open');
+  const returnFocus=document.activeElement; /* restore focus to the card that opened the modal */
+  $('#m-close').focus();
+  const escH=e=>{ if(e.key==='Escape') close(); };
+  const close=()=>{ root.innerHTML=''; document.body.classList.remove('modal-open'); document.removeEventListener('keydown',escH); returnFocus?.focus?.(); };
+  document.addEventListener('keydown',escH);
+  /* pipe this item into another tool via the shared pipeline (field-aware mapping) */
+  $$('[data-use-in]',root).forEach(b=>b.addEventListener('click',()=>{
+    close();
+    Pipe.send(item.tool,b.dataset.useIn,item.content,item.title);
+  }));
+  $('#m-close').onclick=close;
+  $('#modal-bg').addEventListener('click',e=>{ if(e.target.id==='modal-bg') close(); });
+  $('#m-copy').onclick=()=>copyText(item.content).then(()=>toast('Copied'));
+  $('#m-dl').onclick=()=>{ download(item.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50)+'.md',item.content); };
+  $('#m-del').onclick=()=>{
+    if(!confirm('Delete this item from your library?')) return;
+    Store.set(prev=>({library:prev.library.filter(i=>i.id!==itemId)}));
+    libCache.delete(itemId);
+    close(); toast('Deleted','info');
+    if(currentRoute==='library') renderLibrary();
+    if(currentRoute==='dashboard') renderDashboard();
+  };
+}
+
+/* ============================================================
+   SETTINGS
+============================================================ */
+function settingsHTML(){
+  return `
+  <div class="tool-hero">
+    <div class="tool-hero-icon" style="--tc:var(--ac)">${ic('set',20)}</div>
+    <div><h1>Settings</h1><p>Connect an AI provider. Keys are stored only in your browser's localStorage and sent directly to the provider — never to any other server.</p></div>
+  </div>
+  <div class="settings-grid">
+    <div class="card"><div class="card-head"><span style="color:var(--ac)">${ic('key',15)}</span><span class="card-title">AI Provider</span></div>
+      <div class="card-body">
+        <div class="provider-tabs" id="pv-tabs">
+          ${Object.entries(PROVIDERS).map(([k,p])=>`
+            <button class="pv-tab" data-pv="${k}">
+              <span class="check">✓</span>
+              <div class="pv-t-name"><span class="status-dot" id="dot-${k}"></span>${p.name}</div>
+              <div class="pv-t-sub">${p.desc}</div>
+            </button>`).join('')}
+        </div>
+        <div id="pv-config"></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-head"><span style="color:var(--ac)">${ic('spark',15)}</span><span class="card-title">Generation Parameters</span></div>
+      <div class="card-body">
+        <div class="adv-row">
+          <div class="field">
+            <label class="field-label">Temperature <span class="opt">creativity</span></label>
+            <div class="slider-row"><input type="range" id="set-temp" min="0" max="2" step="0.05"><span class="slider-val" id="temp-val"></span></div>
+          </div>
+          <div class="field">
+            <label class="field-label">Max Output Tokens</label>
+            <div class="slider-row"><input type="range" id="set-max" min="256" max="8192" step="256"><span class="slider-val" id="max-val"></span></div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:12px">Higher temperature → wilder, more surprising prose. Lower → more focused and predictable. Long stories may need 3000+ tokens.</p>
+      </div>
+    </div>
+    <div class="card"><div class="card-body">
+      <p class="hint">🔒 <b>Privacy:</b> This is a fully static app. Your API keys and library never leave this browser except for direct calls to your chosen provider's API. Get free keys: <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> · <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq Console</a></p>
+    </div></div>
+  </div>`;
+}
+
+function maskKey(k){ return k.length<=10?'•'.repeat(k.length):k.slice(0,5)+'…'+k.slice(-4); }
+let showFilteredModels=false;
+
+function renderProviderConfig(){
+  const s=Store.get(), pv=s.provider, p=PROVIDERS[pv];
+  $$('#pv-tabs .pv-tab').forEach(b=>b.classList.toggle('on',b.dataset.pv===pv));
+  Object.keys(PROVIDERS).forEach(k=>{ const d=$(`#dot-${k}`); if(d) d.classList.toggle('on',KeyManager.hasAny(k)); });
+  const ring=KeyManager.list(pv);
+  const cache=ModelHub.cached(pv);
+  const compatN=cache?cache.models.filter(m=>m.compatible).length:0;
+  const totalN=cache?cache.models.length:0;
+
+  $('#pv-config').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:18px;margin-top:6px">
+
+      <!-- ===== KEY MANAGER ===== -->
+      <div class="field">
+        <label class="field-label">${p.name} API Keys <span class="opt">${ring.length} added · rotation: ${s.rotation==='roundrobin'?'round-robin':'failover'}</span></label>
+        <div class="key-list" id="key-list">
+          ${ring.length?ring.map((k,i)=>{
+            const si=KeyManager.statusInfo(k);
+            return `
+            <div class="key-item ${k.cooldownUntil>Date.now()?'cooling':''}" data-kid="${k.id}">
+              <span class="ki-prio" title="Priority order">#${i+1}</span>
+              <div class="ki-main">
+                <div class="ki-label">${esc(k.label)}
+                  <span class="ki-status" style="color:${si.c}">${si.txt}</span>
+                </div>
+                <div class="ki-key" data-reveal="masked">${esc(maskKey(k.key))}</div>
+              </div>
+              <span class="ki-uses" title="Successful uses">${k.uses||0}×</span>
+              <div class="ki-actions">
+                <button class="btn btn-icon" data-kact="up" title="Raise priority" ${i===0?'disabled':''}>▲</button>
+                <button class="btn btn-icon" data-kact="down" title="Lower priority" ${i===ring.length-1?'disabled':''}>▼</button>
+                <button class="btn btn-icon" data-kact="reveal" title="Show/hide key">👁</button>
+                <button class="btn btn-icon" data-kact="test" title="Test this key"><span class="spinner" style="display:none"></span><span class="ktest-ic">${ic('spark',13)}</span></button>
+                <button class="btn btn-icon" data-kact="del" title="Remove key" style="color:var(--err)">${ic('trash',13)}</button>
+              </div>
+            </div>`;}).join('')
+          :`<p class="hint" style="padding:8px 2px">No keys yet — add one below. You can add several and StoryForge will rotate between them automatically.</p>`}
+        </div>
+        <form class="key-add-row" onsubmit="return false" autocomplete="off">
+          <input type="text" name="username" autocomplete="username" value="${p.name}" style="display:none" aria-hidden="true" tabindex="-1">
+          <input class="input" id="key-add-label" name="key-label" autocomplete="off" placeholder="Label (optional)" aria-label="Key label" style="font-size:var(--fs-sm)">
+          <input class="input" id="key-add-input" type="password" name="api-key" placeholder="${p.keyHint}" autocomplete="new-password" aria-label="${p.name} API key" style="font-family:var(--mono);font-size:var(--fs-sm)">
+          <button type="button" class="btn btn-primary" id="key-add-btn">${ic('key',13)} Add key</button>
+        </form>
+        <p class="hint" style="margin-top:6px">Get a key at <a href="${p.keyUrl}" target="_blank" rel="noopener">${p.keyUrl.replace('https://','')}</a>. Failed/rate-limited keys cool down for 90s and requests fail over to the next key automatically.</p>
+      </div>
+
+      <!-- ===== ROTATION STRATEGY ===== -->
+      <div class="field">
+        <label class="field-label">Key Rotation Strategy</label>
+        <div class="seg" id="rot-seg">
+          <button data-rot="failover" class="${s.rotation==='failover'?'on':''}">Failover (priority order)</button>
+          <button data-rot="roundrobin" class="${s.rotation==='roundrobin'?'on':''}">Round-robin (spread load)</button>
+        </div>
+        <p class="rot-desc">${s.rotation==='roundrobin'
+          ?'Each request uses the next healthy key in turn — spreads usage across keys to stay under per-key rate limits.'
+          :'Always uses the highest-priority healthy key (#1 first). Lower keys are only used when higher ones fail or cool down.'}</p>
+      </div>
+
+      <!-- ===== MODEL SELECTION ===== -->
+      <div class="field">
+        <label class="field-label">Model
+          <span class="opt">${cache?`catalog updated ${timeAgo(cache.ts)}`:'using built-in list'}</span>
+        </label>
+        <div class="model-toolbar">
+          <button class="btn btn-ghost btn-sm" id="models-refresh"><span class="spinner" style="display:none"></span><span class="btn-txt-icon">${ic('redo',13)}</span> Update model list</button>
+          <label class="chip ${showFilteredModels?'':'on'}" id="models-compat-toggle" style="cursor:pointer" title="Hide models that can't do text generation (image/video/audio/embedding models)">
+            ${showFilteredModels?'Showing all models':'Text models only'}
+          </label>
+          ${cache?`<span class="model-count">${compatN} compatible / ${totalN} total${totalN-compatN?` · ${totalN-compatN} filtered (image/video/audio/embed)`:''}</span>`:''}
+        </div>
+        <select class="select" id="set-model" style="font-family:var(--mono);font-size:var(--fs-sm)"></select>
+        <input class="input" id="set-model-custom" placeholder="custom model id, e.g. ${p.models[0][0]}" style="display:none;font-family:var(--mono);font-size:var(--fs-sm);margin-top:8px">
+        <p class="hint" id="model-note" style="margin-top:6px"></p>
+      </div>
+    </div>`;
+
+  populateModelSelect();
+
+  /* ---- key manager events ---- */
+  $('#key-add-btn').addEventListener('click',()=>{
+    const r=KeyManager.add(pv,$('#key-add-input').value,$('#key-add-label').value);
+    if(!r.ok){ toast(r.msg,'err'); return; }
+    toast('Key added');
+    renderProviderConfig(); updateProviderPill();
+  });
+  $('#key-add-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#key-add-btn').click(); } });
+  $('#key-list').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-kact]'); if(!btn) return;
+    const item=btn.closest('[data-kid]'), kid=item.dataset.kid;
+    const act=btn.dataset.kact;
+    if(act==='del'){
+      if(!confirm('Remove this API key?')) return;
+      KeyManager.remove(pv,kid); renderProviderConfig(); updateProviderPill(); toast('Key removed','info');
+    }else if(act==='up'||act==='down'){
+      KeyManager.move(pv,kid,act==='up'?-1:1); renderProviderConfig();
+    }else if(act==='reveal'){
+      const kEl=item.querySelector('.ki-key');
+      const k=KeyManager.list(pv).find(x=>x.id===kid);
+      const masked=kEl.dataset.reveal==='masked';
+      kEl.textContent=masked?k.key:maskKey(k.key);
+      kEl.dataset.reveal=masked?'shown':'masked';
+    }else if(act==='test'){
+      await testSingleKey(pv,kid,btn);
+    }
+  });
+  /* ---- rotation events ---- */
+  $('#rot-seg').addEventListener('click',e=>{
+    const b=e.target.closest('[data-rot]'); if(!b) return;
+    Store.set({rotation:b.dataset.rot});
+    renderProviderConfig();
+  });
+  /* ---- model events ---- */
+  $('#models-refresh').addEventListener('click',()=>refreshModels(pv,$('#models-refresh')));
+  $('#models-compat-toggle').addEventListener('click',()=>{
+    showFilteredModels=!showFilteredModels;
+    renderProviderConfig();
+  });
+  const modelSel=$('#set-model'), custom=$('#set-model-custom');
+  modelSel.addEventListener('change',()=>{
+    if(modelSel.value==='__custom'){ custom.style.display='block'; custom.focus(); }
+    else{
+      custom.style.display='none';
+      const opt=ModelHub.options(pv,false).find(m=>m.id===modelSel.value);
+      if(opt&&!opt.compatible&&!confirm(`"${modelSel.value}" appears to be a ${opt.tag} model, not a text-generation model. Story tools will likely fail with it.\n\nSelect it anyway?`)){
+        populateModelSelect(); return;
+      }
+      const models={...Store.get().models}; models[pv]=modelSel.value; Store.set({models}); updateProviderPill(); updateModelNote();
+    }
+  });
+  custom.addEventListener('input',()=>{ if(custom.value.trim()){ const models={...Store.get().models}; models[pv]=custom.value.trim(); Store.set({models}); updateProviderPill(); updateModelNote(); } });
+}
+
+function populateModelSelect(){
+  const s=Store.get(), pv=s.provider;
+  const sel=$('#set-model'); if(!sel) return;
+  const opts=ModelHub.options(pv,!showFilteredModels);
+  const current=s.models[pv];
+  const inList=opts.some(m=>m.id===current);
+  sel.innerHTML=opts.map(m=>`<option value="${esc(m.id)}"${m.id===current?' selected':''}>${esc(m.label)}${m.compatible?'':' ⚠ '+m.tag}</option>`).join('')
+    +`<option value="__custom"${inList?'':' selected'}>Custom model ID…</option>`;
+  const custom=$('#set-model-custom');
+  if(!inList){ custom.style.display='block'; custom.value=current; }
+  updateModelNote();
+}
+function updateModelNote(){
+  const s=Store.get(), pv=s.provider;
+  const note=$('#model-note'); if(!note) return;
+  const cache=ModelHub.cached(pv);
+  const m=cache?.models.find(x=>x.id===s.models[pv]);
+  if(m&&!m.compatible) note.innerHTML=`⚠️ <b style="color:var(--warn)">${esc(m.id)}</b> is classified as a <b>${m.tag}</b> model — story generation will likely fail. Pick a text model instead.`;
+  else if(m) note.textContent=`✓ ${m.id}${m.ctx?` · ${ModelHub.fmtCtx(m.ctx)} context`:''} · text-generation compatible`;
+  else note.textContent='';
+}
+
+/* silently refresh stale model catalogs in the background */
+let autoUpdating=false;
+async function autoUpdateModels(){
+  if(autoUpdating) return;
+  autoUpdating=true;
+  try{
+    for(const pv of Object.keys(PROVIDERS)){
+      if(!ModelHub.isStale(pv)) continue;
+      const key=KeyManager.peek(pv)?.key||'';
+      if(pv!=='openrouter'&&!key) continue; // Gemini/Groq need a key to list models
+      try{
+        await ModelHub.fetch(pv,key);
+        if(currentRoute==='settings'&&Store.get().provider===pv) renderProviderConfig();
+      }catch(e){ /* silent — manual refresh surfaces errors */ }
+    }
+  }finally{ autoUpdating=false; }
+}
+
+async function refreshModels(pv,btn){
+  const keyEntry=KeyManager.peek(pv);
+  btn.classList.add('loading'); btn.disabled=true;
+  try{
+    const models=await ModelHub.fetch(pv,keyEntry?.key||'');
+    const n=models.filter(m=>m.compatible).length;
+    toast(`${PROVIDERS[pv].name}: ${models.length} models found, ${n} text-compatible`);
+    renderProviderConfig();
+  }catch(err){
+    toast('Model update failed: '+err.message.slice(0,80),'err');
+    btn.classList.remove('loading'); btn.disabled=false;
+  }
+}
+
+async function testSingleKey(pv,kid,btn){
+  const k=KeyManager.list(pv).find(x=>x.id===kid); if(!k) return;
+  const sp=btn.querySelector('.spinner'), icn=btn.querySelector('.ktest-ic');
+  sp.style.display='inline-block'; icn.style.display='none'; btn.disabled=true;
+  try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),CONFIG.KEY_TEST_TIMEOUT_MS);
+    let got='';
+    for await(const c of PROVIDERS[pv].stream(Store.get().models[pv],'You are a test.','Reply with exactly: OK',{key:k.key,temperature:0,maxTokens:10},ctrl.signal)){
+      got+=c; if(got.length>1) break;
+    }
+    clearTimeout(timer);
+    KeyManager.markSuccess(pv,kid);
+    toast(`"${k.label}" is working ✓`);
+  }catch(err){
+    KeyManager.markFailure(pv,kid,err);
+    toast(`"${k.label}" failed: ${err.message.slice(0,60)}`,'err');
+  }finally{
+    renderProviderConfig(); updateProviderPill();
+  }
+}
+
+function initSettings(){
+  $('#pv-tabs').addEventListener('click',e=>{
+    const b=e.target.closest('.pv-tab'); if(!b) return;
+    Store.set({provider:b.dataset.pv});
+    renderProviderConfig(); updateProviderPill();
+  });
+  const s=Store.get();
+  const temp=$('#set-temp'), max=$('#set-max');
+  temp.value=s.temperature; max.value=s.maxTokens;
+  const sync=()=>{ $('#temp-val').textContent=Number(temp.value).toFixed(2); $('#max-val').textContent=max.value; };
+  sync();
+  temp.addEventListener('input',()=>{ Store.set({temperature:Number(temp.value)}); sync(); });
+  max.addEventListener('input',()=>{ Store.set({maxTokens:Number(max.value)}); sync(); });
+  renderProviderConfig();
+  /* live cooldown countdown for key badges while settings is visible */
+  setInterval(()=>{
+    if(currentRoute!=='settings'||document.hidden) return;
+    const pv=Store.get().provider;
+    $$('#key-list [data-kid]').forEach(item=>{
+      const k=KeyManager.list(pv).find(x=>x.id===item.dataset.kid); if(!k) return;
+      const si=KeyManager.statusInfo(k);
+      const badge=item.querySelector('.ki-status');
+      if(badge&&badge.textContent!==si.txt){ badge.textContent=si.txt; badge.style.color=si.c; item.classList.toggle('cooling',k.cooldownUntil>Date.now()); }
+    });
+  },1000);
+}
+
+function updateProviderPill(){
+  const s=Store.get();
+  $('#pv-name').textContent=PROVIDERS[s.provider].name;
+  $('#pv-model').textContent=s.models[s.provider];
+  $('#pv-status').classList.toggle('on',KeyManager.healthy(s.provider).length>0);
+}
+function updateChips(){
+  const s=Store.get();
+  $('#chip-words').textContent=fmtNum(s.stats.words);
+  $('#chip-gens').textContent=fmtNum(s.stats.gens);
+}
+
+/* ============================================================
+   GLOBAL EVENTS + BOOT
+============================================================ */
+function closeDrawer(){ $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('show'); }
+function openDrawer(){ $('#sidebar').classList.add('open'); $('#scrim').classList.add('show'); }
+
+/* delegated global clicks: navigation, output actions, library items */
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('[data-nav]');
+  if(nav){ e.preventDefault(); navigate(nav.dataset.nav); return; }
+  const act=e.target.closest('[data-act]');
+  if(act){ handleOutputAction(act.dataset.act,act.dataset.tool,act); return; }
+  const open=e.target.closest('[data-open-item]');
+  if(open){ openItem(open.dataset.openItem); return; }
+  const wfStart=e.target.closest('[data-wf-start]');
+  if(wfStart){ Flow.start(wfStart.dataset.wfStart); return; }
+  if(e.target.closest('[data-wf-next]')){ Flow.next(); return; }
+  if(e.target.closest('[data-wf-cancel]')){ Flow.cancel(); return; }
+});
+
+/* single global keydown: Esc drawer, Enter on cards, 1–8 view shortcuts (derived from ROUTES) */
+const VIEW_SHORTCUTS=Object.fromEntries(ROUTES.map((r,i)=>[String(i+1),r]));
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    closeDrawer();
+    /* Esc also stops a stream on the tool page you're looking at */
+    if(TOOLS[currentRoute]&&toolState[currentRoute].running&&!document.body.classList.contains('modal-open')) toolState[currentRoute].abort?.abort();
+    return;
+  }
+  if(e.key==='Enter'&&e.target.matches?.('[data-open-item]')){ openItem(e.target.dataset.openItem); return; }
+  if(e.target.matches('input,textarea,select')||document.body.classList.contains('modal-open')) return;
+  if(VIEW_SHORTCUTS[e.key]&&!e.metaKey&&!e.ctrlKey&&!e.altKey) navigate(VIEW_SHORTCUTS[e.key]);
+});
+
+$('#menu-btn').addEventListener('click',openDrawer);
+$('#scrim').addEventListener('click',closeDrawer);
+/* warn before leaving while a generation is streaming */
+window.addEventListener('beforeunload',e=>{
+  if(Object.values(toolState).some(st=>st.running)){ e.preventDefault(); e.returnValue=''; }
+});
+
+buildNav();
+buildViews();
+updateProviderPill();
+updateChips();
+Flow.render(); /* restore any in-progress workflow from storage */
+/* deep-linkable views: restore from URL hash, react to back/forward */
+window.addEventListener('hashchange',()=>{
+  const r=location.hash.slice(1);
+  if(r!==currentRoute) navigate(r,true);
+});
+navigate(location.hash.slice(1)||'dashboard',true);
+</script>
+</body>
+</html>
